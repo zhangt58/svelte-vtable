@@ -42,7 +42,6 @@
   "homepage": "https://github.com/zhangt58/svelte-vtable#readme",
   "peerDependencies": {
     "flowbite-svelte": "^1.0.0",
-    "flowbite-svelte-icons": "^3.0.0",
     "svelte": "^5.0.0",
     "svelte-virtuallists": "^1.0.0",
     "tailwindcss": "^4.0.0"
