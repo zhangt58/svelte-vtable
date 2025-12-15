@@ -4,6 +4,9 @@ on:
   push:
     tags:
       - 'v*'   # run only on tags that start with 'v'
+  release:
+    types:
+      - created
 
 jobs:
   build:
