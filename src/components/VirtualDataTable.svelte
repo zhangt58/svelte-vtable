@@ -189,5 +189,5 @@
 </section>
 
 <style>
-  @import '../lib/styles.css';
+  @import '../lib/dist/styles.css';
 </style>

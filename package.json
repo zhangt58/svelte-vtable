@@ -12,11 +12,12 @@
       "import": "./src/lib/index.js",
       "default": "./src/lib/index.js"
     },
-    "./styles.css": "./src/lib/styles.css"
+    "./styles.css": "./src/lib/dist/styles.css"
   },
   "scripts": {
     "check": "svelte-check --tsconfig ./jsconfig.json",
-    "prepublishOnly": "npm run check"
+    "build:styles": "node ./scripts/build-styles.cjs",
+    "prepublishOnly": "npm run build:styles && npm run check"
   },
   "keywords": [
     "svelte",
@@ -53,6 +54,7 @@
   "files": [
     "src",
     "README.md",
-    "LICENSE"
+    "LICENSE",
+    "src/lib/dist/styles.css"
   ]
 }
