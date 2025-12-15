@@ -1,6 +1,6 @@
 {
   "name": "@zhangt58/svelte-vtable",
-  "version": "0.0.2",
+  "version": "0.0.3",
   "description": "A Svelte 5 library for virtualized data tables with sorting, selection, and pagination controls.",
   "type": "module",
   "svelte": "./src/lib/index.js",
