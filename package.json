@@ -1,0 +1,58 @@
+{
+  "name": "@zhangt58/svelte-vtable",
+  "version": "0.0.1",
+  "description": "A Svelte 5 library for virtualized data tables with sorting, selection, and pagination controls.",
+  "type": "module",
+  "svelte": "./src/lib/index.js",
+  "main": "./src/lib/index.js",
+  "module": "./src/lib/index.js",
+  "exports": {
+    ".": {
+      "svelte": "./src/lib/index.js",
+      "import": "./src/lib/index.js",
+      "default": "./src/lib/index.js"
+    },
+    "./styles.css": "./src/lib/styles.css"
+  },
+  "scripts": {
+    "check": "svelte-check --tsconfig ./jsconfig.json",
+    "prepublishOnly": "npm run check"
+  },
+  "keywords": [
+    "svelte",
+    "svelte5",
+    "table",
+    "virtual",
+    "data-table",
+    "sortable",
+    "pagination",
+    "virtualized"
+  ],
+  "author": "zhangt58",
+  "license": "MIT",
+  "repository": {
+    "type": "git",
+    "url": "https://github.com/zhangt58/svelte-vtable"
+  },
+  "bugs": {
+    "url": "https://github.com/zhangt58/svelte-vtable/issues"
+  },
+  "homepage": "https://github.com/zhangt58/svelte-vtable#readme",
+  "peerDependencies": {
+    "flowbite-svelte": "^1.0.0",
+    "flowbite-svelte-icons": "^3.0.0",
+    "svelte": "^5.0.0",
+    "svelte-virtuallists": "^1.0.0",
+    "tailwindcss": "^4.0.0"
+  },
+  "devDependencies": {
+    "svelte": "^5.0.0",
+    "svelte-check": "^4.3.4",
+    "typescript": "^5.0.0"
+  },
+  "files": [
+    "src",
+    "README.md",
+    "LICENSE"
+  ]
+}
