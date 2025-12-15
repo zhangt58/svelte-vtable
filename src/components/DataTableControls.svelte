@@ -1,6 +1,6 @@
 <script>
   import { Pagination, Search, Badge } from 'flowbite-svelte';
-  import { ChevronLeftOutline, ChevronRightOutline } from 'flowbite-svelte-icons';
+  // Inline SVGs are used instead of importing icons to avoid the dependency on flowbite-svelte-icons
   import { onMount, onDestroy } from 'svelte';
 
   // Props for search, pagination (but no per-page control)
@@ -134,7 +134,8 @@
     }
 
     // Now map pageLis to pageList entries in order
-    pageLis.forEach(({ li, btn, text }, idx) => {
+    pageLis.forEach((p, idx) => {
+      const { li, btn, text } = p;
       const pageObj = pageList[idx];
       if (!pageObj) return;
       // clear previous decorations
@@ -286,12 +287,18 @@
     >
       {#snippet prevContent()}
         <span class="sr-only">Previous</span>
-        <ChevronLeftOutline class="shrink-0 h-6 w-6" />
+        <!-- Left chevron SVG (replaces ChevronLeftOutline) -->
+        <svg class="shrink-0 h-6 w-6" xmlns="http://www.w3.org/2000/svg" fill="none" viewBox="0 0 24 24" stroke="currentColor" aria-hidden="true">
+          <path stroke-linecap="round" stroke-linejoin="round" stroke-width="1" d="M15 19l-7-7 7-7" />
+        </svg>
       {/snippet}
 
       {#snippet nextContent()}
         <span class="sr-only">Next</span>
-        <ChevronRightOutline class="shrink-0 h-6 w-6" />
+        <!-- Right chevron SVG (replaces ChevronRightOutline) -->
+        <svg class="shrink-0 h-6 w-6" xmlns="http://www.w3.org/2000/svg" fill="none" viewBox="0 0 24 24" stroke="currentColor" aria-hidden="true">
+          <path stroke-linecap="round" stroke-linejoin="round" stroke-width="1" d="M9 5l7 7-7 7" />
+        </svg>
       {/snippet}
     </Pagination>
   </div>
