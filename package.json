@@ -17,6 +17,7 @@
   "scripts": {
     "check": "svelte-check --tsconfig ./jsconfig.json",
     "build:styles": "node ./scripts/build-styles.cjs",
+    "prepare": "npm run build:styles",
     "prepublishOnly": "npm run build:styles && npm run check"
   },
   "keywords": [
@@ -54,7 +55,6 @@
   "files": [
     "src",
     "README.md",
-    "LICENSE",
-    "src/lib/dist/styles.css"
+    "LICENSE"
   ]
 }

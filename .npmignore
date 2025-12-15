@@ -4,6 +4,7 @@ node_modules/
 # Build artifacts
 .svelte-kit/
 dist/
+src/lib/dist/
 
 # IDE and editor files
 .idea/
