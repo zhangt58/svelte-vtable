@@ -176,11 +176,23 @@
   });
 </script>
 
-<div class="p-4 bg-gray-50 rounded-lg border border-gray-200 {className}"
+<div class="p-4 bg-gray-50 rounded-lg border border-gray-200 dark:bg-gray-800 dark:border-gray-700 {className}"
      class:horizontal={direction === 'horizontal'} class:vertical={direction === 'vertical'}>
   <div class="flex justify-between items-center mb-4 flex-wrap gap-2">
-    <h3 class="text-lg font-semibold text-gray-900 m-0">Filters</h3>
+    <h3 class="text-lg font-semibold text-gray-900 dark:text-gray-100 m-0">Filters</h3>
     <div class="flex items-center gap-2 flex-wrap">
+      {#if hasActiveFilters()}
+        <div class="flex items-center gap-2">
+          <Badge color="blue" rounded>{activeFilterCount()} active</Badge>
+          <button
+            class="px-3 py-1 text-sm text-red-600 bg-transparent border border-red-600 rounded-md hover:bg-red-600 hover:text-white transition-all cursor-pointer"
+            onclick={clearAllFilters}
+            title="Clear all filters"
+          >
+            Clear All
+          </button>
+        </div>
+      {/if}
       <button
         class="px-3 py-1 text-sm text-green-600 bg-transparent border border-green-600 rounded-md hover:bg-green-600 hover:text-white transition-all cursor-pointer disabled:opacity-50 disabled:cursor-not-allowed disabled:hover:bg-transparent disabled:hover:text-green-600"
         disabled={allDropdownsOpen}
@@ -197,18 +209,6 @@
       >
         Collapse All
       </button>
-      {#if hasActiveFilters()}
-        <div class="flex items-center gap-2">
-          <Badge color="blue" rounded>{activeFilterCount()} active</Badge>
-          <button
-            class="px-3 py-1 text-sm text-red-600 bg-transparent border border-red-600 rounded-md hover:bg-red-600 hover:text-white transition-all cursor-pointer"
-            onclick={clearAllFilters}
-            title="Clear all filters"
-          >
-            Clear All
-          </button>
-        </div>
-      {/if}
     </div>
   </div>
 
@@ -222,7 +222,7 @@
       <div class="flex flex-col min-w-0 relative">
         <button
           id="filter-{column.key}"
-          class="w-full flex justify-between items-center px-3 py-2 text-sm text-gray-700 bg-white border border-gray-300 rounded-md hover:border-gray-400 focus:outline-none focus:border-blue-500 focus:ring-2 focus:ring-blue-100 transition-all cursor-pointer gap-2 {isActive ? 'border-green-500 bg-green-50' : ''}"
+          class="w-full flex justify-between items-center px-3 py-2 text-sm text-gray-700 dark:text-gray-300 bg-white dark:bg-gray-700 border border-gray-300 dark:border-gray-600 rounded-md hover:border-gray-400 dark:hover:border-gray-500 focus:outline-none focus:border-blue-500 dark:focus:border-blue-400 focus:ring-2 focus:ring-blue-100 dark:focus:ring-blue-900 transition-all cursor-pointer gap-2 {isActive ? 'border-green-500 dark:border-green-400 bg-green-50 dark:bg-green-900/20' : ''}"
           onclick={() => toggleDropdown(column.key)}
           type="button"
         >
@@ -237,14 +237,20 @@
 
         {#if isOpen}
           <div
-            class="absolute top-full mt-1 left-0 right-0 bg-white border border-gray-300 rounded-md shadow-lg max-h-96 flex flex-col dropdown-menu"
+            class="absolute top-full mt-1 left-0 right-0 bg-white dark:bg-gray-700 border border-gray-300 dark:border-gray-600 rounded-md shadow-lg dark:shadow-gray-900 max-h-96 flex flex-col dropdown-menu"
             tabindex="-1"
             onblur={(e) => handleClickOutside(e, column.key)}
           >
-              <div class="flex justify-between items-center px-2 py-2 border-b border-gray-200 gap-2 flex-wrap">
+              <div class="flex justify-between items-center px-2 py-2 border-b border-gray-200 dark:border-gray-600 gap-2 flex-wrap">
                 <div class="flex gap-1">
                   <button
-                    class="flex items-center gap-1 px-2 py-1 text-xs text-gray-600 dark:text-gray-400 bg-transparent border border-gray-200 dark:border-gray-700 rounded hover:bg-gray-100 dark:hover:bg-gray-700 hover:border-gray-300 dark:hover:border-gray-600 hover:text-gray-700 dark:hover:text-gray-300 transition-all cursor-pointer whitespace-nowrap {currentSortMode === 'name' ? 'bg-blue-500 dark:bg-blue-600 border-blue-500 dark:border-blue-600 text-white dark:text-white' : ''}"
+                    class="flex items-center gap-1 px-2 py-1 text-xs text-gray-600 dark:text-gray-400 bg-transparent border border-gray-200 dark:border-gray-700 rounded hover:bg-gray-100 dark:hover:bg-gray-700 hover:border-gray-300 dark:hover:border-gray-600 hover:text-gray-700 dark:hover:text-gray-300 transition-all cursor-pointer whitespace-nowrap"
+                    class:bg-blue-100={currentSortMode === 'name'}
+                    class:dark:bg-blue-900={currentSortMode === 'name'}
+                    class:border-blue-500={currentSortMode === 'name'}
+                    class:dark:border-blue-600={currentSortMode === 'name'}
+                    class:text-blue-900={currentSortMode === 'name'}
+                    class:dark:text-blue-100={currentSortMode === 'name'}
                     onclick={() => toggleSortMode(column.key, 'name')}
                     title="Sort by name"
                     type="button"
@@ -254,7 +260,13 @@
                   </button>
                   {#if showCounts && column.counts}
                     <button
-                      class="flex items-center gap-1 px-2 py-1 text-xs text-gray-600 dark:text-gray-400 bg-transparent border border-gray-200 dark:border-gray-700 rounded hover:bg-gray-100 dark:hover:bg-gray-700 hover:border-gray-300 dark:hover:border-gray-600 hover:text-gray-700 dark:hover:text-gray-300 transition-all cursor-pointer whitespace-nowrap {currentSortMode === 'count' ? 'bg-blue-500 dark:bg-blue-600 border-blue-500 dark:border-blue-600 text-white dark:text-white' : ''}"
+                      class="flex items-center gap-1 px-2 py-1 text-xs text-gray-600 dark:text-gray-400 bg-transparent border border-gray-200 dark:border-gray-700 rounded hover:bg-gray-100 dark:hover:bg-gray-700 hover:border-gray-300 dark:hover:border-gray-600 hover:text-gray-700 dark:hover:text-gray-300 transition-all cursor-pointer whitespace-nowrap"
+                      class:bg-blue-100={currentSortMode === 'count'}
+                      class:dark:bg-blue-900={currentSortMode === 'count'}
+                      class:border-blue-500={currentSortMode === 'count'}
+                      class:dark:border-blue-600={currentSortMode === 'count'}
+                      class:text-blue-900={currentSortMode === 'count'}
+                      class:dark:text-blue-100={currentSortMode === 'count'}
                       onclick={() => toggleSortMode(column.key, 'count')}
                       title="Sort by count"
                       type="button"
@@ -281,21 +293,21 @@
                     {@const isSelected = selections[column.key]?.includes(value)}
                     {@const displayValue = value === null || value === undefined ? '(empty)' : String(value)}
 
-                    <label class="flex items-center gap-2 px-2 py-2 cursor-pointer rounded hover:bg-gray-100 transition-colors">
+                    <label class="flex items-center gap-2 px-2 py-2 cursor-pointer rounded hover:bg-gray-100 dark:hover:bg-gray-600 transition-colors">
                       <input
                         type="checkbox"
                         checked={isSelected}
                         onchange={() => toggleSelection(column.key, value)}
                         class="w-4 h-4 shrink-0 cursor-pointer accent-blue-500"
                       />
-                      <span class="flex-1 text-sm text-gray-700 select-none min-w-0 overflow-hidden text-ellipsis">{displayValue}</span>
+                      <span class="flex-1 text-sm text-gray-700 dark:text-gray-300 select-none min-w-0 overflow-hidden text-ellipsis">{displayValue}</span>
                       {#if showCounts && column.counts && column.counts[value] !== undefined}
-                        <span class="text-xs text-gray-500 ml-auto shrink-0">({column.counts[value]})</span>
+                        <span class="text-xs text-gray-500 dark:text-gray-400 ml-auto shrink-0">({column.counts[value]})</span>
                       {/if}
                     </label>
                   {/each}
                 {:else}
-                  <div class="p-4 text-center text-sm text-gray-400">No values available</div>
+                  <div class="p-4 text-center text-sm text-gray-400 dark:text-gray-500">No values available</div>
                 {/if}
               </div>
             </div>
