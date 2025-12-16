@@ -1,5 +1,6 @@
 <script>
-  import { Pagination, Search, Badge } from 'flowbite-svelte';
+  import { Pagination, Search, Badge, Toggle } from 'flowbite-svelte';
+  import DataTableFilters from './DataTableFilters.svelte';
   // Inline SVGs are used instead of importing icons to avoid the dependency on flowbite-svelte-icons
   import { onMount, onDestroy } from 'svelte';
 
@@ -10,7 +11,19 @@
     perPage = 25,  // Fixed value, not user-configurable
     totalItems = 0,
     pagechange = () => {},
-    searchchange = () => {}
+    searchchange = () => {},
+    // control visibility of DataTableFilters above the controls
+    filtersVisible = true,
+    // callback when toggle changes: filterstoggle({ filtersVisible })
+    filterstoggle = () => {},
+    // optional DataTableFilters inputs - when provided, this component will render the filters
+    columnFilters = [],
+    activeFilters = {},
+    /** @type {(..._args: any[]) => void} */
+    filterChange = (..._args) => {},
+    direction = 'horizontal',
+    showCounts = true,
+    className = ''
   } = $props();
 
   // totalPages derived from totalItems and perPage
@@ -33,6 +46,23 @@
   $effect(() => {
     if (typeof search !== 'undefined') searchchange?.({ search });
   });
+
+  // call filterstoggle when filtersVisible changes (avoid on:change typing issues)
+  let _prevFiltersVisible = undefined;
+  $effect(() => {
+    // initialize previous value on first run without emitting
+    if (_prevFiltersVisible === undefined) {
+      _prevFiltersVisible = filtersVisible;
+      return;
+    }
+    if (filtersVisible !== _prevFiltersVisible) {
+      try { filterstoggle?.({ filtersVisible }); } catch (err) {}
+      _prevFiltersVisible = filtersVisible;
+    }
+  });
+
+  // stable id for the Toggle so the label can reference it
+  const toggleId = `dtc-toggle-${Math.random().toString(36).slice(2,9)}`;
 
   // Calculate range for display
   const startItem = $derived(() => totalItems === 0 ? 0 : (currentPage - 1) * perPage + 1);
@@ -135,7 +165,7 @@
 
     // Now map pageLis to pageList entries in order
     pageLis.forEach((p, idx) => {
-      const { li, btn, text } = p;
+      const btn = p.btn;
       const pageObj = pageList[idx];
       if (!pageObj) return;
       // clear previous decorations
@@ -262,48 +292,72 @@
   // No external tooltip component in use; we rely on native title attribute for ellipses
 </script>
 
-<div class="flex items-center w-full gap-3 px-0 py-0">
-  <!-- Search field on the left -->
-  <div class="flex-1">
-    <Search size="sm" bind:value={search} placeholder="Search..." clearable
-            clearableOnClick={() => { search = ''; searchchange?.({ search }); }} />
-  </div>
+<div class="w-full">
+  {#if filtersVisible && columnFilters && columnFilters.length > 0}
+    <div class="mb-2 {className}">
+      <DataTableFilters
+        columnFilters={columnFilters}
+        activeFilters={activeFilters}
+        filterChange={(...args) => { try { return filterChange(...args); } catch (e) {} }}
+        direction={direction}
+        showCounts={showCounts}
+        className="mb-2"
+      />
+    </div>
+  {/if}
 
-  <!-- Range count badge -->
-  <div class="flex-2">
-    <Badge rounded color="gray">
-      Showing {startItem()} to {endItem()} of {totalItems}
-    </Badge>
-  </div>
+  <div class="flex items-center w-full gap-3 px-0 py-0">
+    <!-- Search field on the left -->
+    <div class="flex-1">
+      <div class="flex items-center gap-2">
+        <!-- Toggle to show/hide DataTableFilters above with visible label -->
+        <div class="flex items-center gap-1">
+          <label for={toggleId} class="text-sm text-slate-700 dark:text-slate-300 select-none cursor-pointer">Filters</label>
+          <Toggle id={toggleId} size="small" bind:checked={filtersVisible} aria-label="Toggle filters" />
+        </div>
 
-  <!-- Pagination navigation: use Pagination with chevrons and page buttons -->
-  <div bind:this={paginationContainerEl} data-pagination-id={paginationId} class="flex items-center gap-0.5" aria-label="Pagination">
-    <Pagination
-      pages={pages()}
-      {previous}
-      {next}
-      ariaLabel="Pagination"
-      onclick={handlePaginationClick}
-    >
-      {#snippet prevContent()}
-        <span class="sr-only">Previous</span>
-        <!-- Left chevron SVG (replaces ChevronLeftOutline) -->
-        <svg class="shrink-0 h-6 w-6" xmlns="http://www.w3.org/2000/svg" fill="none" viewBox="0 0 24 24" stroke="currentColor" aria-hidden="true">
-          <path stroke-linecap="round" stroke-linejoin="round" stroke-width="1" d="M15 19l-7-7 7-7" />
-        </svg>
-      {/snippet}
+        <Search size="sm" bind:value={search} placeholder="Search..." clearable
+                clearableOnClick={() => { search = ''; searchchange?.({ search }); }} />
+      </div>
+    </div>
 
-      {#snippet nextContent()}
-        <span class="sr-only">Next</span>
-        <!-- Right chevron SVG (replaces ChevronRightOutline) -->
-        <svg class="shrink-0 h-6 w-6" xmlns="http://www.w3.org/2000/svg" fill="none" viewBox="0 0 24 24" stroke="currentColor" aria-hidden="true">
-          <path stroke-linecap="round" stroke-linejoin="round" stroke-width="1" d="M9 5l7 7-7 7" />
-        </svg>
-      {/snippet}
-    </Pagination>
+    <!-- Range count badge -->
+    <div class="flex-2">
+      <Badge rounded color="gray">
+        Showing {startItem()} to {endItem()} of {totalItems}
+      </Badge>
+    </div>
+
+    <!-- Pagination navigation: use Pagination with chevrons and page buttons -->
+    <div bind:this={paginationContainerEl} data-pagination-id={paginationId} class="flex items-center gap-0.5" aria-label="Pagination">
+      <Pagination
+        pages={pages()}
+        {previous}
+        {next}
+        ariaLabel="Pagination"
+        onclick={handlePaginationClick}
+      >
+        {#snippet prevContent()}
+          <span class="sr-only">Previous</span>
+          <!-- Left chevron SVG (replaces ChevronLeftOutline) -->
+          <svg class="shrink-0 h-6 w-6" xmlns="http://www.w3.org/2000/svg" fill="none" viewBox="0 0 24 24" stroke="currentColor" aria-hidden="true">
+            <path stroke-linecap="round" stroke-linejoin="round" stroke-width="1" d="M15 19l-7-7 7-7" />
+          </svg>
+        {/snippet}
+
+        {#snippet nextContent()}
+          <span class="sr-only">Next</span>
+          <!-- Right chevron SVG (replaces ChevronRightOutline) -->
+          <svg class="shrink-0 h-6 w-6" xmlns="http://www.w3.org/2000/svg" fill="none" viewBox="0 0 24 24" stroke="currentColor" aria-hidden="true">
+            <path stroke-linecap="round" stroke-linejoin="round" stroke-width="1" d="M9 5l7 7-7 7" />
+          </svg>
+        {/snippet}
+      </Pagination>
+    </div>
   </div>
 </div>
 
 <style>
-  @import '../lib/dist/styles.css';
-</style>
+   @import '../lib/dist/styles.css';
+ </style>
+
