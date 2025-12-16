@@ -1,118 +1,218 @@
-# Examples
+# Svelte-VTable Example
 
-This directory contains working examples demonstrating the usage of svelte-vtable components.
+This is an example project demonstrating how to use the `@zhangt58/svelte-vtable` library.
 
-## Running the Examples
+## Features Demonstrated
+
+- **DataTableFilters**: Multi-column filtering with various filter types
+- **VirtualDataTable**: High-performance virtualized data table
+- **DataTableControls**: Pagination and table controls
+- **Dark Mode**: Complete theme switching support
+- **Responsive Design**: Mobile-friendly layouts
+
+## Running the Example Project
 
 ### Prerequisites
 
-Make sure you have installed all dependencies:
+Before running the example, ensure you have the following installed:
+
+- **Node.js** (version 18 or higher) - [Download from nodejs.org](https://nodejs.org/)
+- **npm** (comes with Node.js) or **yarn** package manager
+
+You can verify your installation by running:
+```bash
+node --version
+npm --version
+```
+
+### Quick Start
+
+1. **Clone or navigate to the project**:
+   ```bash
+   cd /path/to/svelte-vtable
+   ```
+
+2. **Navigate to the examples directory**:
+   ```bash
+   cd examples
+   ```
+
+3. **Install dependencies**:
+   ```bash
+   npm install
+   ```
+
+4. **Start the development server**:
+   ```bash
+   npm run dev
+   ```
+
+5. **Open your browser** and visit `http://localhost:5173/`
+
+### Detailed Setup Instructions
+
+#### Step 1: Install Dependencies
+
+The example project has its own `package.json` with all necessary dependencies:
 
 ```bash
+cd examples
 npm install
 ```
 
-### Start the Development Server
+This will install:
+- `@zhangt58/svelte-vtable` (local library)
+- `svelte` and `@sveltejs/vite-plugin-svelte`
+- `tailwindcss` and `@tailwindcss/vite`
+- `flowbite-svelte` and `flowbite-svelte-icons`
+- Development tools (`vite`, `svelte-check`)
+
+#### Step 2: Development Server
+
+Start the Vite development server:
 
 ```bash
-npm run dev:example
+npm run dev
 ```
 
-This will start a Vite development server and open your browser to `http://localhost:5173` (or another port if 5173 is in use).
+**Expected Output:**
+```
+VITE v7.3.0  ready in 290 ms
 
-## Available Examples
+➜  Local:   http://localhost:5173/
+➜  Network: use --host to expose
+➜  press h + enter to show help
+```
 
-### DataTableFilters Demo
+The server will automatically reload when you make changes to the code.
 
-**File**: `filters-demo.svelte`
+#### Step 3: Access the Example
 
-A comprehensive demonstration of the DataTableFilters component showing:
+Open your web browser and navigate to `http://localhost:5173/`
 
-- Multi-select dropdown filters for each column
-- OR logic within same column (selecting multiple values matches ANY)
-- AND logic across columns (all active filters must match)
-- Real-time filtering of sample employee data
-- Active filter indicators with count badges
-- Individual column and "Clear All" functionality
-- Layout toggle (horizontal/vertical)
-- Value counts display
+### Alternative Package Managers
 
-**Features demonstrated:**
-- Building column filters from data using `buildColumnFilters()`
-- Applying filters with `applyFilters()`
-- Counting active filters with `countActiveFilters()`
-- Dynamic layout switching
-- Integration with a data table display
+If you prefer using Yarn:
 
-### How the Example Works
+```bash
+# Install dependencies
+yarn install
 
-1. **Sample Data**: Uses a mock dataset of 12 employees with properties like department, status, and level
+# Start development server
+yarn dev
 
-2. **Column Filters**: Automatically extracts unique values and counts from the data
+# Build for production
+yarn build
 
-3. **Filter Logic**: 
-   - Selecting "Engineering" OR "Sales" in Department filter
-   - Then selecting "Active" in Status filter
-   - Results in: (Department=Engineering OR Department=Sales) AND Status=Active
+# Preview production build
+yarn preview
+```
 
-4. **Real-time Updates**: The filtered results update immediately as you select/deselect filter options
+### Production Build
 
-5. **Layout Options**: Toggle between horizontal grid and vertical stack layouts
+To build the example for production:
+
+```bash
+npm run build
+```
+
+This creates an optimized build in the `dist/` directory.
+
+To preview the production build locally:
+
+```bash
+npm run preview
+```
+
+### Troubleshooting
+
+#### Common Issues
+
+**1. Port already in use:**
+If port 5173 is busy, Vite will automatically use the next available port (e.g., 5174).
+
+**2. Dependencies not installing:**
+- Clear npm cache: `npm cache clean --force`
+- Delete `node_modules` and `package-lock.json`, then run `npm install` again
+
+**3. Build errors:**
+- Ensure you're in the `examples/` directory
+- Check that the main library is built: run `npm run prepare` in the parent directory
+
+**4. Import errors:**
+- Make sure the local library is properly linked
+- Check that `package.json` has the correct dependency: `"@zhangt58/svelte-vtable": "file:.."`
+
+#### Development Tips
+
+- **Hot Reload**: The dev server automatically reloads on file changes
+- **Type Checking**: Run `npm run check` to validate TypeScript/Svelte types
+- **Browser DevTools**: Use browser developer tools to inspect components and debug
+
+## Getting Started
+
+### Prerequisites
+
+Make sure you have Node.js and npm installed.
+
+### Installation
+
+1. Navigate to the examples directory:
+   ```bash
+   cd examples
+   ```
+
+2. Install dependencies:
+   ```bash
+   npm install
+   ```
+
+### Development
+
+Start the development server:
+```bash
+npm run dev
+```
+
+The example will be available at `http://localhost:5173/`
+
+### Building
+
+Build for production:
+```bash
+npm run build
+```
+
+Preview the production build:
+```bash
+npm run preview
+```
 
 ## Project Structure
 
-```
-examples/
-├── index.html              # Main HTML entry point
-├── main.js                 # JavaScript entry point (mounts Svelte app)
-├── filters-demo.svelte     # DataTableFilters demo component
-├── vite.config.js          # Vite configuration for examples
-└── README.md               # This file
-```
+- `App.svelte` - Main application component
+- `sampleData.js` - Sample data and column configurations
+- `main.js` - Application entry point
+- `index.html` - HTML template
+- `vite.config.js` - Vite configuration
+- `svelte.config.js` - Svelte configuration
+- `app.css` - Tailwind CSS imports
 
-## Adding New Examples
+## Usage
 
-To add a new example:
+The example demonstrates:
 
-1. Create a new `.svelte` file in this directory
-2. Import it in `main.js` or create a new entry point
-3. Update `index.html` to include navigation if needed
-4. Add documentation here
+1. **Filtering**: Use the filter dropdowns to filter data by department, status, and level
+2. **Layout**: Switch between horizontal and vertical filter layouts
+3. **Theme**: Toggle between light and dark modes
+4. **Virtual Table**: Scroll through large datasets efficiently
+5. **Controls**: Navigate through paginated results
 
-## Development
+## Dependencies
 
-The examples use Vite for hot module replacement, so changes you make to the example files or the source components will automatically reload in the browser.
-
-## Troubleshooting
-
-### Port Already in Use
-
-If you see "Port 5173 is in use", Vite will automatically try the next available port. Check the terminal output for the actual URL.
-
-### Module Not Found
-
-Make sure you've run `npm install` in the root directory to install all dependencies including:
-- `flowbite-svelte`
-- `svelte-virtuallists`
-- `svelte`
-- `vite`
-
-### Styles Not Loading
-
-The examples automatically import the compiled CSS from `../src/lib/dist/styles.css`. If styles aren't loading:
-
-1. Run `npm run build:styles` to regenerate the CSS
-2. Check that `src/lib/dist/styles.css` exists
-3. Clear your browser cache
-
-## Related Documentation
-
-- [DataTableFilters README](../DATATABLEFILTERS_README.md) - Full API documentation
-- [Integration Guide](../INTEGRATION_GUIDE.md) - Step-by-step integration instructions
-- [Quick Reference](../QUICK_REFERENCE.md) - Developer quick reference
-- [Visual Guide](../VISUAL_GUIDE.md) - Visual diagrams and flows
-
-## License
-
-MIT
-
+This example project depends on:
+- `@zhangt58/svelte-vtable` - The main library
+- `flowbite-svelte` - UI components
+- `tailwindcss` - Styling framework
+- `svelte` - Framework
+- `vite` - Build tool
