@@ -1,6 +1,7 @@
 <script>
   import { Badge } from 'flowbite-svelte';
-  import { CloseOutline, ChevronDownOutline, ArrowDownOutline } from 'flowbite-svelte-icons';
+  import { BadgeCheckOutline, ArrowsRepeatOutline, CircleMinusOutline, ChevronDownOutline, ArrowDownOutline } from 'flowbite-svelte-icons';
+  import { onDestroy } from 'svelte';
 
   // shared default no-op function
   const DEFAULT_NOOP = (..._args) => {};
@@ -25,11 +26,54 @@
     // Virtualization props (defaults)
     virtualThreshold = 500,
     virtualItemHeight = 36,
-    virtualOverscan = 5
+    virtualOverscan = 5,
+    // Debounce milliseconds for emitting filterChange (0 = immediate)
+    emitDebounce = 100
   } = $props();
 
   // Internal state for selected options per column
   let selections = $state({});
+
+  // --- Debounced emission helpers ---
+  let _emitTimer = null;
+  let _pendingEmit = null;
+
+  function scheduleEmit(columnKey, selectedValues) {
+    // capture latest state snapshot
+    _pendingEmit = { columnKey, selectedValues, allFilters: selections };
+
+    if (!emitDebounce || emitDebounce <= 0) {
+      // immediate
+      flushEmit();
+      return;
+    }
+
+    if (_emitTimer) clearTimeout(_emitTimer);
+    _emitTimer = setTimeout(() => flushEmit(), emitDebounce);
+  }
+
+  function flushEmit() {
+    if (!_pendingEmit) return;
+    const payload = _pendingEmit;
+    _pendingEmit = null;
+    if (_emitTimer) {
+      clearTimeout(_emitTimer);
+      _emitTimer = null;
+    }
+
+    try {
+      (/** @type {any} */ (filterChange))(payload);
+    } catch (err) {
+      try { console.error('filterChange threw:', err); } catch (e) {}
+    }
+  }
+
+  // cleanup on destroy to avoid timers running after unmount
+  onDestroy(() => {
+    if (_emitTimer) clearTimeout(_emitTimer);
+    // flush any pending emit synchronously
+    flushEmit();
+  });
 
   // Initialize selections from activeFilters
   $effect(() => {
@@ -55,31 +99,14 @@
 
     selections = { ...selections, [columnKey]: updated };
 
-    // Emit the filter change event
-    try {
-      (/** @type {any} */ (filterChange))({
-        columnKey,
-        selectedValues: updated,
-        allFilters: selections
-      });
-    } catch (err) {
-      try { console.error('filterChange threw:', err); } catch (e) {}
-    }
+    // Schedule debounced filter change emission
+    scheduleEmit(columnKey, updated);
   }
 
   // Clear all selections for a column
   function clearColumn(columnKey) {
     selections = { ...selections, [columnKey]: [] };
-
-    try {
-      (/** @type {any} */ (filterChange))({
-        columnKey,
-        selectedValues: [],
-        allFilters: selections
-      });
-    } catch (err) {
-      try { console.error('filterChange threw:', err); } catch (e) {}
-    }
+    scheduleEmit(columnKey, []);
   }
 
   // Clear all filters
@@ -90,15 +117,8 @@
     }
     selections = cleared;
 
-    try {
-      (/** @type {any} */ (filterChange))({
-        columnKey: null,
-        selectedValues: [],
-        allFilters: selections
-      });
-    } catch (err) {
-      try { console.error('filterChange threw:', err); } catch (e) {}
-    }
+    // emit after debounce (columnKey null indicates global clear)
+    scheduleEmit(null, []);
   }
 
   // Check if any filters are active
@@ -282,6 +302,29 @@
     clearColumn(columnKey);
   }
 
+  // Check all values for a column
+  function checkAll(columnKey, values) {
+    const all = Array.isArray(values) ? values.slice() : [];
+    selections = { ...selections, [columnKey]: all };
+    scheduleEmit(columnKey, all);
+  }
+
+  // Invert selection for a column (values is the full option list)
+  function invertSelection(columnKey, values) {
+    const current = new Set(selections[columnKey] || []);
+    const next = [];
+    for (const v of (Array.isArray(values) ? values : [])) {
+      if (!current.has(v)) next.push(v);
+    }
+    selections = { ...selections, [columnKey]: next };
+    scheduleEmit(columnKey, next);
+  }
+
+  // Uncheck all -> reuse clearColumn
+  function checkNone(columnKey) {
+    clearColumn(columnKey);
+  }
+
   // Show all dropdowns
   function showAllDropdowns() {
     const allOpen = {};
@@ -416,18 +459,47 @@
                       />
                     </button>
                   {/if}
+
+
                 </div>
 
+              </div>
+            </div>
+
+            <!-- Action row: Check all / Invert / Uncheck all (icon buttons) -->
+            <div class="px-2 py-2 border-b border-gray-100 dark:border-gray-600">
+              <div class="flex items-center gap-2">
                 <button
-                  class="p-1 flex items-center justify-center text-xs bg-transparent border rounded transition-all text-red-600 border-red-100 hover:bg-red-50 hover:border-red-600 ml-auto"
-                  class:opacity-50={!isActive}
-                  class:cursor-not-allowed={!isActive}
-                  disabled={!isActive}
-                  onclick={() => clearSelection(column.key)}
-                  title="Clear selection"
                   type="button"
+                  class="p-1 rounded-md text-gray-600 dark:text-gray-300 hover:bg-gray-100 dark:hover:bg-gray-600 disabled:opacity-50 disabled:cursor-not-allowed"
+                  onclick={() => checkAll(column.key, sortedValues)}
+                  disabled={sortedValues.length === 0}
+                  aria-label="Check all"
+                  title="Check all"
                 >
-                  <CloseOutline class="w-4 h-4" />
+                  <BadgeCheckOutline class="w-4 h-4" />
+                </button>
+
+                <button
+                  type="button"
+                  class="p-1 rounded-md text-gray-600 dark:text-gray-300 hover:bg-gray-100 dark:hover:bg-gray-600 disabled:opacity-50 disabled:cursor-not-allowed"
+                  onclick={() => invertSelection(column.key, sortedValues)}
+                  disabled={sortedValues.length === 0}
+                  aria-label="Invert selection"
+                  title="Invert selection"
+                >
+                  <ArrowsRepeatOutline class="w-4 h-4" />
+                </button>
+
+                <button
+                  type="button"
+                  class="p-1 rounded-md text-gray-600 dark:text-gray-300 hover:bg-gray-100 dark:hover:bg-gray-600 disabled:opacity-50 disabled:cursor-not-allowed"
+                  onclick={() => checkNone(column.key)}
+                  disabled={sortedValues.length === 0}
+                  aria-label="Uncheck all"
+                  title="Uncheck all"
+                >
+                  <CircleMinusOutline class="w-4 h-4" />
                 </button>
               </div>
             </div>
