@@ -109,11 +109,23 @@
   let openDropdowns = $state({});
 
   function toggleDropdown(columnKey) {
-    openDropdowns = { ...openDropdowns, [columnKey]: !openDropdowns[columnKey] };
+    const wasOpen = openDropdowns[columnKey];
+    openDropdowns = { ...openDropdowns, [columnKey]: !wasOpen };
+    if (!wasOpen) {
+      inputModes = { ...inputModes, [columnKey]: true };
+      // Focus the input after render
+      setTimeout(() => {
+        const input = searchInputs[columnKey];
+        if (input) input.focus();
+      }, 0);
+    } else {
+      inputModes = { ...inputModes, [columnKey]: false };
+    }
   }
 
   function closeDropdown(columnKey) {
     openDropdowns = { ...openDropdowns, [columnKey]: false };
+    inputModes = { ...inputModes, [columnKey]: false };
   }
 
   // Handle click outside to close dropdowns
@@ -126,10 +138,17 @@
 
   // Sorting state for each column's dropdown
   let sortModes = $state({});
+  let searchQueries = $state({});
+  let searchInputs = $state({}); // refs for search inputs
+  let inputModes = $state({}); // whether each select is in input mode
 
   // Get sorted unique values for a column
-  function getSortedValues(column) {
-    const values = column.uniqueValues || [];
+  function getSortedValues(column, search = '') {
+    let values = column.uniqueValues || [];
+    if (search) {
+      const q = search.toLowerCase();
+      values = values.filter(v => String(v ?? '').toLowerCase().includes(q));
+    }
     const mode = sortModes[column.key] || 'name';
 
     if (mode === 'count' && column.counts) {
@@ -137,7 +156,7 @@
       return [...values].sort((a, b) => (column.counts[b] || 0) - (column.counts[a] || 0));
     } else {
       // Sort by name (ascending)
-      return [...values].sort((a, b) => String(a).localeCompare(String(b)));
+      return [...values].sort((a, b) => String(a ?? '').localeCompare(String(b ?? '')));
     }
   }
 
@@ -174,6 +193,12 @@
   const allDropdownsClosed = $derived.by(() => {
     return columnFilters.every(col => !openDropdowns[col.key]);
   });
+
+  // Handle input blur to exit input mode
+  function handleInputBlur(columnKey) {
+    inputModes = { ...inputModes, [columnKey]: false };
+    closeDropdown(columnKey);
+  }
 </script>
 
 <div class="p-4 bg-gray-50 rounded-lg border border-gray-200 dark:bg-gray-800 dark:border-gray-700 {className}"
@@ -216,28 +241,38 @@
     {#each columnFilters as column (column.key)}
       {@const isActive = selections[column.key]?.length > 0}
       {@const isOpen = openDropdowns[column.key]}
-      {@const sortedValues = getSortedValues(column)}
+      {@const sortedValues = getSortedValues(column, searchQueries[column.key])}
       {@const currentSortMode = sortModes[column.key] || 'name'}
 
       <div class="flex flex-col min-w-0 relative">
-        <button
-          id="filter-{column.key}"
-          class="w-full flex justify-between items-center px-3 py-2 text-sm text-gray-700 dark:text-gray-300 bg-white dark:bg-gray-700 border border-gray-300 dark:border-gray-600 rounded-md hover:border-gray-400 dark:hover:border-gray-500 focus:outline-none focus:border-blue-500 dark:focus:border-blue-400 focus:ring-2 focus:ring-blue-100 dark:focus:ring-blue-900 transition-all cursor-pointer gap-2 {isActive ? 'border-green-500 dark:border-green-400 bg-green-50 dark:bg-green-900/20' : ''}"
-          onclick={() => toggleDropdown(column.key)}
-          type="button"
-        >
-          <span class="flex-1 text-left whitespace-nowrap overflow-hidden text-ellipsis min-w-0">
-              {column.label || column.key}
-          </span>
-          {#if isActive}
-            <Badge color="green" rounded class="ml-1">{selections[column.key].length}</Badge>
-          {/if}
-          <ChevronDownOutline class="w-5 h-5 shrink-0 transition-transform {isOpen ? 'rotate-180' : ''}" />
-        </button>
+        {#if isOpen && inputModes[column.key]}
+          <input
+            bind:value={searchQueries[column.key]}
+            class="w-full px-3 py-2 text-sm text-gray-700 dark:text-gray-300 bg-white dark:bg-gray-700 border border-gray-300 dark:border-gray-600 rounded-md focus:outline-none focus:border-blue-500 dark:focus:border-blue-400 focus:ring-2 focus:ring-blue-100 dark:focus:ring-blue-900 {isActive ? 'border-green-500 dark:border-green-400 bg-green-50 dark:bg-green-900/20' : ''}"
+            placeholder={column.label || column.key}
+            bind:this={searchInputs[column.key]}
+            onblur={() => handleInputBlur(column.key)}
+          />
+        {:else}
+          <button
+            id="filter-{column.key}"
+            class="w-full flex justify-between items-center px-3 py-2 text-sm text-gray-700 dark:text-gray-300 bg-white dark:bg-gray-700 border border-gray-300 dark:border-gray-600 rounded-md hover:border-gray-400 dark:hover:border-gray-500 focus:outline-none focus:border-blue-500 dark:focus:border-blue-400 focus:ring-2 focus:ring-blue-100 dark:focus:ring-blue-900 transition-all cursor-pointer gap-2 {isActive ? 'border-green-500 dark:border-green-400 bg-green-50 dark:bg-green-900/20' : ''}"
+            onclick={() => toggleDropdown(column.key)}
+            type="button"
+          >
+            <span class="flex-1 text-left whitespace-nowrap overflow-hidden text-ellipsis min-w-0">
+                {column.label || column.key}
+            </span>
+            {#if isActive}
+              <Badge color="green" rounded class="ml-1">{selections[column.key].length}</Badge>
+            {/if}
+            <ChevronDownOutline class="w-5 h-5 shrink-0 transition-transform {isOpen ? 'rotate-180' : ''}" />
+          </button>
+        {/if}
 
         {#if isOpen}
           <div
-            class="absolute top-full mt-1 left-0 right-0 bg-white dark:bg-gray-700 border border-gray-300 dark:border-gray-600 rounded-md shadow-lg dark:shadow-gray-900 max-h-96 flex flex-col dropdown-menu"
+            class="absolute top-full mt-1 left-0 right-0 bg-white dark:bg-gray-700 border border-gray-300 dark:border-gray-600 rounded-md shadow-lg dark:shadow-gray-900 max-h-64 flex flex-col dropdown-menu"
             tabindex="-1"
             onblur={(e) => handleClickOutside(e, column.key)}
           >
@@ -329,7 +364,7 @@
 
   /* Dropdown menu positioning */
   .dropdown-menu {
-    z-index: 1000;
+    z-index: 9999;
   }
 
   /* Responsive adjustments */
