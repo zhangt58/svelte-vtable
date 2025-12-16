@@ -21,7 +21,11 @@
     // CSS class for the container
     className = '',
     // Whether to show filter counts
-    showCounts = true
+    showCounts = true,
+    // Virtualization props (defaults)
+    virtualThreshold = 500,
+    virtualItemHeight = 36,
+    virtualOverscan = 5
   } = $props();
 
   // Internal state for selected options per column
@@ -125,34 +129,124 @@
   // Inline header search queries per column (small text filter for options)
   let searchQueries = $state({});
 
-  // Get sorted unique values for a column
+  // --- Virtualization settings and state ---
+  // (virtual props are provided via the main $props() destructure above)
+
+  // DOM refs for per-column scroll containers
+  let listRefs = $state({});
+
+  // Per-column scroll state: { scrollTop, height }
+  let virtualScroll = $state({});
+
+  // Svelte action to register list containers and keep virtualScroll updated
+  function registerList(node, params) {
+    const key = params && params.key;
+    if (!key) return { destroy() {} };
+
+    listRefs = { ...listRefs, [key]: node };
+
+    function updateState() {
+      virtualScroll = {
+        ...virtualScroll,
+        [key]: { scrollTop: node.scrollTop, height: node.clientHeight }
+      };
+    }
+
+    // initialize
+    updateState();
+
+    const onScroll = () => updateState();
+    const onResize = () => updateState();
+
+    node.addEventListener('scroll', onScroll);
+    // Observe size changes (in case container height changes)
+    const ro = new ResizeObserver(onResize);
+    ro.observe(node);
+
+    return {
+      update(newParams) {
+        // allow key to be updated (unlikely)
+        if (!newParams || newParams.key !== key) {
+          node.removeEventListener('scroll', onScroll);
+          ro.disconnect();
+          delete listRefs[key];
+        }
+      },
+      destroy() {
+        node.removeEventListener('scroll', onScroll);
+        ro.disconnect();
+        delete listRefs[key];
+        // remove virtualScroll entry
+        const copy = { ...virtualScroll };
+        delete copy[key];
+        virtualScroll = copy;
+      }
+    };
+  }
+
+  // Compute virtual slice for a column when the values exceed threshold
+  function getVirtualSlice(column, values) {
+    if (!values || values.length <= virtualThreshold) return null;
+    const vs = virtualScroll[column.key] || { scrollTop: 0, height: 200 };
+    const itemH = virtualItemHeight;
+    const height = vs.height || 200;
+    const overscan = virtualOverscan;
+
+    const start = Math.max(0, Math.floor(vs.scrollTop / itemH) - overscan);
+    const visibleCount = Math.ceil(height / itemH) + overscan * 2;
+    const end = Math.min(values.length, start + visibleCount);
+    const slice = values.slice(start, end);
+    const top = start * itemH;
+    const totalHeight = values.length * itemH;
+
+    return { slice, start, end, top, totalHeight };
+  }
+
+  // --- Helper: return the values for a column after applying search + sort ---
   function getSortedValues(column) {
-    let values = column.uniqueValues || [];
+    // column.uniqueValues is expected to be an array of possible values
+    const raw = Array.isArray(column.uniqueValues) ? column.uniqueValues.slice() : [];
+
+    // apply search filter if present
+    const q = (searchQueries[column.key] || '').toString().trim().toLowerCase();
+    let filtered = raw;
+    if (q) {
+      filtered = raw.filter(v => {
+        const text = v === null || v === undefined ? '(empty)' : String(v);
+        return text.toLowerCase().includes(q);
+      });
+    }
+
+    // determine sort mode and direction
     const mode = sortModes[column.key] || 'name';
-    const dir = (sortDirs[column.key] || 'asc');
-    const query = (searchQueries[column.key] || '').toLowerCase();
+    const dir = (sortDirs[column.key] || 'asc') === 'asc' ? 1 : -1;
 
-    if (mode === 'count' && column.counts) {
-      // Sort by count
-      values = [...values].sort((a, b) => {
-        const ca = column.counts[a] || 0;
-        const cb = column.counts[b] || 0;
-        return dir === 'asc' ? ca - cb : cb - ca;
-      });
-    } else {
-      // Sort by name
-      values = [...values].sort((a, b) => {
-        const sa = String(a ?? '').localeCompare(String(b ?? ''));
-        return dir === 'asc' ? sa : -sa;
-      });
-    }
+    // stable sort: map-index technique
+    const withIndex = filtered.map((v, i) => ({ v, i }));
 
-    // Filter by search query (apply after sorting to avoid re-sorting)
-    if (query) {
-      values = values.filter(v => String(v ?? '').toLowerCase().includes(query));
-    }
+    withIndex.sort((a, b) => {
+      const va = a.v;
+      const vb = b.v;
 
-    return values;
+      if (mode === 'count' && column.counts) {
+        const ca = Number(column.counts[va] ?? 0);
+        const cb = Number(column.counts[vb] ?? 0);
+        if (ca !== cb) return (ca - cb) * dir * -1; // higher counts first when desc
+        // fallback to name compare
+      }
+
+      // compare by name
+      const sa = va === null || va === undefined ? '(empty)' : String(va);
+      const sb = vb === null || vb === undefined ? '(empty)' : String(vb);
+      const la = sa.toLowerCase();
+      const lb = sb.toLowerCase();
+      if (la < lb) return -1 * dir;
+      if (la > lb) return 1 * dir;
+      // maintain stable order
+      return a.i - b.i;
+    });
+
+    return withIndex.map(x => x.v);
   }
 
   // Toggle sort mode for a column. If the same mode is clicked again,
@@ -338,27 +432,54 @@
               </div>
             </div>
 
-            <div class="p-2 overflow-y-auto flex-1">
-              {#if sortedValues.length > 0}
-                {#each sortedValues as value, idx (idx)}
-                  {@const isSelected = selections[column.key]?.includes(value)}
-                  {@const displayValue = value === null || value === undefined ? '(empty)' : String(value)}
+            <div class="p-2 overflow-y-auto flex-1" use:registerList={{ key: column.key }}>
+              {#if sortedValues.length > virtualThreshold}
+                {@const v = getVirtualSlice(column, sortedValues)}
 
-                  <label class="flex items-center gap-1 px-2 py-1 cursor-pointer rounded-sm hover:bg-gray-100 dark:hover:bg-gray-600 transition-colors">
-                    <input
-                      type="checkbox"
-                      checked={isSelected}
-                      onchange={() => toggleSelection(column.key, value)}
-                      class="w-4 h-4 shrink-0 cursor-pointer accent-blue-500"
-                    />
-                    <span class="flex-1 text-sm text-gray-700 dark:text-gray-300 select-none min-w-0 overflow-hidden text-ellipsis">{displayValue}</span>
-                    {#if showCounts && column.counts && column.counts[value] !== undefined}
-                      <span class="text-xs text-gray-500 dark:text-gray-400 ml-auto shrink-0">({column.counts[value]})</span>
-                    {/if}
-                  </label>
-                {/each}
+                <div style="height:{v.totalHeight}px; position:relative;">
+                  <div style="position:absolute; top:{v.top}px; left:0; right:0;">
+                    {#each v.slice as value, idx (idx)}
+                      {@const isSelected = selections[column.key]?.includes(value)}
+                      {@const displayValue = value === null || value === undefined ? '(empty)' : String(value)}
+
+                      <label class="flex items-center gap-1 px-2 py-1 cursor-pointer rounded-sm hover:bg-gray-100 dark:hover:bg-gray-600 transition-colors" style="height:{virtualItemHeight}px; box-sizing:border-box;">
+                        <input
+                          type="checkbox"
+                          checked={isSelected}
+                          onchange={() => toggleSelection(column.key, value)}
+                          class="w-4 h-4 shrink-0 cursor-pointer accent-blue-500"
+                        />
+                        <span class="flex-1 text-sm text-gray-700 dark:text-gray-300 select-none min-w-0 overflow-hidden text-ellipsis">{displayValue}</span>
+                        {#if showCounts && column.counts && column.counts[value] !== undefined}
+                          <span class="text-xs text-gray-500 dark:text-gray-400 ml-auto shrink-0">({column.counts[value]})</span>
+                        {/if}
+                      </label>
+                    {/each}
+                  </div>
+                </div>
+
               {:else}
-                <div class="p-4 text-center text-sm text-gray-400 dark:text-gray-500">No values available</div>
+                {#if sortedValues.length > 0}
+                  {#each sortedValues as value, idx (idx)}
+                    {@const isSelected = selections[column.key]?.includes(value)}
+                    {@const displayValue = value === null || value === undefined ? '(empty)' : String(value)}
+
+                    <label class="flex items-center gap-1 px-2 py-1 cursor-pointer rounded-sm hover:bg-gray-100 dark:hover:bg-gray-600 transition-colors">
+                      <input
+                        type="checkbox"
+                        checked={isSelected}
+                        onchange={() => toggleSelection(column.key, value)}
+                        class="w-4 h-4 shrink-0 cursor-pointer accent-blue-500"
+                      />
+                      <span class="flex-1 text-sm text-gray-700 dark:text-gray-300 select-none min-w-0 overflow-hidden text-ellipsis">{displayValue}</span>
+                      {#if showCounts && column.counts && column.counts[value] !== undefined}
+                        <span class="text-xs text-gray-500 dark:text-gray-400 ml-auto shrink-0">({column.counts[value]})</span>
+                      {/if}
+                    </label>
+                  {/each}
+                {:else}
+                  <div class="p-4 text-center text-sm text-gray-400 dark:text-gray-500">No values available</div>
+                {/if}
               {/if}
             </div>
           </div>
