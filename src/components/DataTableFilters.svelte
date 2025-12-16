@@ -1,6 +1,6 @@
 <script>
   import { Badge } from 'flowbite-svelte';
-  import { CloseOutline, ChevronDownOutline, SortOutline, ChartMixedOutline } from 'flowbite-svelte-icons';
+  import { CloseOutline, ChevronDownOutline, ArrowDownOutline } from 'flowbite-svelte-icons';
 
   // shared default no-op function
   const DEFAULT_NOOP = (..._args) => {};
@@ -16,6 +16,8 @@
     activeFilters = {},
     // Callback when filters change
     filterChange = DEFAULT_NOOP,
+    // Optional callback when sort mode/dir changes: ( { columnKey, mode, dir } )
+    sortChange = DEFAULT_NOOP,
     // CSS class for the container
     className = '',
     // Whether to show filter counts
@@ -108,61 +110,77 @@
   // Toggle dropdown visibility for a column
   let openDropdowns = $state({});
 
+  // Simple toggle/close functions — dropdowns are controlled only by their
+  // toggle button and programmatic calls (e.g. Show All / Collapse All).
   function toggleDropdown(columnKey) {
     const wasOpen = openDropdowns[columnKey];
     openDropdowns = { ...openDropdowns, [columnKey]: !wasOpen };
-    if (!wasOpen) {
-      inputModes = { ...inputModes, [columnKey]: true };
-      // Focus the input after render
-      setTimeout(() => {
-        const input = searchInputs[columnKey];
-        if (input) input.focus();
-      }, 0);
-    } else {
-      inputModes = { ...inputModes, [columnKey]: false };
-    }
-  }
-
-  function closeDropdown(columnKey) {
-    openDropdowns = { ...openDropdowns, [columnKey]: false };
-    inputModes = { ...inputModes, [columnKey]: false };
-  }
-
-  // Handle click outside to close dropdowns
-  function handleClickOutside(event, columnKey) {
-    const dropdown = event.currentTarget;
-    if (!dropdown.contains(event.relatedTarget)) {
-      closeDropdown(columnKey);
-    }
   }
 
   // Sorting state for each column's dropdown
   let sortModes = $state({});
+  // Per-column sort direction: 'asc' or 'desc'
+  let sortDirs = $state({});
+
+  // Inline header search queries per column (small text filter for options)
   let searchQueries = $state({});
-  let searchInputs = $state({}); // refs for search inputs
-  let inputModes = $state({}); // whether each select is in input mode
 
   // Get sorted unique values for a column
-  function getSortedValues(column, search = '') {
+  function getSortedValues(column) {
     let values = column.uniqueValues || [];
-    if (search) {
-      const q = search.toLowerCase();
-      values = values.filter(v => String(v ?? '').toLowerCase().includes(q));
-    }
     const mode = sortModes[column.key] || 'name';
+    const dir = (sortDirs[column.key] || 'asc');
+    const query = (searchQueries[column.key] || '').toLowerCase();
 
     if (mode === 'count' && column.counts) {
-      // Sort by count (descending)
-      return [...values].sort((a, b) => (column.counts[b] || 0) - (column.counts[a] || 0));
+      // Sort by count
+      values = [...values].sort((a, b) => {
+        const ca = column.counts[a] || 0;
+        const cb = column.counts[b] || 0;
+        return dir === 'asc' ? ca - cb : cb - ca;
+      });
     } else {
-      // Sort by name (ascending)
-      return [...values].sort((a, b) => String(a ?? '').localeCompare(String(b ?? '')));
+      // Sort by name
+      values = [...values].sort((a, b) => {
+        const sa = String(a ?? '').localeCompare(String(b ?? ''));
+        return dir === 'asc' ? sa : -sa;
+      });
     }
+
+    // Filter by search query (apply after sorting to avoid re-sorting)
+    if (query) {
+      values = values.filter(v => String(v ?? '').toLowerCase().includes(query));
+    }
+
+    return values;
   }
 
-  // Toggle sort mode for a column
+  // Toggle sort mode for a column. If the same mode is clicked again,
+  // flip the direction; otherwise set the mode and default to 'desc'.
   function toggleSortMode(columnKey, mode) {
+    const prevMode = sortModes[columnKey];
+    if (prevMode === mode) {
+      // flip direction
+      const prevDir = sortDirs[columnKey] || 'desc';
+      const nextDir = prevDir === 'asc' ? 'desc' : 'asc';
+      sortDirs = { ...sortDirs, [columnKey]: nextDir };
+    } else {
+      sortModes = { ...sortModes, [columnKey]: mode };
+      // default first click to descending (common expectation for counts)
+      sortDirs = { ...sortDirs, [columnKey]: 'desc' };
+    }
+    // ensure the mode is set (for first-time clicks)
     sortModes = { ...sortModes, [columnKey]: mode };
+
+    const newDir = sortDirs[columnKey] || 'asc';
+    try {
+      // notify parent if it wants to react to sort changes
+      (/** @type {any} */ (sortChange))({ columnKey, mode, dir: newDir });
+    } catch (err) {
+      try { console.debug('sortChange callback threw', err); } catch (e) {}
+    }
+    // debug log
+    try { console.debug('toggleSortMode', columnKey, mode, sortDirs[columnKey]); } catch (e) {}
   }
 
   // Clear selection for a column (from within dropdown)
@@ -193,12 +211,6 @@
   const allDropdownsClosed = $derived.by(() => {
     return columnFilters.every(col => !openDropdowns[col.key]);
   });
-
-  // Handle input blur to exit input mode
-  function handleInputBlur(columnKey) {
-    inputModes = { ...inputModes, [columnKey]: false };
-    closeDropdown(columnKey);
-  }
 </script>
 
 <div class="p-4 bg-gray-50 rounded-lg border border-gray-200 dark:bg-gray-800 dark:border-gray-700 {className}"
@@ -241,112 +253,116 @@
     {#each columnFilters as column (column.key)}
       {@const isActive = selections[column.key]?.length > 0}
       {@const isOpen = openDropdowns[column.key]}
-      {@const sortedValues = getSortedValues(column, searchQueries[column.key])}
+      {@const sortedValues = getSortedValues(column)}
       {@const currentSortMode = sortModes[column.key] || 'name'}
+      {@const currentSortDir = sortDirs[column.key] || 'asc'}
 
       <div class="flex flex-col min-w-0 relative">
-        {#if isOpen && inputModes[column.key]}
-          <input
-            bind:value={searchQueries[column.key]}
-            class="w-full px-3 py-2 text-sm text-gray-700 dark:text-gray-300 bg-white dark:bg-gray-700 border border-gray-300 dark:border-gray-600 rounded-md focus:outline-none focus:border-blue-500 dark:focus:border-blue-400 focus:ring-2 focus:ring-blue-100 dark:focus:ring-blue-900 {isActive ? 'border-green-500 dark:border-green-400 bg-green-50 dark:bg-green-900/20' : ''}"
-            placeholder={column.label || column.key}
-            bind:this={searchInputs[column.key]}
-            onblur={() => handleInputBlur(column.key)}
-          />
-        {:else}
-          <button
-            id="filter-{column.key}"
-            class="w-full flex justify-between items-center px-3 py-2 text-sm text-gray-700 dark:text-gray-300 bg-white dark:bg-gray-700 border border-gray-300 dark:border-gray-600 rounded-md hover:border-gray-400 dark:hover:border-gray-500 focus:outline-none focus:border-blue-500 dark:focus:border-blue-400 focus:ring-2 focus:ring-blue-100 dark:focus:ring-blue-900 transition-all cursor-pointer gap-2 {isActive ? 'border-green-500 dark:border-green-400 bg-green-50 dark:bg-green-900/20' : ''}"
-            onclick={() => toggleDropdown(column.key)}
-            type="button"
-          >
-            <span class="flex-1 text-left whitespace-nowrap overflow-hidden text-ellipsis min-w-0">
-                {column.label || column.key}
-            </span>
-            {#if isActive}
-              <Badge color="green" rounded class="ml-1">{selections[column.key].length}</Badge>
-            {/if}
-            <ChevronDownOutline class="w-5 h-5 shrink-0 transition-transform {isOpen ? 'rotate-180' : ''}" />
-          </button>
-        {/if}
+        <button
+          id="filter-{column.key}"
+          class="w-full flex justify-between items-center px-3 py-2 text-sm text-gray-700 dark:text-gray-300 bg-white dark:bg-gray-700 border border-gray-300 dark:border-gray-600 rounded-md hover:border-gray-400 dark:hover:border-gray-500 focus:outline-none focus:border-blue-500 dark:focus:border-blue-400 focus:ring-2 focus:ring-blue-100 dark:focus:ring-blue-900 transition-all cursor-pointer gap-2 {isActive ? 'border-green-500 dark:border-green-400 bg-green-50 dark:bg-green-900/20' : ''}"
+          onclick={() => toggleDropdown(column.key)}
+          type="button"
+        >
+          <span class="flex-1 text-left whitespace-nowrap overflow-hidden text-ellipsis min-w-0">
+              {column.label || column.key}
+          </span>
+          {#if isActive}
+            <Badge color="green" rounded class="ml-1">{selections[column.key].length}</Badge>
+          {/if}
+          <ChevronDownOutline class="w-5 h-5 shrink-0 transition-transform {isOpen ? 'rotate-180' : ''}" />
+        </button>
 
         {#if isOpen}
           <div
             class="absolute top-full mt-1 left-0 right-0 bg-white dark:bg-gray-700 border border-gray-300 dark:border-gray-600 rounded-md shadow-lg dark:shadow-gray-900 max-h-64 flex flex-col dropdown-menu"
             tabindex="-1"
-            onblur={(e) => handleClickOutside(e, column.key)}
+            data-column={column.key}
           >
-              <div class="flex justify-between items-center px-2 py-2 border-b border-gray-200 dark:border-gray-600 gap-2 flex-wrap">
-                <div class="flex gap-1">
+            <div class="px-1 py-1 border-b border-gray-200 dark:border-gray-600">
+              <div class="flex items-center gap-1 w-full min-w-0">
+                <input
+                  type="text"
+                  placeholder="Filter..."
+                  class="p-1 flex-1 min-w-0 px-2 py-1 text-xs border border-gray-200 dark:border-gray-600 rounded bg-white dark:bg-gray-700 text-gray-700 dark:text-gray-200 focus:outline-none focus:border-blue-500"
+                  bind:value={searchQueries[column.key]}
+                />
+
+                <div class="flex items-center gap-1">
                   <button
-                    class="flex items-center gap-1 px-2 py-1 text-xs text-gray-600 dark:text-gray-400 bg-transparent border border-gray-200 dark:border-gray-700 rounded hover:bg-gray-100 dark:hover:bg-gray-700 hover:border-gray-300 dark:hover:border-gray-600 hover:text-gray-700 dark:hover:text-gray-300 transition-all cursor-pointer whitespace-nowrap"
+                    class="p-0.5 flex-1 flex items-center justify-center gap-1 text-sm text-gray-600 dark:text-gray-400 bg-transparent border border-gray-200 dark:border-gray-700 rounded hover:bg-gray-100 dark:hover:bg-gray-700 hover:border-gray-300 dark:hover:border-gray-600 hover:text-gray-700 dark:hover:text-gray-300 transition-all"
                     class:bg-blue-100={currentSortMode === 'name'}
                     class:dark:bg-blue-900={currentSortMode === 'name'}
-                    class:border-blue-500={currentSortMode === 'name'}
-                    class:dark:border-blue-600={currentSortMode === 'name'}
-                    class:text-blue-900={currentSortMode === 'name'}
-                    class:dark:text-blue-100={currentSortMode === 'name'}
                     onclick={() => toggleSortMode(column.key, 'name')}
                     title="Sort by name"
                     type="button"
                   >
-                    <SortOutline class="w-3.5 h-3.5" />
-                    Name
+                    <span class="text-sm font-semibold">Aa</span>
+                    <ArrowDownOutline
+                      class={"w-3 h-3 transition-transform " + (currentSortMode === 'name' ? 'text-blue-900 dark:text-blue-100' : 'text-gray-400 dark:text-gray-500')}
+                      style={currentSortMode === 'name' && currentSortDir === 'asc' ? 'transform: rotate(180deg);' : ''}
+                      aria-hidden="true"
+                    />
                   </button>
+
                   {#if showCounts && column.counts}
                     <button
-                      class="flex items-center gap-1 px-2 py-1 text-xs text-gray-600 dark:text-gray-400 bg-transparent border border-gray-200 dark:border-gray-700 rounded hover:bg-gray-100 dark:hover:bg-gray-700 hover:border-gray-300 dark:hover:border-gray-600 hover:text-gray-700 dark:hover:text-gray-300 transition-all cursor-pointer whitespace-nowrap"
+                      class="p-0.5 flex-1 flex items-center justify-center gap-1 text-sm text-gray-600 dark:text-gray-400 bg-transparent border border-gray-200 dark:border-gray-700 rounded hover:bg-gray-100 dark:hover:bg-gray-700 hover:border-gray-300 dark:hover:border-gray-600 hover:text-gray-700 dark:hover:text-gray-300 transition-all"
                       class:bg-blue-100={currentSortMode === 'count'}
                       class:dark:bg-blue-900={currentSortMode === 'count'}
-                      class:border-blue-500={currentSortMode === 'count'}
-                      class:dark:border-blue-600={currentSortMode === 'count'}
-                      class:text-blue-900={currentSortMode === 'count'}
-                      class:dark:text-blue-100={currentSortMode === 'count'}
                       onclick={() => toggleSortMode(column.key, 'count')}
                       title="Sort by count"
                       type="button"
                     >
-                      <ChartMixedOutline class="w-3.5 h-3.5" />
-                      Count
+                      <span class="text-sm font-semibold">#</span>
+                      <ArrowDownOutline
+                        class={"w-3 h-3 transition-transform " + (currentSortMode === 'count' ? 'text-blue-900 dark:text-blue-100' : 'text-gray-400 dark:text-gray-500')}
+                        style={currentSortMode === 'count' && currentSortDir === 'asc' ? 'transform: rotate(180deg);' : ''}
+                        aria-hidden="true"
+                      />
                     </button>
                   {/if}
                 </div>
-                {#if isActive}
-                  <button
-                    class="flex items-center gap-1 px-2 py-1 text-xs text-red-600 bg-transparent border border-red-100 rounded hover:bg-red-50 hover:border-red-600 transition-all cursor-pointer whitespace-nowrap"
-                    onclick={() => clearSelection(column.key)}
-                    title="Clear selection"
-                    type="button"
-                  >
-                    <CloseOutline class="w-3.5 h-3.5" />
-                  </button>
-                {/if}
-              </div>
-              <div class="p-2 overflow-y-auto flex-1">
-                {#if sortedValues.length > 0}
-                  {#each sortedValues as value, idx (idx)}
-                    {@const isSelected = selections[column.key]?.includes(value)}
-                    {@const displayValue = value === null || value === undefined ? '(empty)' : String(value)}
 
-                    <label class="flex items-center gap-2 px-2 py-2 cursor-pointer rounded hover:bg-gray-100 dark:hover:bg-gray-600 transition-colors">
-                      <input
-                        type="checkbox"
-                        checked={isSelected}
-                        onchange={() => toggleSelection(column.key, value)}
-                        class="w-4 h-4 shrink-0 cursor-pointer accent-blue-500"
-                      />
-                      <span class="flex-1 text-sm text-gray-700 dark:text-gray-300 select-none min-w-0 overflow-hidden text-ellipsis">{displayValue}</span>
-                      {#if showCounts && column.counts && column.counts[value] !== undefined}
-                        <span class="text-xs text-gray-500 dark:text-gray-400 ml-auto shrink-0">({column.counts[value]})</span>
-                      {/if}
-                    </label>
-                  {/each}
-                {:else}
-                  <div class="p-4 text-center text-sm text-gray-400 dark:text-gray-500">No values available</div>
-                {/if}
+                <button
+                  class="p-1 flex items-center justify-center text-xs bg-transparent border rounded transition-all text-red-600 border-red-100 hover:bg-red-50 hover:border-red-600 ml-auto"
+                  class:opacity-50={!isActive}
+                  class:cursor-not-allowed={!isActive}
+                  disabled={!isActive}
+                  onclick={() => clearSelection(column.key)}
+                  title="Clear selection"
+                  type="button"
+                >
+                  <CloseOutline class="w-4 h-4" />
+                </button>
               </div>
             </div>
-          {/if}
+
+            <div class="p-2 overflow-y-auto flex-1">
+              {#if sortedValues.length > 0}
+                {#each sortedValues as value, idx (idx)}
+                  {@const isSelected = selections[column.key]?.includes(value)}
+                  {@const displayValue = value === null || value === undefined ? '(empty)' : String(value)}
+
+                  <label class="flex items-center gap-1 px-2 py-1 cursor-pointer rounded-sm hover:bg-gray-100 dark:hover:bg-gray-600 transition-colors">
+                    <input
+                      type="checkbox"
+                      checked={isSelected}
+                      onchange={() => toggleSelection(column.key, value)}
+                      class="w-4 h-4 shrink-0 cursor-pointer accent-blue-500"
+                    />
+                    <span class="flex-1 text-sm text-gray-700 dark:text-gray-300 select-none min-w-0 overflow-hidden text-ellipsis">{displayValue}</span>
+                    {#if showCounts && column.counts && column.counts[value] !== undefined}
+                      <span class="text-xs text-gray-500 dark:text-gray-400 ml-auto shrink-0">({column.counts[value]})</span>
+                    {/if}
+                  </label>
+                {/each}
+              {:else}
+                <div class="p-4 text-center text-sm text-gray-400 dark:text-gray-500">No values available</div>
+              {/if}
+            </div>
+          </div>
+        {/if}
         </div>
       {/each}
   </div>
