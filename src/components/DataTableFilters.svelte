@@ -1,5 +1,6 @@
 <script>
   import { Badge } from 'flowbite-svelte';
+  import { CloseOutline, ChevronDownOutline, SortOutline, ChartMixedOutline } from 'flowbite-svelte-icons';
 
   // shared default no-op function
   const DEFAULT_NOOP = (..._args) => {};
@@ -122,357 +123,213 @@
       closeDropdown(columnKey);
     }
   }
+
+  // Sorting state for each column's dropdown
+  let sortModes = $state({});
+
+  // Get sorted unique values for a column
+  function getSortedValues(column) {
+    const values = column.uniqueValues || [];
+    const mode = sortModes[column.key] || 'name';
+
+    if (mode === 'count' && column.counts) {
+      // Sort by count (descending)
+      return [...values].sort((a, b) => (column.counts[b] || 0) - (column.counts[a] || 0));
+    } else {
+      // Sort by name (ascending)
+      return [...values].sort((a, b) => String(a).localeCompare(String(b)));
+    }
+  }
+
+  // Toggle sort mode for a column
+  function toggleSortMode(columnKey, mode) {
+    sortModes = { ...sortModes, [columnKey]: mode };
+  }
+
+  // Clear selection for a column (from within dropdown)
+  function clearSelection(columnKey) {
+    clearColumn(columnKey);
+  }
+
+  // Show all dropdowns
+  function showAllDropdowns() {
+    const allOpen = {};
+    for (const col of columnFilters) {
+      allOpen[col.key] = true;
+    }
+    openDropdowns = allOpen;
+  }
+
+  // Collapse all dropdowns
+  function collapseAllDropdowns() {
+    openDropdowns = {};
+  }
+
+  // Check if all dropdowns are open
+  const allDropdownsOpen = $derived.by(() => {
+    return columnFilters.every(col => openDropdowns[col.key]);
+  });
+
+  // Check if all dropdowns are closed
+  const allDropdownsClosed = $derived.by(() => {
+    return columnFilters.every(col => !openDropdowns[col.key]);
+  });
 </script>
 
-<div class="data-table-filters {className}" class:horizontal={direction === 'horizontal'} class:vertical={direction === 'vertical'}>
-  <div class="filters-header">
-    <h3 class="filters-title">Filters</h3>
-    {#if hasActiveFilters()}
-      <div class="filters-summary">
-        <Badge color="blue" rounded>{activeFilterCount()} active</Badge>
-        <button
-          class="clear-all-btn"
-          onclick={clearAllFilters}
-          title="Clear all filters"
-        >
-          Clear All
-        </button>
-      </div>
-    {/if}
+<div class="p-4 bg-gray-50 rounded-lg border border-gray-200 {className}"
+     class:horizontal={direction === 'horizontal'} class:vertical={direction === 'vertical'}>
+  <div class="flex justify-between items-center mb-4 flex-wrap gap-2">
+    <h3 class="text-lg font-semibold text-gray-900 m-0">Filters</h3>
+    <div class="flex items-center gap-2 flex-wrap">
+      <button
+        class="px-3 py-1 text-sm text-green-600 bg-transparent border border-green-600 rounded-md hover:bg-green-600 hover:text-white transition-all cursor-pointer disabled:opacity-50 disabled:cursor-not-allowed disabled:hover:bg-transparent disabled:hover:text-green-600"
+        disabled={allDropdownsOpen}
+        onclick={showAllDropdowns}
+        title="Show all filter dropdowns"
+      >
+        Show All
+      </button>
+      <button
+        class="px-3 py-1 text-sm text-gray-600 bg-transparent border border-gray-600 rounded-md hover:bg-gray-600 hover:text-white transition-all cursor-pointer disabled:opacity-50 disabled:cursor-not-allowed disabled:hover:bg-transparent disabled:hover:text-gray-600"
+        disabled={allDropdownsClosed}
+        onclick={collapseAllDropdowns}
+        title="Collapse all filter dropdowns"
+      >
+        Collapse All
+      </button>
+      {#if hasActiveFilters()}
+        <div class="flex items-center gap-2">
+          <Badge color="blue" rounded>{activeFilterCount()} active</Badge>
+          <button
+            class="px-3 py-1 text-sm text-red-600 bg-transparent border border-red-600 rounded-md hover:bg-red-600 hover:text-white transition-all cursor-pointer"
+            onclick={clearAllFilters}
+            title="Clear all filters"
+          >
+            Clear All
+          </button>
+        </div>
+      {/if}
+    </div>
   </div>
 
-  <div class="filters-grid" class:grid-horizontal={direction === 'horizontal'} class:grid-vertical={direction === 'vertical'}>
+  <div class="grid gap-3" class:grid-horizontal={direction === 'horizontal'} class:grid-vertical={direction === 'vertical'}>
     {#each columnFilters as column (column.key)}
       {@const isActive = selections[column.key]?.length > 0}
       {@const isOpen = openDropdowns[column.key]}
+      {@const sortedValues = getSortedValues(column)}
+      {@const currentSortMode = sortModes[column.key] || 'name'}
 
-      <div class="filter-column">
-        <div class="filter-label-row">
-          <label class="filter-label" for="filter-{column.key}">
-            {column.label || column.key}
-            {#if isActive}
-              <Badge color="green" rounded class="ml-1">{selections[column.key].length}</Badge>
-            {/if}
-          </label>
+      <div class="flex flex-col min-w-0 relative">
+        <button
+          id="filter-{column.key}"
+          class="w-full flex justify-between items-center px-3 py-2 text-sm text-gray-700 bg-white border border-gray-300 rounded-md hover:border-gray-400 focus:outline-none focus:border-blue-500 focus:ring-2 focus:ring-blue-100 transition-all cursor-pointer gap-2 {isActive ? 'border-green-500 bg-green-50' : ''}"
+          onclick={() => toggleDropdown(column.key)}
+          type="button"
+        >
+          <span class="flex-1 text-left whitespace-nowrap overflow-hidden text-ellipsis min-w-0">
+              {column.label || column.key}
+          </span>
           {#if isActive}
-            <button
-              class="clear-column-btn"
-              onclick={() => clearColumn(column.key)}
-              title="Clear {column.label || column.key} filter"
-            >
-              ✕
-            </button>
+            <Badge color="green" rounded class="ml-1">{selections[column.key].length}</Badge>
           {/if}
-        </div>
+          <ChevronDownOutline class="w-5 h-5 shrink-0 transition-transform {isOpen ? 'rotate-180' : ''}" />
+        </button>
 
-        <div class="filter-dropdown-wrapper" tabindex="-1" onblur={(e) => handleClickOutside(e, column.key)}>
-          <button
-            id="filter-{column.key}"
-            class="filter-dropdown-toggle"
-            class:active={isActive}
-            onclick={() => toggleDropdown(column.key)}
-            type="button"
+        {#if isOpen}
+          <div
+            class="absolute top-full mt-1 left-0 right-0 bg-white border border-gray-300 rounded-md shadow-lg max-h-96 flex flex-col dropdown-menu"
+            tabindex="-1"
+            onblur={(e) => handleClickOutside(e, column.key)}
           >
-            <span class="dropdown-text">
-              {#if isActive}
-                {selections[column.key].length} selected
-              {:else}
-                Select values...
-              {/if}
-            </span>
-            <svg class="dropdown-icon" class:rotate={isOpen} fill="none" stroke="currentColor" viewBox="0 0 24 24" xmlns="http://www.w3.org/2000/svg">
-              <path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M19 9l-7 7-7-7"></path>
-            </svg>
-          </button>
-
-          {#if isOpen}
-            <div class="filter-dropdown-menu">
-              <div class="dropdown-menu-inner">
-                {#if column.uniqueValues && column.uniqueValues.length > 0}
-                  {#each column.uniqueValues as value, idx (idx)}
+              <div class="flex justify-between items-center px-2 py-2 border-b border-gray-200 gap-2 flex-wrap">
+                <div class="flex gap-1">
+                  <button
+                    class="flex items-center gap-1 px-2 py-1 text-xs text-gray-600 dark:text-gray-400 bg-transparent border border-gray-200 dark:border-gray-700 rounded hover:bg-gray-100 dark:hover:bg-gray-700 hover:border-gray-300 dark:hover:border-gray-600 hover:text-gray-700 dark:hover:text-gray-300 transition-all cursor-pointer whitespace-nowrap {currentSortMode === 'name' ? 'bg-blue-500 dark:bg-blue-600 border-blue-500 dark:border-blue-600 text-white dark:text-white' : ''}"
+                    onclick={() => toggleSortMode(column.key, 'name')}
+                    title="Sort by name"
+                    type="button"
+                  >
+                    <SortOutline class="w-3.5 h-3.5" />
+                    Name
+                  </button>
+                  {#if showCounts && column.counts}
+                    <button
+                      class="flex items-center gap-1 px-2 py-1 text-xs text-gray-600 dark:text-gray-400 bg-transparent border border-gray-200 dark:border-gray-700 rounded hover:bg-gray-100 dark:hover:bg-gray-700 hover:border-gray-300 dark:hover:border-gray-600 hover:text-gray-700 dark:hover:text-gray-300 transition-all cursor-pointer whitespace-nowrap {currentSortMode === 'count' ? 'bg-blue-500 dark:bg-blue-600 border-blue-500 dark:border-blue-600 text-white dark:text-white' : ''}"
+                      onclick={() => toggleSortMode(column.key, 'count')}
+                      title="Sort by count"
+                      type="button"
+                    >
+                      <ChartMixedOutline class="w-3.5 h-3.5" />
+                      Count
+                    </button>
+                  {/if}
+                </div>
+                {#if isActive}
+                  <button
+                    class="flex items-center gap-1 px-2 py-1 text-xs text-red-600 bg-transparent border border-red-100 rounded hover:bg-red-50 hover:border-red-600 transition-all cursor-pointer whitespace-nowrap"
+                    onclick={() => clearSelection(column.key)}
+                    title="Clear selection"
+                    type="button"
+                  >
+                    <CloseOutline class="w-3.5 h-3.5" />
+                  </button>
+                {/if}
+              </div>
+              <div class="p-2 overflow-y-auto flex-1">
+                {#if sortedValues.length > 0}
+                  {#each sortedValues as value, idx (idx)}
                     {@const isSelected = selections[column.key]?.includes(value)}
                     {@const displayValue = value === null || value === undefined ? '(empty)' : String(value)}
 
-                    <label class="dropdown-item">
+                    <label class="flex items-center gap-2 px-2 py-2 cursor-pointer rounded hover:bg-gray-100 transition-colors">
                       <input
                         type="checkbox"
                         checked={isSelected}
                         onchange={() => toggleSelection(column.key, value)}
-                        class="filter-checkbox"
+                        class="w-4 h-4 shrink-0 cursor-pointer accent-blue-500"
                       />
-                      <span class="checkbox-label">{displayValue}</span>
+                      <span class="flex-1 text-sm text-gray-700 select-none min-w-0 overflow-hidden text-ellipsis">{displayValue}</span>
                       {#if showCounts && column.counts && column.counts[value] !== undefined}
-                        <span class="value-count">({column.counts[value]})</span>
+                        <span class="text-xs text-gray-500 ml-auto shrink-0">({column.counts[value]})</span>
                       {/if}
                     </label>
                   {/each}
                 {:else}
-                  <div class="dropdown-empty">No values available</div>
+                  <div class="p-4 text-center text-sm text-gray-400">No values available</div>
                 {/if}
               </div>
             </div>
           {/if}
         </div>
-      </div>
-    {/each}
+      {/each}
   </div>
 </div>
 
 <style>
-  .data-table-filters {
-    padding: 1rem;
-    background-color: #f9fafb;
-    border-radius: 0.5rem;
-    border: 1px solid #e5e7eb;
-  }
-
-  .filters-header {
-    display: flex;
-    justify-content: space-between;
-    align-items: center;
-    margin-bottom: 1rem;
-  }
-
-  .filters-title {
-    font-size: 1.125rem;
-    font-weight: 600;
-    color: #111827;
-    margin: 0;
-  }
-
-  .filters-summary {
-    display: flex;
-    align-items: center;
-    gap: 0.5rem;
-  }
-
-  .clear-all-btn {
-    padding: 0.25rem 0.75rem;
-    font-size: 0.875rem;
-    color: #dc2626;
-    background-color: transparent;
-    border: 1px solid #dc2626;
-    border-radius: 0.375rem;
-    cursor: pointer;
-    transition: all 0.2s;
-  }
-
-  .clear-all-btn:hover {
-    background-color: #dc2626;
-    color: white;
-  }
-
-  .filters-grid {
-    display: grid;
-    gap: 1rem;
-  }
-
+  /* Grid layout classes */
   .grid-horizontal {
-    grid-template-columns: repeat(auto-fit, minmax(200px, 1fr));
+    grid-template-columns: repeat(auto-fill, minmax(220px, 1fr));
   }
 
   .grid-vertical {
     grid-template-columns: 1fr;
   }
 
-  .filter-column {
-    display: flex;
-    flex-direction: column;
-    gap: 0.5rem;
-  }
-
-  .filter-label-row {
-    display: flex;
-    justify-content: space-between;
-    align-items: center;
-  }
-
-  .filter-label {
-    font-size: 0.875rem;
-    font-weight: 500;
-    color: #374151;
-    display: flex;
-    align-items: center;
-    margin: 0;
-  }
-
-  .clear-column-btn {
-    padding: 0.125rem 0.375rem;
-    font-size: 0.75rem;
-    color: #6b7280;
-    background-color: transparent;
-    border: none;
-    border-radius: 0.25rem;
-    cursor: pointer;
-    transition: all 0.2s;
-  }
-
-  .clear-column-btn:hover {
-    color: #dc2626;
-    background-color: #fee2e2;
-  }
-
-  .filter-dropdown-wrapper {
-    position: relative;
-  }
-
-  .filter-dropdown-toggle {
-    width: 100%;
-    display: flex;
-    justify-content: space-between;
-    align-items: center;
-    padding: 0.5rem 0.75rem;
-    font-size: 0.875rem;
-    color: #374151;
-    background-color: white;
-    border: 1px solid #d1d5db;
-    border-radius: 0.375rem;
-    cursor: pointer;
-    transition: all 0.2s;
-  }
-
-  .filter-dropdown-toggle:hover {
-    border-color: #9ca3af;
-  }
-
-  .filter-dropdown-toggle:focus {
-    outline: none;
-    border-color: #3b82f6;
-    box-shadow: 0 0 0 3px rgba(59, 130, 246, 0.1);
-  }
-
-  .filter-dropdown-toggle.active {
-    border-color: #10b981;
-    background-color: #f0fdf4;
-  }
-
-  .dropdown-text {
-    flex: 1;
-    text-align: left;
-    white-space: nowrap;
-    overflow: hidden;
-    text-overflow: ellipsis;
-  }
-
-  .dropdown-icon {
-    width: 1.25rem;
-    height: 1.25rem;
-    margin-left: 0.5rem;
-    transition: transform 0.2s;
-  }
-
-  .dropdown-icon.rotate {
-    transform: rotate(180deg);
-  }
-
-  .filter-dropdown-menu {
-    position: absolute;
-    top: calc(100% + 0.25rem);
-    left: 0;
-    right: 0;
-    z-index: 50;
-    background-color: white;
-    border: 1px solid #d1d5db;
-    border-radius: 0.375rem;
-    box-shadow: 0 10px 15px -3px rgba(0, 0, 0, 0.1), 0 4px 6px -2px rgba(0, 0, 0, 0.05);
-    max-height: 300px;
-    overflow-y: auto;
-  }
-
-  .dropdown-menu-inner {
-    padding: 0.5rem;
-  }
-
-  .dropdown-item {
-    display: flex;
-    align-items: center;
-    gap: 0.5rem;
-    padding: 0.5rem;
-    cursor: pointer;
-    border-radius: 0.25rem;
-    transition: background-color 0.15s;
-  }
-
-  .dropdown-item:hover {
-    background-color: #f3f4f6;
-  }
-
-  .filter-checkbox {
-    width: 1rem;
-    height: 1rem;
-    cursor: pointer;
-    accent-color: #3b82f6;
-  }
-
-  .checkbox-label {
-    flex: 1;
-    font-size: 0.875rem;
-    color: #374151;
-    user-select: none;
-  }
-
-  .value-count {
-    font-size: 0.75rem;
-    color: #6b7280;
-    margin-left: auto;
-  }
-
-  .dropdown-empty {
-    padding: 1rem;
-    text-align: center;
-    font-size: 0.875rem;
-    color: #9ca3af;
+  /* Dropdown menu positioning */
+  .dropdown-menu {
+    z-index: 1000;
   }
 
   /* Responsive adjustments */
+  @media (max-width: 768px) {
+    .grid-horizontal {
+      grid-template-columns: repeat(auto-fill, minmax(180px, 1fr));
+    }
+  }
+
   @media (max-width: 640px) {
     .grid-horizontal {
       grid-template-columns: 1fr;
     }
   }
-
-  /* Dark mode support (optional) */
-  @media (prefers-color-scheme: dark) {
-    .data-table-filters {
-      background-color: #1f2937;
-      border-color: #374151;
-    }
-
-    .filters-title {
-      color: #f9fafb;
-    }
-
-    .filter-label {
-      color: #d1d5db;
-    }
-
-    .filter-dropdown-toggle {
-      background-color: #374151;
-      border-color: #4b5563;
-      color: #f9fafb;
-    }
-
-    .filter-dropdown-toggle.active {
-      border-color: #10b981;
-      background-color: #064e3b;
-    }
-
-    .filter-dropdown-menu {
-      background-color: #374151;
-      border-color: #4b5563;
-    }
-
-    .dropdown-item:hover {
-      background-color: #4b5563;
-    }
-
-    .checkbox-label {
-      color: #d1d5db;
-    }
-
-    .clear-column-btn:hover {
-      background-color: #7f1d1d;
-    }
-  }
 </style>
-
