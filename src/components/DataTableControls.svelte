@@ -1,6 +1,7 @@
 <script>
-  import { Pagination, Search, Badge, Toggle } from 'flowbite-svelte';
-  import DataTableFilters from './DataTableFilters.svelte';
+  import { Pagination, Search, Badge } from 'flowbite-svelte';
+  import { FilterOutline } from 'flowbite-svelte-icons';
+  import FiltersModal from './FiltersModal.svelte';
   // Inline SVGs are used instead of importing icons to avoid the dependency on flowbite-svelte-icons
   import { onMount, onDestroy } from 'svelte';
 
@@ -25,6 +26,15 @@
     showCounts = true,
     className = ''
   } = $props();
+
+  // count of active filters (sum of selected values per column)
+  const activeFilterCount = $derived(() => {
+    try {
+      return Object.values(activeFilters || {}).reduce((sum, v) => sum + (Array.isArray(v) ? v.length : 0), 0);
+    } catch (e) {
+      return 0;
+    }
+  });
 
   // totalPages derived from totalItems and perPage
   const totalPages = $derived(() => Math.max(1, Math.ceil(totalItems / perPage)));
@@ -60,9 +70,6 @@
       _prevFiltersVisible = filtersVisible;
     }
   });
-
-  // stable id for the Toggle so the label can reference it
-  const toggleId = `dtc-toggle-${Math.random().toString(36).slice(2,9)}`;
 
   // Calculate range for display
   const startItem = $derived(() => totalItems === 0 ? 0 : (currentPage - 1) * perPage + 1);
@@ -293,27 +300,34 @@
 </script>
 
 <div class="w-full">
-  {#if filtersVisible && columnFilters && columnFilters.length > 0}
-    <div class="mb-2 {className}">
-      <DataTableFilters
-        columnFilters={columnFilters}
-        activeFilters={activeFilters}
-        filterChange={(...args) => { try { return filterChange(...args); } catch (e) {} }}
-        direction={direction}
-        showCounts={showCounts}
-        className="mb-2"
-      />
-    </div>
-  {/if}
-
   <div class="flex items-center w-full gap-3 px-0 py-0">
     <!-- Search field on the left -->
     <div class="flex-1">
       <div class="flex items-center gap-2">
-        <!-- Toggle to show/hide DataTableFilters above with visible label -->
-        <div class="flex items-center gap-1">
-          <label for={toggleId} class="text-sm text-slate-700 dark:text-slate-300 select-none cursor-pointer">Filters</label>
-          <Toggle id={toggleId} size="small" bind:checked={filtersVisible} aria-label="Toggle filters" />
+        <!-- Styled button to open/close filters modal -->
+        <div class="flex items-center gap-1 relative">
+          <button
+            type="button"
+            class={
+              "inline-flex items-center gap-2 px-3 py-1 text-sm rounded-md border transition-colors focus:outline-none focus-visible:ring-2 focus-visible:ring-offset-2 focus-visible:ring-green-500 dark:focus-visible:ring-green-400 " +
+              (filtersVisible
+                ? 'bg-slate-100 dark:bg-slate-700 border-slate-300 dark:border-slate-600 text-slate-900 dark:text-slate-100'
+                : 'bg-transparent border-transparent text-slate-700 dark:text-slate-300 hover:bg-slate-100 dark:hover:bg-slate-700')
+            }
+            aria-pressed={filtersVisible}
+            aria-label="Toggle filters"
+            title="Filters"
+            onclick={() => { filtersVisible = !filtersVisible; }}
+          >
+            <!-- Funnel icon (Flowbite icon component) -->
+            <FilterOutline class="h-4 w-4 shrink-0" />
+            <span class="text-sm">Filters</span>
+          </button>
+
+          {#if activeFilterCount() > 0}
+            <!-- positioned badge -->
+            <span class="absolute top-0 right-0 -translate-y-1/2 translate-x-1/2 inline-flex items-center justify-center h-5 min-w-[1.25rem] px-1.5 rounded-full bg-green-600 text-white text-xs font-medium">{activeFilterCount()}</span>
+          {/if}
         </div>
 
         <Search size="sm" bind:value={search} placeholder="Search..." clearable
@@ -357,7 +371,15 @@
   </div>
 </div>
 
+<FiltersModal bind:open={filtersVisible}
+              columnFilters={columnFilters}
+              activeFilters={activeFilters}
+              filterChange={(...args) => { try { return filterChange(...args); } catch (e) {} }}
+              direction={direction}
+              showCounts={showCounts}
+              className={className}
+/>
+
 <style>
    @import '../lib/dist/styles.css';
- </style>
-
+</style>
