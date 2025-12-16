@@ -1,16 +1,17 @@
 # @zhangt58/svelte-vtable
 
-A Svelte 5 library providing virtualized data tables with sorting, selection, search, and pagination controls. Built with Svelte 5 runes for reactive state management.
+A Svelte 5 library providing virtualized data tables with sorting, selection, search, filtering, and pagination controls. Built with Svelte 5 runes for reactive state management.
 
 ## Features
 
 - 🚀 **Virtualized rendering** - Efficiently handles large datasets
 - 🔄 **Sorting** - Click column headers to sort
 - 🔍 **Search** - Built-in search filtering
+- 🎯 **Multi-select filters** - Column-based filtering with OR/AND logic
 - 📄 **Pagination** - Configurable page controls with ellipsis navigation
 - ✅ **Selection** - Row selection with callback support
 - 🎨 **Styling** - Tailwind CSS based with light/dark mode support
-- 📱 **Responsive** - Flexible column widths with stretch weights
+- 📱 **Responsive** - Flexible column widths and layouts
 
 ## Installation
 
@@ -30,11 +31,11 @@ npm install svelte@^5.0.0 tailwindcss@^4.0.0 flowbite-svelte@^1.0.0 flowbite-sve
 
 ```svelte
 <script>
-  import { VirtualDataTable, DataTableControls } from '@zhangt58/svelte-vtable';
+  import { VirtualDataTable, DataTableControls, DataTableFilters } from '@zhangt58/svelte-vtable';
 
   let items = $state([
-    { id: 1, name: 'Alice', email: 'alice@example.com' },
-    { id: 2, name: 'Bob', email: 'bob@example.com' },
+    { id: 1, name: 'Alice', email: 'alice@example.com', dept: 'Engineering' },
+    { id: 2, name: 'Bob', email: 'bob@example.com', dept: 'Sales' },
     // ... more items
   ]);
 
@@ -46,10 +47,24 @@ npm install svelte@^5.0.0 tailwindcss@^4.0.0 flowbite-svelte@^1.0.0 flowbite-sve
     sortDir: 'asc'
   });
 
-  const visibleKeys = ['name', 'email'];
-  const colWidths = { name: 1, email: 2 }; // stretch weights
+  const visibleKeys = ['name', 'email', 'dept'];
+  const colWidths = { name: 1, email: 2, dept: 1 }; // stretch weights
+  
+  // For filtering
+  let activeFilters = $state({});
+  const columnFilters = [
+    { key: 'dept', label: 'Department', uniqueValues: ['Engineering', 'Sales'] }
+  ];
 </script>
 
+<!-- Multi-select filters -->
+<DataTableFilters 
+  {columnFilters} 
+  {activeFilters}
+  filterChange={({allFilters}) => activeFilters = allFilters}
+/>
+
+<!-- Search and pagination controls -->
 <DataTableControls
   search={ui.searchQuery}
   currentPage={ui.currentPage}
@@ -59,6 +74,7 @@ npm install svelte@^5.0.0 tailwindcss@^4.0.0 flowbite-svelte@^1.0.0 flowbite-sve
   searchchange={(e) => ui.searchQuery = e.search}
 />
 
+<!-- Virtualized table -->
 <VirtualDataTable
   {items}
   {visibleKeys}
@@ -72,6 +88,7 @@ npm install svelte@^5.0.0 tailwindcss@^4.0.0 flowbite-svelte@^1.0.0 flowbite-sve
     <tr onclick={select}>
       <td>{item.name}</td>
       <td>{item.email}</td>
+      <td>{item.dept}</td>
     </tr>
   {/snippet}
 </VirtualDataTable>
@@ -108,11 +125,62 @@ The `rowSnippet` receives an object with:
 - `select` - Function to call to select this row
 - `selected` - Currently selected item (for comparison)
 
+### Filter example (filterCallback)
+
+Below is a minimal example showing how to wire the `filterCallback` prop on `VirtualDataTable` to apply per-column inline filters emitted by the header inputs. The idea: keep a small `filters` map in your component, compute a derived `filteredItems` list, and update `filters` when the table emits a column filter change.
+
+```svelte
+<script>
+  import { VirtualDataTable } from '@zhangt58/svelte-vtable';
+
+  // raw dataset you want to display/filter
+  const rawItems = [
+    { id: 1, name: 'Alice', email: 'alice@example.com' },
+    { id: 2, name: 'Bob', email: 'bob@example.com' },
+    { id: 3, name: 'Carol', email: 'carol@example.com' }
+  ];
+
+  // per-column filter values
+  let filters = {};
+
+  // derived, reactive filtered list
+  $: filteredItems = rawItems.filter(item =>
+    Object.entries(filters).every(([k, v]) => !v || String(item[k] ?? '').toLowerCase().includes(v.toLowerCase()))
+  );
+
+  // called when a ColumnHeader emits a filter event: { key, value }
+  function handleFilter({ key, value }) {
+    filters = { ...filters, [key]: value };
+  }
+</script>
+
+<VirtualDataTable
+  items={filteredItems}
+  visibleKeys={['name', 'email']}
+  filterCallback={handleFilter}
+>
+  {#snippet rowSnippet({item, index, select, selected})}
+    <tr onclick={select}>
+      <td>{item.name}</td>
+      <td>{item.email}</td>
+    </tr>
+  {/snippet}
+</VirtualDataTable>
+```
+
 #### Column Widths
 
 Column widths can be specified as:
 - **Stretch weights** (numbers): Distributed proportionally, e.g., `{ name: 1, description: 3 }`
 - **Pixel values** (strings): Fixed widths, e.g., `{ id: '80px', name: '200px' }`
+
+#### Row Snippet Parameters
+
+The `rowSnippet` receives an object with:
+- `item` - The current row data
+- `index` - Row index in the current page
+- `select` - Function to call to select this row
+- `selected` - Currently selected item (for comparison)
 
 ### DataTableControls
 
@@ -128,6 +196,90 @@ Controls component for search and pagination.
 | `totalItems` | `number` | `0` | Total number of items |
 | `pagechange` | `function` | `() => {}` | Callback for page changes: `({currentPage}) => void` |
 | `searchchange` | `function` | `() => {}` | Callback for search changes: `({search}) => void` |
+
+### DataTableFilters
+
+Multi-select filter component with flexible layout options. Implements OR logic within columns and AND logic across columns.
+
+#### Props
+
+| Prop | Type | Default | Description |
+|------|------|---------|-------------|
+| `columnFilters` | `Array` | `[]` | Array of filter configurations (see below) |
+| `direction` | `'horizontal' \| 'vertical'` | `'horizontal'` | Layout direction for filter grid |
+| `activeFilters` | `Object` | `{}` | Current active filters `{ columnKey: [selectedValues] }` |
+| `filterChange` | `function` | `() => {}` | Callback when filters change |
+| `className` | `string` | `''` | Additional CSS classes |
+| `showCounts` | `boolean` | `true` | Whether to show value counts |
+
+#### columnFilters Structure
+
+Each item in `columnFilters` should have:
+```javascript
+{
+  key: 'columnKey',           // Column identifier
+  label: 'Column Label',      // Display label
+  uniqueValues: [...],        // Array of unique values
+  counts: { value: count }    // Optional: value frequency map
+}
+```
+
+#### Filter Logic
+
+- **OR within column**: Selecting multiple values in one filter matches rows with ANY of those values
+- **AND across columns**: All active column filters must match for a row to pass
+
+Example usage with data filtering:
+```svelte
+<script>
+  import { DataTableFilters } from '@zhangt58/svelte-vtable';
+  
+  const data = [
+    { name: 'Alice', dept: 'Engineering', status: 'Active' },
+    { name: 'Bob', dept: 'Sales', status: 'Active' },
+    // ...
+  ];
+  
+  let activeFilters = $state({});
+  
+  const columnFilters = [
+    { 
+      key: 'dept', 
+      label: 'Department', 
+      uniqueValues: ['Engineering', 'Sales'],
+      counts: { 'Engineering': 5, 'Sales': 3 }
+    },
+    { 
+      key: 'status', 
+      label: 'Status', 
+      uniqueValues: ['Active', 'Inactive'],
+      counts: { 'Active': 7, 'Inactive': 1 }
+    }
+  ];
+  
+  // Apply filters
+  const filteredData = $derived(() => {
+    return data.filter(item => {
+      for (const [key, values] of Object.entries(activeFilters)) {
+        if (values?.length > 0 && !values.includes(item[key])) {
+          return false; // AND logic across columns
+        }
+      }
+      return true;
+    });
+  });
+</script>
+
+<DataTableFilters 
+  {columnFilters} 
+  {activeFilters}
+  filterChange={({allFilters}) => activeFilters = allFilters}
+  direction="horizontal"
+  showCounts={true}
+/>
+```
+
+For complete examples, see [DATATABLEFILTERS_README.md](./DATATABLEFILTERS_README.md).
 
 ## Styling (important)
 

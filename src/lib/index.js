@@ -1,6 +1,6 @@
-export { default as VirtualDataTable } from '../components/VirtualDataTable.svelte';
 export { default as DataTableControls } from '../components/DataTableControls.svelte';
 export { default as DataTableFilters } from '../components/DataTableFilters.svelte';
+export { default as VirtualDataTable } from '../components/VirtualDataTable.svelte';
 
 // Export filter utility functions
 export {
@@ -13,4 +13,3 @@ export {
   filtersToSearchParams,
   searchParamsToFilters
 } from './filterUtils.js';
-
