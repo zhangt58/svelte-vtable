@@ -1,6 +1,6 @@
 <script>
   import { Badge } from 'flowbite-svelte';
-  import { BadgeCheckOutline, ArrowsRepeatOutline, CircleMinusOutline, ChevronDownOutline, ArrowDownOutline } from 'flowbite-svelte-icons';
+  import { ChevronDownOutline, ArrowDownOutline } from 'flowbite-svelte-icons';
   import { onDestroy } from 'svelte';
 
   // shared default no-op function
@@ -467,39 +467,54 @@
             </div>
 
             <!-- Action row: Check all / Invert / Uncheck all (icon buttons) -->
-            <div class="px-2 py-2 border-b border-gray-100 dark:border-gray-600">
+            <div class="px-2 py-1 border-b border-gray-100 dark:border-gray-600">
               <div class="flex items-center gap-2">
                 <button
                   type="button"
-                  class="p-1 rounded-md text-gray-600 dark:text-gray-300 hover:bg-gray-100 dark:hover:bg-gray-600 disabled:opacity-50 disabled:cursor-not-allowed"
+                  class="p-1 rounded-md flex items-center gap-2 text-gray-600 dark:text-gray-300 hover:bg-gray-100 dark:hover:bg-gray-600 disabled:opacity-50 disabled:cursor-not-allowed"
                   onclick={() => checkAll(column.key, sortedValues)}
                   disabled={sortedValues.length === 0}
                   aria-label="Check all"
                   title="Check all"
                 >
-                  <BadgeCheckOutline class="w-4 h-4" />
+                  <!-- Checked square icon (higher contrast) -->
+                  <svg class="w-4 h-4 text-gray-800 dark:text-white" viewBox="0 0 24 24" fill="none" aria-hidden="true">
+                    <rect x="3" y="3" width="18" height="18" rx="2" stroke="currentColor" stroke-width="2.5" fill="none" />
+                    <path d="M7 13l3 3 7-7" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round" fill="none" />
+                  </svg>
+                  <span class="text-sm text-gray-800 dark:text-gray-100 select-none">All</span>
                 </button>
 
                 <button
                   type="button"
-                  class="p-1 rounded-md text-gray-600 dark:text-gray-300 hover:bg-gray-100 dark:hover:bg-gray-600 disabled:opacity-50 disabled:cursor-not-allowed"
+                  class="p-1 rounded-md flex items-center gap-2 text-gray-600 dark:text-gray-300 hover:bg-gray-100 dark:hover:bg-gray-600 disabled:opacity-50 disabled:cursor-not-allowed"
                   onclick={() => invertSelection(column.key, sortedValues)}
                   disabled={sortedValues.length === 0}
                   aria-label="Invert selection"
                   title="Invert selection"
                 >
-                  <ArrowsRepeatOutline class="w-4 h-4" />
+                  <!-- Half-checked square icon (left half filled) - higher contrast -->
+                  <svg class="w-4 h-4 text-gray-800 dark:text-white" viewBox="0 0 24 24" fill="none" aria-hidden="true">
+                    <rect x="3" y="3" width="18" height="18" rx="2" stroke="currentColor" stroke-width="2.5" fill="none" />
+                    <rect x="4" y="4" width="8.5" height="16" fill="currentColor" opacity="0.28" stroke="none" />
+                    <path d="M7 13l3 3 7-7" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round" fill="none" />
+                  </svg>
+                  <span class="text-sm text-gray-800 dark:text-gray-100 select-none">Invert</span>
                 </button>
 
                 <button
                   type="button"
-                  class="p-1 rounded-md text-gray-600 dark:text-gray-300 hover:bg-gray-100 dark:hover:bg-gray-600 disabled:opacity-50 disabled:cursor-not-allowed"
+                  class="p-1 rounded-md flex items-center gap-2 text-gray-600 dark:text-gray-300 hover:bg-gray-100 dark:hover:bg-gray-600 disabled:opacity-50 disabled:cursor-not-allowed"
                   onclick={() => checkNone(column.key)}
                   disabled={sortedValues.length === 0}
                   aria-label="Uncheck all"
                   title="Uncheck all"
                 >
-                  <CircleMinusOutline class="w-4 h-4" />
+                  <!-- Empty square icon (higher contrast stroke) -->
+                  <svg class="w-4 h-4 text-gray-800 dark:text-white" viewBox="0 0 24 24" fill="none" aria-hidden="true">
+                    <rect x="3" y="3" width="18" height="18" rx="2" stroke="currentColor" stroke-width="2" fill="none" />
+                  </svg>
+                  <span class="text-sm text-gray-800 dark:text-gray-100 select-none">None</span>
                 </button>
               </div>
             </div>
