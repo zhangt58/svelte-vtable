@@ -366,13 +366,13 @@
   });
 </script>
 
-<div class="p-4 bg-gray-50 rounded-lg border border-gray-200 dark:bg-gray-800 dark:border-gray-700 {className}"
+<div class="p-2 bg-gray-50 rounded-md border border-gray-200 dark:bg-gray-800 dark:border-gray-700 {className}"
      class:horizontal={direction === 'horizontal'} class:vertical={direction === 'vertical'}>
-  <div class="flex justify-between items-center mb-4 flex-wrap gap-2">
+  <div class="flex justify-between items-center mb-2 flex-wrap gap-1">
     <h3 class="text-lg font-semibold text-gray-900 dark:text-gray-100 m-0">Filters</h3>
-    <div class="flex items-center gap-2 flex-wrap">
+    <div class="flex items-center gap-1 flex-wrap">
       {#if hasActiveFilters()}
-        <div class="flex items-center gap-2">
+        <div class="flex items-center gap-1">
           <Badge color="blue" rounded>{activeFilterCount()} active</Badge>
           <button
             class="px-3 py-1 text-sm text-red-600 bg-transparent border border-red-600 rounded-md hover:bg-red-600 hover:text-white transition-all cursor-pointer"
@@ -395,14 +395,14 @@
         class="px-3 py-1 text-sm text-gray-600 bg-transparent border border-gray-600 rounded-md hover:bg-gray-600 hover:text-white transition-all cursor-pointer disabled:opacity-50 disabled:cursor-not-allowed disabled:hover:bg-transparent disabled:hover:text-gray-600"
         disabled={allDropdownsClosed}
         onclick={collapseAllDropdowns}
-        title="Collapse all filter dropdowns"
+        title="Close all filter dropdowns"
       >
-        Collapse All
+        Close All
       </button>
     </div>
   </div>
 
-  <div class="grid gap-3" class:grid-horizontal={direction === 'horizontal'} class:grid-vertical={direction === 'vertical'}>
+  <div class="grid gap-2" class:grid-horizontal={direction === 'horizontal'} class:grid-vertical={direction === 'vertical'}>
     {#each columnFilters as column (column.key)}
       {@const isActive = selections[column.key]?.length > 0}
       {@const isOpen = openDropdowns[column.key]}
