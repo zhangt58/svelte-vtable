@@ -14,14 +14,28 @@
   // Track layout direction
   let direction = $state('horizontal');
 
+  // Pagination state (bound to DataTableControls)
+  let currentPage = $state(1);
+  const perPage = 25; // keep in sync with DataTableControls default
+
   // Handle filter changes
   function handleFilterChange({ columnKey, selectedValues, allFilters }) {
     activeFilters = { ...allFilters };
+    // reset to first page when filters change
+    currentPage = 1;
     console.log('Filter changed:', { columnKey, selectedValues, allFilters });
   }
 
   // Apply filters to data using utility function
   const filteredData = $derived(() => applyFilters(allData, activeFilters));
+
+  // Compute paged slice for current page
+  const pagedData = $derived(() => {
+    const items = filteredData() || [];
+    const cp = Math.max(1, Math.floor(currentPage || 1));
+    const start = (cp - 1) * perPage;
+    return items.slice(start, start + perPage);
+  });
 
   // Count active filters using utility function
   const activeCount = $derived(() => countActiveFilters(activeFilters));
@@ -30,9 +44,16 @@
   const colWidths = Object.fromEntries(
     tableColumns.map(col => [col.key, col.stretch])
   );
+
+  // Touch derived values to avoid "unused variable" warnings in this example file
+  $effect(() => {
+    // call derived to register usage and reference colWidths
+    try { void activeCount(); } catch (e) {}
+    try { void colWidths; } catch (e) {}
+  });
 </script>
 
-{#snippet rowSnippet({ item, index })}
+{#snippet rowSnippet({ item, index, select, selected })}
   <tr class="hover:bg-gray-50 dark:hover:bg-gray-700">
     {#each tableColumns as col}
       <td class="p-3 border-b border-gray-200 dark:border-gray-600 text-gray-900 dark:text-gray-200">{item[col.key]}</td>
@@ -110,7 +131,8 @@
         Vertical Layout
       </button>
     </div>
-    <div class="flex items-center">
+    <div class="flex items-center gap-4">
+      <div class="text-sm text-gray-600 dark:text-gray-300">{activeCount()} active filters</div>
       <DarkMode />
     </div>
   </div>
@@ -127,16 +149,25 @@
 <div class="mt-2 p-4 bg-gray-50 border border-gray-200 rounded-lg dark:bg-gray-800 dark:border-gray-700">
   <DataTableControls
     data={filteredData()}
+    bind:currentPage={currentPage}
+    perPage={perPage}
+    totalItems={filteredData().length}
+    columnFilters={columnFilters}
+    activeFilters={activeFilters}
+    filterChange={handleFilterChange}
+    direction={direction}
+    showCounts={true}
     class="mt-1"
   />
   {#if filteredData().length > 0}
     <div class="mt-2">
       <VirtualDataTable
-        items={filteredData()}
+        items={pagedData()}
         visibleKeys={tableColumns.map(col => col.key)}
         height={400}
         class="border border-gray-200 dark:border-gray-600 rounded"
         rowSnippet={rowSnippet}
+        colWidths={colWidths}
       />
     </div>
   {:else}
