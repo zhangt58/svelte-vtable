@@ -1,5 +1,7 @@
 <script>
   import { Pagination, Search, Badge } from 'flowbite-svelte';
+  import { FilterOutline } from 'flowbite-svelte-icons';
+  import FiltersModal from './FiltersModal.svelte';
   // Inline SVGs are used instead of importing icons to avoid the dependency on flowbite-svelte-icons
   import { onMount, onDestroy } from 'svelte';
 
@@ -10,8 +12,29 @@
     perPage = 25,  // Fixed value, not user-configurable
     totalItems = 0,
     pagechange = () => {},
-    searchchange = () => {}
+    searchchange = () => {},
+    // control visibility of DataTableFilters above the controls
+    filtersVisible = true,
+    // callback when toggle changes: filterstoggle({ filtersVisible })
+    filterstoggle = () => {},
+    // optional DataTableFilters inputs - when provided, this component will render the filters
+    columnFilters = [],
+    activeFilters = {},
+    /** @type {(..._args: any[]) => void} */
+    filterChange = (..._args) => {},
+    direction = 'horizontal',
+    showCounts = true,
+    className = ''
   } = $props();
+
+  // count of active filters (sum of selected values per column)
+  const activeFilterCount = $derived(() => {
+    try {
+      return Object.values(activeFilters || {}).reduce((sum, v) => sum + (Array.isArray(v) ? v.length : 0), 0);
+    } catch (e) {
+      return 0;
+    }
+  });
 
   // totalPages derived from totalItems and perPage
   const totalPages = $derived(() => Math.max(1, Math.ceil(totalItems / perPage)));
@@ -32,6 +55,20 @@
   // emit search changes for parent when search updates
   $effect(() => {
     if (typeof search !== 'undefined') searchchange?.({ search });
+  });
+
+  // call filterstoggle when filtersVisible changes (avoid on:change typing issues)
+  let _prevFiltersVisible = undefined;
+  $effect(() => {
+    // initialize previous value on first run without emitting
+    if (_prevFiltersVisible === undefined) {
+      _prevFiltersVisible = filtersVisible;
+      return;
+    }
+    if (filtersVisible !== _prevFiltersVisible) {
+      try { filterstoggle?.({ filtersVisible }); } catch (err) {}
+      _prevFiltersVisible = filtersVisible;
+    }
   });
 
   // Calculate range for display
@@ -135,7 +172,7 @@
 
     // Now map pageLis to pageList entries in order
     pageLis.forEach((p, idx) => {
-      const { li, btn, text } = p;
+      const btn = p.btn;
       const pageObj = pageList[idx];
       if (!pageObj) return;
       // clear previous decorations
@@ -262,48 +299,87 @@
   // No external tooltip component in use; we rely on native title attribute for ellipses
 </script>
 
-<div class="flex items-center w-full gap-3 px-0 py-0">
-  <!-- Search field on the left -->
-  <div class="flex-1">
-    <Search size="sm" bind:value={search} placeholder="Search..." clearable
-            clearableOnClick={() => { search = ''; searchchange?.({ search }); }} />
-  </div>
+<div class="w-full">
+  <div class="flex items-center w-full gap-3 px-0 py-0">
+    <!-- Search field on the left -->
+    <div class="flex-1">
+      <div class="flex items-center gap-2">
+        <!-- Styled button to open/close filters modal -->
+        <div class="flex items-center gap-1 relative">
+          <button
+            type="button"
+            class={
+              "inline-flex items-center gap-2 px-3 py-1 text-sm rounded-md border transition-colors focus:outline-none focus-visible:ring-2 focus-visible:ring-offset-2 focus-visible:ring-green-500 dark:focus-visible:ring-green-400 " +
+              (filtersVisible
+                ? 'bg-slate-100 dark:bg-slate-700 border-slate-300 dark:border-slate-600 text-slate-900 dark:text-slate-100'
+                : 'bg-transparent border-transparent text-slate-700 dark:text-slate-300 hover:bg-slate-100 dark:hover:bg-slate-700')
+            }
+            aria-pressed={filtersVisible}
+            aria-label="Toggle filters"
+            title="Filters"
+            onclick={() => { filtersVisible = !filtersVisible; }}
+          >
+            <!-- Funnel icon (Flowbite icon component) -->
+            <FilterOutline class="h-4 w-4 shrink-0" />
+            <span class="text-sm">Filters</span>
+          </button>
 
-  <!-- Range count badge -->
-  <div class="flex-2">
-    <Badge rounded color="gray">
-      Showing {startItem()} to {endItem()} of {totalItems}
-    </Badge>
-  </div>
+          {#if activeFilterCount() > 0}
+            <!-- positioned badge -->
+            <span class="absolute top-0 right-0 -translate-y-1/2 translate-x-1/2 inline-flex items-center justify-center h-5 min-w-[1.25rem] px-1.5 rounded-full bg-green-600 text-white text-xs font-medium">{activeFilterCount()}</span>
+          {/if}
+        </div>
 
-  <!-- Pagination navigation: use Pagination with chevrons and page buttons -->
-  <div bind:this={paginationContainerEl} data-pagination-id={paginationId} class="flex items-center gap-0.5" aria-label="Pagination">
-    <Pagination
-      pages={pages()}
-      {previous}
-      {next}
-      ariaLabel="Pagination"
-      onclick={handlePaginationClick}
-    >
-      {#snippet prevContent()}
-        <span class="sr-only">Previous</span>
-        <!-- Left chevron SVG (replaces ChevronLeftOutline) -->
-        <svg class="shrink-0 h-6 w-6" xmlns="http://www.w3.org/2000/svg" fill="none" viewBox="0 0 24 24" stroke="currentColor" aria-hidden="true">
-          <path stroke-linecap="round" stroke-linejoin="round" stroke-width="1" d="M15 19l-7-7 7-7" />
-        </svg>
-      {/snippet}
+        <Search size="sm" bind:value={search} placeholder="Search..." clearable
+                clearableOnClick={() => { search = ''; searchchange?.({ search }); }} />
+      </div>
+    </div>
 
-      {#snippet nextContent()}
-        <span class="sr-only">Next</span>
-        <!-- Right chevron SVG (replaces ChevronRightOutline) -->
-        <svg class="shrink-0 h-6 w-6" xmlns="http://www.w3.org/2000/svg" fill="none" viewBox="0 0 24 24" stroke="currentColor" aria-hidden="true">
-          <path stroke-linecap="round" stroke-linejoin="round" stroke-width="1" d="M9 5l7 7-7 7" />
-        </svg>
-      {/snippet}
-    </Pagination>
+    <!-- Range count badge -->
+    <div class="flex-2">
+      <Badge rounded color="gray">
+        Showing {startItem()} to {endItem()} of {totalItems}
+      </Badge>
+    </div>
+
+    <!-- Pagination navigation: use Pagination with chevrons and page buttons -->
+    <div bind:this={paginationContainerEl} data-pagination-id={paginationId} class="flex items-center gap-0.5" aria-label="Pagination">
+      <Pagination
+        pages={pages()}
+        {previous}
+        {next}
+        ariaLabel="Pagination"
+        onclick={handlePaginationClick}
+      >
+        {#snippet prevContent()}
+          <span class="sr-only">Previous</span>
+          <!-- Left chevron SVG (replaces ChevronLeftOutline) -->
+          <svg class="shrink-0 h-6 w-6" xmlns="http://www.w3.org/2000/svg" fill="none" viewBox="0 0 24 24" stroke="currentColor" aria-hidden="true">
+            <path stroke-linecap="round" stroke-linejoin="round" stroke-width="1" d="M15 19l-7-7 7-7" />
+          </svg>
+        {/snippet}
+
+        {#snippet nextContent()}
+          <span class="sr-only">Next</span>
+          <!-- Right chevron SVG (replaces ChevronRightOutline) -->
+          <svg class="shrink-0 h-6 w-6" xmlns="http://www.w3.org/2000/svg" fill="none" viewBox="0 0 24 24" stroke="currentColor" aria-hidden="true">
+            <path stroke-linecap="round" stroke-linejoin="round" stroke-width="1" d="M9 5l7 7-7 7" />
+          </svg>
+        {/snippet}
+      </Pagination>
+    </div>
   </div>
 </div>
 
+<FiltersModal bind:open={filtersVisible}
+              columnFilters={columnFilters}
+              activeFilters={activeFilters}
+              filterChange={(...args) => { try { return filterChange(...args); } catch (e) {} }}
+              direction={direction}
+              showCounts={showCounts}
+              className={className}
+/>
+
 <style>
-  @import '../lib/dist/styles.css';
+   @import '../lib/dist/styles.css';
 </style>

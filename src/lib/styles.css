@@ -26,7 +26,7 @@
 
   /* Header visual styles - only bottom border */
   :global(.datatable-table) thead th {
-    background-color: var(--tbl-head-bg, #f8f9fa);
+    background-color: #f8f9fa;
     font-size: 0.8125rem; /* 13px */
     font-weight: 600;
     text-transform: uppercase;
@@ -34,8 +34,8 @@
     border-top: none;
     border-left: none;
     border-right: none;
-    border-bottom: 2px solid #dee2e6;
-    padding: 0.5rem 0.75rem;
+    border-bottom: 1px solid #dee2e6;
+    padding: 0.5rem 0.5rem;
     text-align: left;
     white-space: normal; /* Allow header text to wrap */
     overflow: visible;
@@ -89,7 +89,7 @@
 
   /* Body cell defaults - only bottom border */
   :global(.datatable-table tbody td) {
-    padding: 0.5rem 0.75rem;
+    padding: 0.5rem 0.5rem;
     border-top: none;
     border-left: none;
     border-right: none;
