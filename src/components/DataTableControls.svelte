@@ -14,7 +14,7 @@
     pagechange = () => {},
     searchchange = () => {},
     // control visibility of DataTableFilters above the controls
-    filtersVisible = true,
+    filtersVisible = false,
     // callback when toggle changes: filterstoggle({ filtersVisible })
     filterstoggle = () => {},
     // optional DataTableFilters inputs - when provided, this component will render the filters
