@@ -14,6 +14,9 @@
   // Track layout direction
   let direction = $state('horizontal');
 
+  // Search state
+  let searchQuery = $state('');
+
   // Pagination state (bound to DataTableControls)
   let currentPage = $state(1);
   const perPage = 25; // keep in sync with DataTableControls default
@@ -26,8 +29,26 @@
     console.log('Filter changed:', { columnKey, selectedValues, allFilters });
   }
 
-  // Apply filters to data using utility function
-  const filteredData = $derived(() => applyFilters(allData, activeFilters));
+  // Apply filters to data using utility function, then apply search
+  const filteredData = $derived(() => {
+    let items = applyFilters(allData, activeFilters) || [];
+    const q = String(searchQuery || '').trim();
+    if (q.length > 0) {
+      const low = q.toLowerCase();
+      items = items.filter(it => tableColumns.some(c => String(it[c.key] ?? '').toLowerCase().includes(low)));
+    }
+    return items;
+  });
+
+  // Reset to first page when the search query changes (only when it actually changes)
+  let _prevSearch = '';
+  $effect(() => {
+    const q = String(searchQuery || '');
+    if (q !== _prevSearch) {
+      currentPage = 1;
+      _prevSearch = q;
+    }
+  });
 
   // Compute paged slice for current page
   const pagedData = $derived(() => {
@@ -148,8 +169,10 @@
 
 <div class="mt-2 p-4 bg-gray-50 border border-gray-200 rounded-lg dark:bg-gray-800 dark:border-gray-700">
   <DataTableControls
-    data={filteredData()}
-    bind:currentPage={currentPage}
+    search={searchQuery}
+    currentPage={currentPage}
+    pagechange={(payload) => { currentPage = payload.currentPage }}
+    searchchange={(payload) => { searchQuery = payload.search }}
     perPage={perPage}
     totalItems={filteredData().length}
     columnFilters={columnFilters}
@@ -164,10 +187,10 @@
       <VirtualDataTable
         items={pagedData()}
         visibleKeys={tableColumns.map(col => col.key)}
-        height={400}
-        class="border border-gray-200 dark:border-gray-600 rounded"
+        class="border border-gray-200 dark:border-gray-600 rounded overflow-auto scrollbar-thin"
         rowSnippet={rowSnippet}
         colWidths={colWidths}
+        style="height:400px; overflow:auto;"
       />
     </div>
   {:else}
