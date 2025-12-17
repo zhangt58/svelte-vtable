@@ -1,18 +1,51 @@
 // Sample dataset for the DataTableFilters demo
-export const allData = [
-  { id: 1, name: 'Alice Johnson', department: 'Engineering', status: 'Active', level: 'Senior' },
-  { id: 2, name: 'Bob Smith', department: 'Engineering', status: 'Active', level: 'Junior' },
-  { id: 3, name: 'Carol Williams', department: 'Marketing', status: 'Active', level: 'Mid' },
-  { id: 4, name: 'David Brown', department: 'Sales', status: 'Inactive', level: 'Senior' },
-  { id: 5, name: 'Eve Davis', department: 'Engineering', status: 'Active', level: 'Mid' },
-  { id: 6, name: 'Frank Miller', department: 'HR', status: 'Active', level: 'Junior' },
-  { id: 7, name: 'Grace Wilson', department: 'Marketing', status: 'Active', level: 'Senior' },
-  { id: 8, name: 'Henry Moore', department: 'Sales', status: 'Inactive', level: 'Mid' },
-  { id: 9, name: 'Ivy Taylor', department: 'Engineering', status: 'Active', level: 'Senior' },
-  { id: 10, name: 'Jack Anderson', department: 'HR', status: 'Active', level: 'Junior' },
-  { id: 11, name: 'Kelly Thomas', department: 'Marketing', status: 'Inactive', level: 'Mid' },
-  { id: 12, name: 'Leo Jackson', department: 'Sales', status: 'Active', level: 'Senior' },
+
+// Generate a larger sample dataset (1000 rows) deterministically using a simple LCG PRNG.
+const firstNames = [
+  'Alice', 'Bob', 'Carol', 'David', 'Eve', 'Frank', 'Grace', 'Henry', 'Ivy', 'Jack', 'Kelly', 'Leo',
+  'Mia', 'Noah', 'Olivia', 'Paul', 'Quinn', 'Rose', 'Sam', 'Tina', 'Uma', 'Victor', 'Wendy', 'Xavier',
+  'Yara', 'Zane'
 ];
+const lastNames = [
+  'Johnson', 'Smith', 'Williams', 'Brown', 'Davis', 'Miller', 'Wilson', 'Moore', 'Taylor', 'Anderson', 'Thomas', 'Jackson',
+  'White', 'Harris', 'Martin', 'Thompson', 'Garcia', 'Martinez', 'Robinson', 'Clark'
+];
+const departments = ['Engineering', 'Marketing', 'Sales', 'HR', 'Support', 'Product', 'Finance'];
+const statuses = ['Active', 'Inactive', 'On Leave'];
+const levels = ['Junior', 'Mid', 'Senior', 'Lead'];
+
+// Small linear congruential generator for deterministic pseudo-random numbers
+function lcg(seed) {
+  let state = seed >>> 0;
+  return function() {
+    // Constants from Numerical Recipes
+    state = (1664525 * state + 1013904223) >>> 0;
+    return state / 0x100000000;
+  };
+}
+
+const rand = lcg(42);
+
+function pick(arr) {
+  return arr[Math.floor(rand() * arr.length)];
+}
+
+function makeName() {
+  return `${pick(firstNames)} ${pick(lastNames)}`;
+}
+
+const generatedData = Array.from({ length: 1000 }, (_, i) => {
+  const id = i + 1;
+  return {
+    id,
+    name: makeName(),
+    department: pick(departments),
+    status: pick(statuses),
+    level: pick(levels)
+  };
+});
+
+export const allData = generatedData;
 
 // Define columns to filter on
 export const filterColumns = [
