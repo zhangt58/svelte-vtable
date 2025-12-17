@@ -34,6 +34,55 @@ function makeName() {
   return `${pick(firstNames)} ${pick(lastNames)}`;
 }
 
+// Word bank for description generation (kept fairly small for determinism and readability)
+const descWords = [
+  'research', 'development', 'system', 'analysis', 'design', 'implementation', 'performance', 'scalable', 'robust', 'user',
+  'interface', 'algorithm', 'optimization', 'prototype', 'feature', 'integration', 'testing', 'deployment', 'cloud', 'service',
+  'database', 'management', 'security', 'protocol', 'model', 'training', 'evaluation', 'experiment', 'data', 'visualization',
+  'component', 'module', 'workflow', 'automation', 'script', 'library', 'package', 'version', 'support', 'maintenance',
+  'policy', 'regression', 'benchmark', 'latency', 'throughput', 'cache', 'index', 'query', 'pipeline', 'stream'
+];
+
+// Create a deterministic description: mix of short and long descriptions
+function makeDescription() {
+  // Decide if we want a short or long description
+  const p = rand();
+  if (p < 0.15) {
+    // long paragraph (80-160 words)
+    const len = 80 + Math.floor(rand() * 81); // 80..160
+    return randomWords(len);
+  } else if (p < 0.5) {
+    // medium sentence (20-50 words)
+    const len = 20 + Math.floor(rand() * 31); // 20..50
+    return randomWords(len);
+  } else {
+    // short blurb (5-20 words)
+    const len = 5 + Math.floor(rand() * 16); // 5..20
+    return randomWords(len);
+  }
+}
+
+function randomWords(count) {
+  const parts = [];
+  for (let i = 0; i < count; i++) {
+    // pick a word and occasionally add punctuation
+    let w = pick(descWords);
+    // randomly capitalize some words to vary appearance
+    if (rand() < 0.08) w = w.charAt(0).toUpperCase() + w.slice(1);
+    parts.push(w);
+  }
+  // join into sentences: insert a period every 12-18 words to create readable chunks
+  const out = [];
+  let i = 0;
+  while (i < parts.length) {
+    const chunkLen = 6 + Math.floor(rand() * 13); // 6..18
+    const chunk = parts.slice(i, i + chunkLen).join(' ');
+    out.push(chunk.charAt(0).toUpperCase() + chunk.slice(1) + '.');
+    i += chunkLen;
+  }
+  return out.join(' ');
+}
+
 const generatedData = Array.from({ length: 1000 }, (_, i) => {
   const id = i + 1;
   return {
@@ -41,7 +90,8 @@ const generatedData = Array.from({ length: 1000 }, (_, i) => {
     name: makeName(),
     department: pick(departments),
     status: pick(statuses),
-    level: pick(levels)
+    level: pick(levels),
+    description: makeDescription()
   };
 });
 
@@ -60,5 +110,6 @@ export const tableColumns = [
   { key: 'name', label: 'Name', stretch: 3 },
   { key: 'department', label: 'Department', stretch: 2 },
   { key: 'status', label: 'Status', stretch: 1.5 },
-  { key: 'level', label: 'Level', stretch: 1.5 }
+  { key: 'level', label: 'Level', stretch: 1.5 },
+  { key: 'description', label: 'Description', stretch: 4 }
 ];
