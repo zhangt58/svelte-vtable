@@ -258,30 +258,24 @@
     const ul = li.parentElement;
     if (!ul) return;
     const lis = Array.from(ul.children);
-    // Find prev/next by detecting non-numeric/non-ellipsis buttons
-    const pageList = pages();
-    // Build ordered list of page-button lis (numeric and ellipsis)
+    // Build a list of page-button <li>s (skip prev/next controls) by checking their textContent
     const pageLis = [];
-    for (const item of lis) {
-      const btn = item.querySelector('button, a');
+    for (const liItem of lis) {
+      const btn = liItem.querySelector('button, a');
       if (!btn) continue;
       const text = (btn.textContent || '').trim();
-      if (/^\d+$/.test(text) || text === '…') pageLis.push({ li: item, btn, text });
+      // consider numeric pages and ellipsis as page buttons
+      if (/^\d+$/.test(text) || text === '…') pageLis.push({ li: liItem, btn, text });
     }
 
-    // If clicked on prev/next controls, detect by checking whether clicked li is not in pageLis
+    // Map clicked li to decide what to do. If clicked is not a page button (i.e. prev/next),
+    // do nothing here because the Pagination component already calls the `previous`/`next` callbacks.
     const clickedIsPage = pageLis.some(p => p.li === li);
     if (!clickedIsPage) {
-      // determine if it was prev (first li) or next (last li)
-      const firstLi = lis[0];
-      const lastLi = lis[lis.length - 1];
-      if (li === firstLi) {
-        previous();
-      } else if (li === lastLi) {
-        next();
-      }
-      return;
+      return; // rely on Pagination's built-in previous/next handling to avoid double-invocation
     }
+
+    const pageList = pages();
 
     // Map clicked li to page index
     const pageIdx = pageLis.findIndex(p => p.li === li);
