@@ -1,270 +1,270 @@
 .virtual-data-table {
-    display: block;
-    min-width: 0;
-    height: 100%;
-    overflow: auto;
-  }
+  display: block;
+  min-width: 0;
+  height: 100%;
+  overflow: auto;
+}
 
-  :global(.datatable-table) {
-    display: table;
-    width: 100%;
-    min-width: 0;
-    border-collapse: collapse;
-    box-sizing: border-box;
-    font-size: 0.875rem; /* 14px - smaller, more compact */
-    font-family: -apple-system, BlinkMacSystemFont, 'Segoe UI', 'Roboto', 'Helvetica Neue', Arial, sans-serif;
-    line-height: 1.4;
-    border: none;
-  }
+:global(.datatable-table) {
+  display: table;
+  width: 100%;
+  min-width: 0;
+  border-collapse: collapse;
+  box-sizing: border-box;
+  font-size: 0.875rem; /* 14px - smaller, more compact */
+  font-family: -apple-system, BlinkMacSystemFont, 'Segoe UI', 'Roboto', 'Helvetica Neue', Arial, sans-serif;
+  line-height: 1.4;
+  border: none;
+}
 
-  /* Sticky header support */
-  :global(.datatable-table) thead.sticky-header {
-    position: sticky;
-    top: 0;
-    z-index: 20;
-  }
+/* Sticky header support */
+:global(.datatable-table) thead.sticky-header {
+  position: sticky;
+  top: 0;
+  z-index: 20;
+}
 
-  /* Header visual styles - only bottom border */
-  :global(.datatable-table) thead th {
-    background-color: #f8f9fa;
-    font-size: 0.8125rem; /* 13px */
-    font-weight: 600;
-    text-transform: uppercase;
-    letter-spacing: 0.025em;
-    border-top: none;
-    border-left: none;
-    border-right: none;
-    border-bottom: 1px solid #dee2e6;
-    padding: 0.5rem 0.5rem;
-    text-align: left;
-    white-space: normal; /* Allow header text to wrap */
-    overflow: visible;
-    box-shadow: 0 2px 2px -1px rgba(0, 0, 0, 0.1); /* Keep border visible on scroll */
-  }
+/* Header visual styles - only bottom border */
+:global(.datatable-table) thead th {
+  background-color: #f8f9fa;
+  font-size: 0.8125rem; /* 13px */
+  font-weight: 600;
+  text-transform: uppercase;
+  letter-spacing: 0.025em;
+  border-top: none;
+  border-left: none;
+  border-right: none;
+  border-bottom: 1px solid #dee2e6;
+  padding: 0.5rem 0.5rem;
+  text-align: left;
+  white-space: normal; /* Allow header text to wrap */
+  overflow: visible;
+  box-shadow: 0 2px 2px -1px rgba(0, 0, 0, 0.1); /* Keep border visible on scroll */
+}
 
-  /* Row striping - alternating colors */
-  /* VirtualList may wrap rows, so we target tr directly */
-  :global(.datatable-table tbody tr:nth-of-type(even)) {
-    background-color: #ffffff;
-  }
+/* Row striping - alternating colors */
+/* VirtualList may wrap rows, so we target tr directly */
+:global(.datatable-table tbody tr:nth-of-type(even)) {
+  background-color: #ffffff;
+}
 
-  :global(.datatable-table tbody tr:nth-of-type(odd)) {
-    background-color: #f8f9fa;
-  }
+:global(.datatable-table tbody tr:nth-of-type(odd)) {
+  background-color: #f8f9fa;
+}
 
-  /* Also ensure tr elements themselves have background */
-  :global(.datatable-table tbody tr) {
-    background-color: inherit;
-  }
+/* Also ensure tr elements themselves have background */
+:global(.datatable-table tbody tr) {
+  background-color: inherit;
+}
 
-  /* Hover effect */
-  :global(.datatable-table tbody tr:hover) {
-    background-color: #e7f1ff !important;
-    transition: background-color 0.15s ease-in-out;
-  }
+/* Hover effect */
+:global(.datatable-table tbody tr:hover) {
+  background-color: #e7f1ff !important;
+  transition: background-color 0.15s ease-in-out;
+}
 
-  /* Selesky-500 row overrides striping and hover */
-  :global(.datatable-table tbody tr.selected-row) {
-    background-color: #e0f2fe !important; /* light sky background */
-    box-shadow: inset 4px 0 0 0 #0369a1; /* left accent */
-  }
+/* Selesky-500 row overrides striping and hover */
+:global(.datatable-table tbody tr.selected-row) {
+  background-color: #e0f2fe !important; /* light sky background */
+  box-shadow: inset 4px 0 0 0 #0369a1; /* left accent */
+}
 
-  :global(.dark) :global(.datatable-table tbody tr.selected-row) {
-    /* brighter, higher-contrast selection in dark mode */
-    background-color: rgba(14,165,233,0.22) !important; /* stronger visible blue */
-    box-shadow: inset 6px 0 0 0 rgba(56,189,248,0.85); /* stronger left accent */
-    transition: background-color 0.12s ease-in-out, box-shadow 0.12s ease-in-out;
-  }
+:global(.dark) :global(.datatable-table tbody tr.selected-row) {
+  /* brighter, higher-contrast selection in dark mode */
+  background-color: rgba(14,165,233,0.22) !important; /* stronger visible blue */
+  box-shadow: inset 6px 0 0 0 rgba(56,189,248,0.85); /* stronger left accent */
+  transition: background-color 0.12s ease-in-out, box-shadow 0.12s ease-in-out;
+}
 
-  /* Also apply to cells to defeat any cell-level background from striping and ensure readable text */
-  :global(.datatable-table tbody tr.selected-row) td {
-    background-color: #e0f2fe !important;
-  }
+/* Also apply to cells to defeat any cell-level background from striping and ensure readable text */
+:global(.datatable-table tbody tr.selected-row) td {
+  background-color: #e0f2fe !important;
+}
 
-  :global(.dark) :global(.datatable-table tbody tr.selected-row) td {
-    background-color: rgba(14,165,233,0.22) !important;
-    color: #f0fbff !important; /* ensure high-contrast, very light text */
-    border-bottom-color: rgba(255,255,255,0.06);
-  }
+:global(.dark) :global(.datatable-table tbody tr.selected-row) td {
+  background-color: rgba(14,165,233,0.22) !important;
+  color: #f0fbff !important; /* ensure high-contrast, very light text */
+  border-bottom-color: rgba(255,255,255,0.06);
+}
 
-  /* Body cell defaults - only bottom border */
-  :global(.datatable-table tbody td) {
-    padding: 0.5rem 0.5rem;
-    border-top: none;
-    border-left: none;
-    border-right: none;
-    border-bottom: 1px solid #e9ecef;
-    vertical-align: middle;
-    text-align: left;
-    font-size: 0.875rem; /* 14px */
-    overflow: hidden;
-    white-space: normal; /* Allow wrapping by default */
-    word-wrap: break-word;
-    box-sizing: border-box;
-  }
+/* Body cell defaults - only bottom border */
+:global(.datatable-table tbody td) {
+  padding: 0.5rem 0.5rem;
+  border-top: none;
+  border-left: none;
+  border-right: none;
+  border-bottom: 1px solid #e9ecef;
+  vertical-align: middle;
+  text-align: left;
+  font-size: 0.875rem; /* 14px */
+  overflow: hidden;
+  white-space: normal; /* Allow wrapping by default */
+  word-wrap: break-word;
+  box-sizing: border-box;
+}
 
-  /* No-wrap variant for cells that should truncate */
-  :global(.datatable-table tbody td.nowrap) {
-    white-space: nowrap;
-    text-overflow: ellipsis;
-  }
+/* No-wrap variant for cells that should truncate */
+:global(.datatable-table tbody td.nowrap) {
+  white-space: nowrap;
+  text-overflow: ellipsis;
+}
 
-  /* Compact variant */
-  :global(.datatable-table.compact tbody td) {
-    padding: 0.1rem 0.3rem;
-  }
+/* Compact variant */
+:global(.datatable-table.compact tbody td) {
+  padding: 0.1rem 0.3rem;
+}
 
-  /* Header content alignment helper */
-  :global(.datatable-table thead th > div) {
-    display: inline-flex;
-    align-items: center;
-    gap: 0.25rem;
-  }
+/* Header content alignment helper */
+:global(.datatable-table thead th > div) {
+  display: inline-flex;
+  align-items: center;
+  gap: 0.25rem;
+}
 
-  /* Allow certain long cells to wrap fully if explicitly requested */
-  :global(.datatable-table td.wrap) {
-    white-space: normal;
-    word-break: break-word;
-  }
+/* Allow certain long cells to wrap fully if explicitly requested */
+:global(.datatable-table td.wrap) {
+  white-space: normal;
+  word-break: break-word;
+}
 
-  /* Dark mode variants for the datatable */
-  :global(.dark) :global(.datatable-table thead th) {
-    background-color: #1f2937;
-    border-bottom-color: #374151;
-    color: #f9fafb;
-    box-shadow: 0 2px 2px -1px rgba(0, 0, 0, 0.3); /* Darker shadow for dark mode */
-  }
+/* Dark mode variants for the datatable */
+:global(.dark) :global(.datatable-table thead th) {
+  background-color: #1f2937;
+  border-bottom-color: #374151;
+  color: #f9fafb;
+  box-shadow: 0 2px 2px -1px rgba(0, 0, 0, 0.3); /* Darker shadow for dark mode */
+}
 
-  :global(.dark) :global(.datatable-table tbody tr:nth-of-type(even)) {
-    background-color: #111827;
-  }
+:global(.dark) :global(.datatable-table tbody tr:nth-of-type(even)) {
+  background-color: #111827;
+}
 
-  :global(.dark) :global(.datatable-table tbody tr:nth-of-type(odd)) {
-    background-color: #1f2937;
-  }
+:global(.dark) :global(.datatable-table tbody tr:nth-of-type(odd)) {
+  background-color: #1f2937;
+}
 
-  :global(.dark) :global(.datatable-table tbody tr:hover) {
-    background-color: #374151 !important;
-  }
+:global(.dark) :global(.datatable-table tbody tr:hover) {
+  background-color: #374151 !important;
+}
 
-  :global(.dark) :global(.datatable-table tbody td) {
-    border-bottom-color: #374151;
-    color: #e5e7eb;
-  }
+:global(.dark) :global(.datatable-table tbody td) {
+  border-bottom-color: #374151;
+  color: #e5e7eb;
+}
 
-  /* Shared control styles (inputs, pagination, column filters) used by page components */
-  :global(.datatable-input) {
-    padding: 0.375rem 0.75rem;
-    font-size: 0.95rem;
-    border: 1px solid #ced4da;
-    border-radius: 0.25rem;
-  }
+/* Shared control styles (inputs, pagination, column filters) used by page components */
+:global(.datatable-input) {
+  padding: 0.375rem 0.75rem;
+  font-size: 0.95rem;
+  border: 1px solid #ced4da;
+  border-radius: 0.25rem;
+}
 
-  :global(.datatable-input:focus) {
-    border-color: #86b7fe;
-    outline: 0;
-    box-shadow: 0 0 0.1rem 0.2rem rgba(13, 110, 253, 0.25);
-  }
+:global(.datatable-input:focus) {
+  border-color: #86b7fe;
+  outline: 0;
+  box-shadow: 0 0 0.1rem 0.2rem rgba(13, 110, 253, 0.25);
+}
 
-  :global(.search-filtering-row) {
-    background-color: #f8f9fa;
-  }
+:global(.search-filtering-row) {
+  background-color: #f8f9fa;
+}
 
-  :global(.search-filtering-row th) {
-    padding: 0.1rem 0.1rem;
-    border-bottom: 1px solid #dee2e6;
-  }
+:global(.search-filtering-row th) {
+  padding: 0.1rem 0.1rem;
+  border-bottom: 1px solid #dee2e6;
+}
 
-  :global(.column-filter) {
-    width: 95%;
-    padding: 0.2rem 0.25rem;
-    font-size: 0.8rem;
-    border: 1px solid #ced4da;
-    border-radius: 0.25rem;
-  }
+:global(.column-filter) {
+  width: 95%;
+  padding: 0.2rem 0.25rem;
+  font-size: 0.8rem;
+  border: 1px solid #ced4da;
+  border-radius: 0.25rem;
+}
 
-  :global(.column-filter::placeholder) {
-    color: #adb5bd;
-    font-size: 0.75rem;
-    font-style: italic;
-  }
+:global(.column-filter::placeholder) {
+  color: #adb5bd;
+  font-size: 0.75rem;
+  font-style: italic;
+}
 
-  :global(.datatable-pagination) {
-    display: flex;
-    gap: 0.1rem;
-    margin-top: 0.6rem;
-  }
+:global(.datatable-pagination) {
+  display: flex;
+  gap: 0.1rem;
+  margin-top: 0.6rem;
+}
 
-  :global(.datatable-pagination li a),
-  :global(.datatable-pagination li button) {
-    padding: 0.3rem 0.7rem;
-    border: 1px solid #dee2e6;
-    border-radius: 0;
-    background-color: #fff;
-    color: #0d6efd;
-    text-decoration: none;
-  }
+:global(.datatable-pagination li a),
+:global(.datatable-pagination li button) {
+  padding: 0.3rem 0.7rem;
+  border: 1px solid #dee2e6;
+  border-radius: 0;
+  background-color: #fff;
+  color: #0d6efd;
+  text-decoration: none;
+}
 
-  :global(.datatable-pagination li a:hover),
-  :global(.datatable-pagination li button:hover) {
-    background-color: #e9ecef;
-  }
+:global(.datatable-pagination li a:hover),
+:global(.datatable-pagination li button:hover) {
+  background-color: #e9ecef;
+}
 
-  :global(.datatable-pagination .datatable-active a),
-  :global(.datatable-pagination .datatable-active button) {
-    background-color: #0d6efd;
-    border-color: #0d6efd;
-    color: #fff;
-  }
+:global(.datatable-pagination .datatable-active a),
+:global(.datatable-pagination .datatable-active button) {
+  background-color: #0d6efd;
+  border-color: #0d6efd;
+  color: #fff;
+}
 
-  /* Force the active/current page to use the green tokens (override flowbite's primary/orange).
-     Intentionally specific to reliably win over third-party rules. */
-  :global([data-pagination-id] ul li [aria-current="page"]) {
-    background-color: #dcfce7 !important; /* bg-green-100 */
-    color: #16a34a !important;           /* text-green-600 */
-    border-color: transparent !important;
-  }
+/* Force the active/current page to use the green tokens (override flowbite's primary/orange).
+   Intentionally specific to reliably win over third-party rules. */
+:global([data-pagination-id] ul li [aria-current="page"]) {
+  background-color: #dcfce7 !important; /* bg-green-100 */
+  color: #16a34a !important;           /* text-green-600 */
+  border-color: transparent !important;
+}
 
-  /* Ensure Prev/Next controls visually match the numeric buttons' border and rhythm
-     (keeps border, radius and min-width consistent). This is minimal and won't
-     override hover/text colors managed by Tailwind classes applied at runtime. */
-  :global([data-pagination-id] ul li:first-child > button),
-  :global([data-pagination-id] ul li:first-child > a),
-  :global([data-pagination-id] ul li:last-child > button),
-  :global([data-pagination-id] ul li:last-child > a) {
-    border: 1px solid #d1d5db; /* border-gray-300 */
-    min-width: 2rem; /* align with numeric buttons' min width */
-    background: transparent;
-    padding: 0.25rem 0.5rem; /* keep comfortable hit area */
-  }
+/* Ensure Prev/Next controls visually match the numeric buttons' border and rhythm
+   (keeps border, radius and min-width consistent). This is minimal and won't
+   override hover/text colors managed by Tailwind classes applied at runtime. */
+:global([data-pagination-id] ul li:first-child > button),
+:global([data-pagination-id] ul li:first-child > a),
+:global([data-pagination-id] ul li:last-child > button),
+:global([data-pagination-id] ul li:last-child > a) {
+  border: 1px solid #d1d5db; /* border-gray-300 */
+  min-width: 2rem; /* align with numeric buttons' min width */
+  background: transparent;
+  padding: 0.25rem 0.5rem; /* keep comfortable hit area */
+}
 
-  /* Light mode: hover/focus for Prev/Next match numeric button hover */
-  :global([data-pagination-id] ul li:first-child > button:hover),
-  :global([data-pagination-id] ul li:first-child > a:hover),
-  :global([data-pagination-id] ul li:last-child > button:hover),
-  :global([data-pagination-id] ul li:last-child > a:hover),
-  :global([data-pagination-id] ul li:first-child > button:focus),
-  :global([data-pagination-id] ul li:first-child > a:focus),
-  :global([data-pagination-id] ul li:last-child > button:focus),
-  :global([data-pagination-id] ul li:last-child > a:focus) {
-    background-color: #f3f4f6; /* tailwind gray-100 */
-    outline: none;
-  }
+/* Light mode: hover/focus for Prev/Next match numeric button hover */
+:global([data-pagination-id] ul li:first-child > button:hover),
+:global([data-pagination-id] ul li:first-child > a:hover),
+:global([data-pagination-id] ul li:last-child > button:hover),
+:global([data-pagination-id] ul li:last-child > a:hover),
+:global([data-pagination-id] ul li:first-child > button:focus),
+:global([data-pagination-id] ul li:first-child > a:focus),
+:global([data-pagination-id] ul li:last-child > button:focus),
+:global([data-pagination-id] ul li:last-child > a:focus) {
+  background-color: #f3f4f6; /* tailwind gray-100 */
+  outline: none;
+}
 
-  /* Ellipsis styling: make clickable and visually lighter (JS sets data-ellipsis/data-jump) */
-  :global([data-pagination-id] ul li [data-ellipsis="true"]) {
-    cursor: pointer;
-    background: transparent !important;
-    color: inherit;
-    opacity: 0.9;
-    font-size: 0.875rem;
-    padding: 0.25rem 0.5rem;
-  }
+/* Ellipsis styling: make clickable and visually lighter (JS sets data-ellipsis/data-jump) */
+:global([data-pagination-id] ul li [data-ellipsis="true"]) {
+  cursor: pointer;
+  background: transparent !important;
+  color: inherit;
+  opacity: 0.9;
+  font-size: 0.875rem;
+  padding: 0.25rem 0.5rem;
+}
 
-  /* Chevron sizing for Prev/Next so icons sit comfortably in the buttons */
-  :global([data-pagination-id] ul li:first-child svg),
-  :global([data-pagination-id] ul li:last-child svg) {
-    height: 1.25rem;
-    width: 1.25rem;
-    display: block;
-  }
+/* Chevron sizing for Prev/Next so icons sit comfortably in the buttons */
+:global([data-pagination-id] ul li:first-child svg),
+:global([data-pagination-id] ul li:last-child svg) {
+  height: 1.25rem;
+  width: 1.25rem;
+  display: block;
+}
