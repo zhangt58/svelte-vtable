@@ -19,7 +19,7 @@
 
   // Pagination state (bound to DataTableControls)
   let currentPage = $state(1);
-  const perPage = 25; // keep in sync with DataTableControls default
+  let perPage = $state(25);
 
   // Handle filter changes
   function handleFilterChange({ columnKey, selectedValues, allFilters }) {
@@ -173,7 +173,7 @@
     currentPage={currentPage}
     pagechange={(payload) => { currentPage = payload.currentPage }}
     searchchange={(payload) => { searchQuery = payload.search }}
-    perPage={perPage}
+    bind:perPage={perPage}
     totalItems={filteredData().length}
     columnFilters={columnFilters}
     activeFilters={activeFilters}
@@ -190,6 +190,7 @@
         class="border border-gray-200 dark:border-gray-600 rounded overflow-auto scrollbar-thin"
         rowSnippet={rowSnippet}
         colWidths={colWidths}
+        virtualize={false}
         style="height:400px; overflow:auto;"
       />
     </div>

@@ -1,15 +1,15 @@
 <script>
-  import { Pagination, Search, Badge } from 'flowbite-svelte';
+  import { Pagination, Search, Badge, Select } from 'flowbite-svelte';
   import { FilterOutline } from 'flowbite-svelte-icons';
   import FiltersModal from './FiltersModal.svelte';
   // Inline SVGs are used instead of importing icons to avoid the dependency on flowbite-svelte-icons
   import { onMount, onDestroy } from 'svelte';
 
-  // Props for search, pagination (but no per-page control)
+  // Props for search, pagination (perPage made bindable using Svelte 5 rune $bindable)
   let {
     search = '',
     currentPage = 1,
-    perPage = 25,  // Fixed value, not user-configurable
+    perPage = $bindable(25),
     totalItems = 0,
     pagechange = () => {},
     searchchange = () => {},
@@ -24,8 +24,17 @@
     filterChange = (..._args) => {},
     direction = 'horizontal',
     showCounts = true,
-    className = ''
+    className = '',
+    // new callback when perPage changes
+    perpagechange = () => {}
   } = $props();
+
+  const perPageOptions = [
+    {value: 10, name: "10 rows"},
+    {value: 25, name: "25 rows"},
+    {value: 50, name: "50 rows"},
+    {value: 100, name: "100 rows"}
+  ]
 
   // count of active filters (sum of selected values per column)
   const activeFilterCount = $derived(() => {
@@ -71,6 +80,28 @@
     }
   });
 
+  // Watch perPage changes: reset to first page and notify parent
+  let _prevPerPage = undefined;
+  $effect(() => {
+    if (_prevPerPage === undefined) {
+      _prevPerPage = perPage;
+      return;
+    }
+    if (perPage !== _prevPerPage) {
+      // coerce to number just in case
+      perPage = +perPage || 25;
+      _prevPerPage = perPage;
+      // reset to page 1 (common UX) and notify parent
+      currentPage = 1;
+      try {
+        perpagechange?.({ perPage });
+      } catch (err) {}
+      try {
+        pagechange?.({ currentPage });
+      } catch (err) {}
+    }
+  });
+
   // Calculate range for display
   const startItem = $derived(() => totalItems === 0 ? 0 : (currentPage - 1) * perPage + 1);
   const endItem = $derived(() => Math.min(currentPage * perPage, totalItems));
@@ -80,6 +111,7 @@
 
   // stable id to query the pagination DOM if needed (fallback)
   const paginationId = `pagination-${Math.random().toString(36).slice(2,9)}`;
+  const perPageSelectId = `dpc-perpage-${Math.random().toString(36).slice(2,7)}`;
 
   // pages array for Pagination component (condensed with ellipses)
   const pages = $derived(() => {
@@ -329,11 +361,18 @@
       </div>
     </div>
 
-    <!-- Range count badge -->
-    <div class="flex-2">
+    <!-- Range count badge + per-page selector -->
+    <div class="flex-2 flex items-center gap-2">
       <Badge rounded color="gray">
         Showing {startItem()} to {endItem()} of {totalItems}
       </Badge>
+
+      <!-- Per-page selector -->
+      <div class="flex items-center gap-2">
+        <Select id={perPageSelectId} size="sm"
+                items={perPageOptions} bind:value={perPage}
+        />
+      </div>
     </div>
 
     <!-- Pagination navigation: use Pagination with chevrons and page buttons -->

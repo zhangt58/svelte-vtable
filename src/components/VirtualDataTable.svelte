@@ -32,6 +32,10 @@
     selectCallback = DEFAULT_NOOP,
     // new prop name: sortCallback defaulting to `defaultSort` (alphabetical string sort)
     sortCallback = defaultSort,
+    // New prop: allow consumers to disable virtualization (useful when paginating by fixed item counts)
+    // If `virtualize` is false we ask the wrapped VirtualList to render as a normal list/table
+    // by setting its `isDisabled` prop. Default: true (virtualization enabled).
+    virtualize = true,
     // <slot> -> @render migration
     rowSnippet
   } = $props();
@@ -154,7 +158,10 @@
 
 <section class="virtual-data-table {className}" style={style}>
   {#if items && items.length > 0}
-    <VirtualList items={items} isTable class="datatable-table max-w-full max-h-full overflow-auto">
+    <!-- When `virtualize` is false we instruct VirtualList to render as a normal list/table
+         by setting `isDisabled`. This ensures pagination based on item counts shows the
+         exact number of rows expected (useful when rows have variable height). -->
+    <VirtualList items={items} isTable isDisabled={!virtualize} class="datatable-table max-w-full max-h-full overflow-auto">
         <!-- colgroup enforces the column widths so table-layout: fixed distributes as intended -->
       {#snippet header()}
         <colgroup>
