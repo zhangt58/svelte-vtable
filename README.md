@@ -31,7 +31,7 @@ npm install svelte@^5.0.0 tailwindcss@^4.0.0 flowbite-svelte@^1.0.0 flowbite-sve
 
 ```svelte
 <script>
-  import { VirtualDataTable, DataTableControls, DataTableFilters } from '@zhangt58/svelte-vtable';
+  import { DataTable, DataTableControls, DataTableFilters } from '@zhangt58/svelte-vtable';
 
   let items = $state([
     { id: 1, name: 'Alice', email: 'alice@example.com', dept: 'Engineering' },
@@ -75,7 +75,7 @@ npm install svelte@^5.0.0 tailwindcss@^4.0.0 flowbite-svelte@^1.0.0 flowbite-sve
 />
 
 <!-- Virtualized table -->
-<VirtualDataTable
+<DataTable
   {items}
   {visibleKeys}
   sortKey={ui.sortKey}
@@ -91,14 +91,14 @@ npm install svelte@^5.0.0 tailwindcss@^4.0.0 flowbite-svelte@^1.0.0 flowbite-sve
       <td>{item.dept}</td>
     </tr>
   {/snippet}
-</VirtualDataTable>
+</DataTable>
 ```
 
 ## Components
 
-### VirtualDataTable
+### DataTable (previously named VirtualDataTable)
 
-A virtualized table component for efficient rendering of large datasets.
+A virtualized table component for efficient rendering of large datasets. The component was renamed to `DataTable`; `VirtualDataTable` is still exported for backward compatibility.
 
 #### Props
 
@@ -131,7 +131,7 @@ Below is a minimal example showing how to wire the `filterCallback` prop on `Vir
 
 ```svelte
 <script>
-  import { VirtualDataTable } from '@zhangt58/svelte-vtable';
+  import { DataTable } from '@zhangt58/svelte-vtable';
 
   // raw dataset you want to display/filter
   const rawItems = [
@@ -154,7 +154,7 @@ Below is a minimal example showing how to wire the `filterCallback` prop on `Vir
   }
 </script>
 
-<VirtualDataTable
+<DataTable
   items={filteredItems}
   visibleKeys={['name', 'email']}
   filterCallback={handleFilter}
@@ -165,7 +165,7 @@ Below is a minimal example showing how to wire the `filterCallback` prop on `Vir
       <td>{item.email}</td>
     </tr>
   {/snippet}
-</VirtualDataTable>
+</DataTable>
 ```
 
 #### Column Widths
