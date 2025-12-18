@@ -104,7 +104,7 @@ export const filterColumns = [
   { key: 'level', label: 'Level' }
 ];
 
-// Define table columns for VirtualDataTable
+// Define table columns for DataTable
 export const tableColumns = [
   { key: 'id', label: 'ID', stretch: 1 },
   { key: 'name', label: 'Name', stretch: 3 },

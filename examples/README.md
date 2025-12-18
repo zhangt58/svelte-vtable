@@ -5,7 +5,7 @@ This is an example project demonstrating how to use the `@zhangt58/svelte-vtable
 ## Features Demonstrated
 
 - **DataTableFilters**: Multi-column filtering with various filter types
-- **VirtualDataTable**: High-performance virtualized data table
+- **DataTable**: High-performance virtualized data table
 - **DataTableControls**: Pagination and table controls
 - **Dark Mode**: Complete theme switching support
 - **Responsive Design**: Mobile-friendly layouts

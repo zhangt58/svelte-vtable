@@ -1,6 +1,6 @@
 <script>
   import DataTableFilters from '../src/components/DataTableFilters.svelte';
-  import { VirtualDataTable, DataTableControls } from '@zhangt58/svelte-vtable';
+  import { DataTable, DataTableControls } from '@zhangt58/svelte-vtable';
   import { buildColumnFilters, applyFilters, countActiveFilters } from '../src/lib/filterUtils.js';
   import { DarkMode } from 'flowbite-svelte';
   import { allData, filterColumns, tableColumns } from './sampleData.js';
@@ -61,7 +61,7 @@
   // Count active filters using utility function
   const activeCount = $derived(() => countActiveFilters(activeFilters));
 
-  // Create column width mapping for VirtualDataTable
+  // Create column width mapping for DataTable
   const colWidths = Object.fromEntries(
     tableColumns.map(col => [col.key, col.stretch])
   );
@@ -99,7 +99,7 @@
         <div class="flex items-start gap-3">
           <div class="w-2 h-2 bg-green-500 rounded-full mt-2 shrink-0"></div>
           <div>
-            <h3 class="font-semibold text-gray-900 dark:text-gray-100">VirtualDataTable</h3>
+            <h3 class="font-semibold text-gray-900 dark:text-gray-100">DataTable</h3>
             <p class="text-sm text-gray-600 dark:text-gray-300">High-performance virtualized table with sorting and custom row rendering</p>
           </div>
         </div>
@@ -184,7 +184,7 @@
   />
   {#if filteredData().length > 0}
     <div class="mt-2">
-      <VirtualDataTable
+      <DataTable
         items={pagedData()}
         visibleKeys={tableColumns.map(col => col.key)}
         class="border border-gray-200 dark:border-gray-600 rounded overflow-auto scrollbar-thin"
