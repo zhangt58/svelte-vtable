@@ -5,6 +5,7 @@
   const DEFAULT_NOOP = (..._args) => {};
 
   // Default sort behavior: sort by the header string alphabetically, toggling asc/desc
+  // and actually sort the items array
   function defaultSort(key) {
     if (sortKey === key) {
       sortDir = sortDir === 'asc' ? 'desc' : 'asc';
@@ -12,6 +13,27 @@
       sortKey = key;
       sortDir = 'asc';
     }
+
+    // Actually sort the items array
+    items = [...items].sort((a, b) => {
+      const aVal = a[key];
+      const bVal = b[key];
+
+      // Handle null/undefined values
+      if (aVal == null && bVal == null) return 0;
+      if (aVal == null) return 1;
+      if (bVal == null) return -1;
+
+      // Convert to strings for comparison
+      const aStr = String(aVal);
+      const bStr = String(bVal);
+
+      // Alphabetical comparison
+      const comparison = aStr.localeCompare(bStr, undefined, { numeric: true, sensitivity: 'base' });
+
+      // Apply sort direction
+      return sortDir === 'asc' ? comparison : -comparison;
+    });
   }
 
   // Runic props: accept props via $props() so the component matches the
@@ -198,4 +220,3 @@
 <style>
   @import '../lib/dist/styles.css';
 </style>
-
