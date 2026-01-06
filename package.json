@@ -18,7 +18,9 @@
     "check": "svelte-check --tsconfig ./jsconfig.json",
     "build:styles": "node ./scripts/build-styles.cjs",
     "prepare": "npm run build:styles",
-    "prepublishOnly": "npm run build:styles && npm run check"
+    "prepublishOnly": "npm run build:styles && npm run check",
+    "format": "prettier --write .",
+    "format:check": "prettier --check ."
   },
   "keywords": [
     "svelte",
@@ -54,7 +56,9 @@
     "svelte": "^5.0.0",
     "svelte-check": "^4.3.4",
     "svelte-virtuallists": "^1.4.2",
-    "vite": "^7.2.2"
+    "vite": "^7.2.2",
+    "prettier": "^3.7.4",
+    "prettier-plugin-svelte": "^3.4.1"
   },
   "files": [
     "src",
