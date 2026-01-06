@@ -29,7 +29,10 @@
       const bStr = String(bVal);
 
       // Alphabetical comparison
-      const comparison = aStr.localeCompare(bStr, undefined, { numeric: true, sensitivity: 'base' });
+      const comparison = aStr.localeCompare(bStr, undefined, {
+        numeric: true,
+        sensitivity: 'base',
+      });
 
       // Apply sort direction
       return sortDir === 'asc' ? comparison : -comparison;
@@ -59,21 +62,29 @@
     // by setting its `isDisabled` prop. Default: true (virtualization enabled).
     virtualize = true,
     // <slot> -> @render migration
-    rowSnippet
+    rowSnippet,
   } = $props();
 
   // expose selection via the callback prop (if provided)
   function selectItem(item, index) {
     selected = item;
-    try { callSelectCallback({ item, index }); } catch (err) { try { console.error('selectCallback threw:', err); } catch (e) {} }
+    try {
+      callSelectCallback({ item, index });
+    } catch (err) {
+      try {
+        console.error('selectCallback threw:', err);
+      } catch (e) {}
+    }
   }
 
   // Wrapper that casts the possibly-typed callback to any before invoking so callers may pass a payload
   function callSelectCallback(payload) {
     try {
-      (/** @type {any} */ (selectCallback))(payload);
+      /** @type {any} */ (selectCallback)(payload);
     } catch (err) {
-      try { console.error('selectCallback threw:', err); } catch (e) {}
+      try {
+        console.error('selectCallback threw:', err);
+      } catch (e) {}
     }
   }
 
@@ -81,7 +92,13 @@
   // using bind:sortKey / bind:sortDir receive updates (no event dispatching).
   function handleSort(key) {
     // Delegate sorting to the configured callback (by default `defaultSort` will run)
-    try { sortCallback(key); } catch (err) { try { console.error('sortCallback threw:', err); } catch (e) {} }
+    try {
+      sortCallback(key);
+    } catch (err) {
+      try {
+        console.error('sortCallback threw:', err);
+      } catch (e) {}
+    }
   }
 
   // Normalize colWidths: handle object or array input, treat numeric as stretch weights.
@@ -123,9 +140,10 @@
     if (numeric.length > 0 && totalWeight > 0) {
       let acc = 0;
       numeric.forEach((n, idx) => {
-        const pct = idx === numeric.length - 1
-          ? Math.max(0, Math.round((availablePct - acc) * 100) / 100)
-          : Math.round((n.w / totalWeight) * availablePct * 100) / 100;
+        const pct =
+          idx === numeric.length - 1
+            ? Math.max(0, Math.round((availablePct - acc) * 100) / 100)
+            : Math.round((n.w / totalWeight) * availablePct * 100) / 100;
         map[n.key] = `${pct}%`;
         acc += pct;
       });
@@ -175,16 +193,20 @@
     const pct = Math.floor(100 / n);
     return pct + '%';
   }
-
 </script>
 
-<section class="virtual-data-table {className}" style={style}>
+<section class="virtual-data-table {className}" {style}>
   {#if items && items.length > 0}
     <!-- When `virtualize` is false we instruct VirtualList to render as a normal list/table
          by setting `isDisabled`. This ensures pagination based on item counts shows the
          exact number of rows expected (useful when rows have variable height). -->
-    <VirtualList items={items} isTable isDisabled={!virtualize} class="datatable-table max-w-full max-h-full overflow-auto">
-        <!-- colgroup enforces the column widths so table-layout: fixed distributes as intended -->
+    <VirtualList
+      {items}
+      isTable
+      isDisabled={!virtualize}
+      class="datatable-table max-w-full max-h-full overflow-auto"
+    >
+      <!-- colgroup enforces the column widths so table-layout: fixed distributes as intended -->
       {#snippet header()}
         <colgroup>
           {#each visibleKeys as key, i}
@@ -194,8 +216,16 @@
         <thead class="sticky-header">
           <tr>
             {#each visibleKeys as key, i}
-              <th style="width: {calcColWidth(key, i)}" class="cursor-pointer select-none" onclick={() => handleSort(key)}
-                  aria-sort={sortKey === key ? (sortDir === 'asc' ? 'ascending' : 'descending') : 'none'}>
+              <th
+                style="width: {calcColWidth(key, i)}"
+                class="cursor-pointer select-none"
+                onclick={() => handleSort(key)}
+                aria-sort={sortKey === key
+                  ? sortDir === 'asc'
+                    ? 'ascending'
+                    : 'descending'
+                  : 'none'}
+              >
                 <div class="inline-flex items-center gap-1">
                   <span>{key}</span>
                   {#if sortKey === key}
@@ -209,7 +239,7 @@
       {/snippet}
 
       {#snippet vl_slot({ index, item })}
-        {@render rowSnippet({item, index, select: () => selectItem(item, index), selected})}
+        {@render rowSnippet({ item, index, select: () => selectItem(item, index), selected })}
       {/snippet}
     </VirtualList>
   {:else}

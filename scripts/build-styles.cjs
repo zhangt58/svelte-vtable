@@ -22,4 +22,3 @@ fs.mkdirSync(outDir, { recursive: true });
 fs.writeFileSync(outPath, css, 'utf8');
 console.log('Generated compiled CSS:', outPath);
 process.exit(0);
-

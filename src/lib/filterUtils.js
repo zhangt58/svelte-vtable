@@ -11,7 +11,7 @@
 export function getUniqueValuesWithCounts(data, key) {
   const countMap = {};
 
-  data.forEach(item => {
+  data.forEach((item) => {
     const value = item[key];
     // Handle null/undefined
     const normalizedValue = value ?? '(empty)';
@@ -20,7 +20,7 @@ export function getUniqueValuesWithCounts(data, key) {
 
   return {
     uniqueValues: Object.keys(countMap),
-    counts: countMap
+    counts: countMap,
   };
 }
 
@@ -31,13 +31,13 @@ export function getUniqueValuesWithCounts(data, key) {
  * @returns {Array} Column filters configuration for DataTableFilters
  */
 export function buildColumnFilters(data, columns) {
-  return columns.map(col => {
+  return columns.map((col) => {
     const { uniqueValues, counts } = getUniqueValuesWithCounts(data, col.key);
     return {
       key: col.key,
       label: col.label || col.key,
       uniqueValues,
-      counts
+      counts,
     };
   });
 }
@@ -53,7 +53,7 @@ export function applyFilters(data, activeFilters) {
     return data;
   }
 
-  return data.filter(item => {
+  return data.filter((item) => {
     // Check each column filter (AND logic across columns)
     for (const [columnKey, selectedValues] of Object.entries(activeFilters)) {
       // Skip if no values selected for this column
@@ -78,7 +78,7 @@ export function applyFilters(data, activeFilters) {
  * @returns {boolean} True if any filters are active
  */
 export function hasActiveFilters(activeFilters) {
-  return Object.values(activeFilters).some(arr => arr && arr.length > 0);
+  return Object.values(activeFilters).some((arr) => arr && arr.length > 0);
 }
 
 /**
@@ -97,7 +97,7 @@ export function countActiveFilters(activeFilters) {
  */
 export function clearAllFilters(columnFilters) {
   const cleared = {};
-  columnFilters.forEach(col => {
+  columnFilters.forEach((col) => {
     cleared[col.key] = [];
   });
   return cleared;
@@ -127,19 +127,20 @@ export function filtersToSearchParams(activeFilters) {
  * @returns {Object} Active filters object
  */
 export function searchParamsToFilters(searchParams, columnFilters) {
-  const params = typeof searchParams === 'string'
-    ? new URLSearchParams(searchParams)
-    : searchParams;
+  const params =
+    typeof searchParams === 'string' ? new URLSearchParams(searchParams) : searchParams;
 
-  const validKeys = new Set(columnFilters.map(c => c.key));
+  const validKeys = new Set(columnFilters.map((c) => c.key));
   const filters = {};
 
   for (const [key, value] of params.entries()) {
     if (validKeys.has(key) && value) {
-      filters[key] = value.split(',').map(v => v.trim()).filter(Boolean);
+      filters[key] = value
+        .split(',')
+        .map((v) => v.trim())
+        .filter(Boolean);
     }
   }
 
   return filters;
 }
-

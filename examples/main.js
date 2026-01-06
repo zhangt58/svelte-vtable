@@ -8,7 +8,7 @@ import './app.css';
 import '@zhangt58/svelte-vtable/styles.css';
 
 const app = mount(App, {
-  target: document.getElementById('app')
+  target: document.getElementById('app'),
 });
 
 export default app;

@@ -20,6 +20,7 @@ Before running the example, ensure you have the following installed:
 - **npm** (comes with Node.js) or **yarn** package manager
 
 You can verify your installation by running:
+
 ```bash
 node --version
 npm --version
@@ -28,21 +29,25 @@ npm --version
 ### Quick Start
 
 1. **Clone or navigate to the project**:
+
    ```bash
    cd /path/to/svelte-vtable
    ```
 
 2. **Navigate to the examples directory**:
+
    ```bash
    cd examples
    ```
 
 3. **Install dependencies**:
+
    ```bash
    npm install
    ```
 
 4. **Start the development server**:
+
    ```bash
    npm run dev
    ```
@@ -61,6 +66,7 @@ npm install
 ```
 
 This will install:
+
 - `@zhangt58/svelte-vtable` (local library)
 - `svelte` and `@sveltejs/vite-plugin-svelte`
 - `tailwindcss` and `@tailwindcss/vite`
@@ -76,6 +82,7 @@ npm run dev
 ```
 
 **Expected Output:**
+
 ```
 VITE v7.3.0  ready in 290 ms
 
@@ -132,14 +139,17 @@ npm run preview
 If port 5173 is busy, Vite will automatically use the next available port (e.g., 5174).
 
 **2. Dependencies not installing:**
+
 - Clear npm cache: `npm cache clean --force`
 - Delete `node_modules` and `package-lock.json`, then run `npm install` again
 
 **3. Build errors:**
+
 - Ensure you're in the `examples/` directory
 - Check that the main library is built: run `npm run prepare` in the parent directory
 
 **4. Import errors:**
+
 - Make sure the local library is properly linked
 - Check that `package.json` has the correct dependency: `"@zhangt58/svelte-vtable": "file:.."`
 
@@ -158,6 +168,7 @@ Make sure you have Node.js and npm installed.
 ### Installation
 
 1. Navigate to the examples directory:
+
    ```bash
    cd examples
    ```
@@ -170,6 +181,7 @@ Make sure you have Node.js and npm installed.
 ### Development
 
 Start the development server:
+
 ```bash
 npm run dev
 ```
@@ -179,11 +191,13 @@ The example will be available at `http://localhost:5173/`
 ### Building
 
 Build for production:
+
 ```bash
 npm run build
 ```
 
 Preview the production build:
+
 ```bash
 npm run preview
 ```
@@ -211,6 +225,7 @@ The example demonstrates:
 ## Dependencies
 
 This example project depends on:
+
 - `@zhangt58/svelte-vtable` - The main library
 - `flowbite-svelte` - UI components
 - `tailwindcss` - Styling framework

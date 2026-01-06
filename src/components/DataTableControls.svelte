@@ -26,20 +26,23 @@
     showCounts = true,
     className = '',
     // new callback when perPage changes
-    perpagechange = () => {}
+    perpagechange = () => {},
   } = $props();
 
   const perPageOptions = [
-    {value: 10, name: "10 rows"},
-    {value: 25, name: "25 rows"},
-    {value: 50, name: "50 rows"},
-    {value: 100, name: "100 rows"}
-  ]
+    { value: 10, name: '10 rows' },
+    { value: 25, name: '25 rows' },
+    { value: 50, name: '50 rows' },
+    { value: 100, name: '100 rows' },
+  ];
 
   // count of active filters (sum of selected values per column)
   const activeFilterCount = $derived(() => {
     try {
-      return Object.values(activeFilters || {}).reduce((sum, v) => sum + (Array.isArray(v) ? v.length : 0), 0);
+      return Object.values(activeFilters || {}).reduce(
+        (sum, v) => sum + (Array.isArray(v) ? v.length : 0),
+        0,
+      );
     } catch (e) {
       return 0;
     }
@@ -75,7 +78,9 @@
       return;
     }
     if (filtersVisible !== _prevFiltersVisible) {
-      try { filterstoggle?.({ filtersVisible }); } catch (err) {}
+      try {
+        filterstoggle?.({ filtersVisible });
+      } catch (err) {}
       _prevFiltersVisible = filtersVisible;
     }
   });
@@ -103,15 +108,15 @@
   });
 
   // Calculate range for display
-  const startItem = $derived(() => totalItems === 0 ? 0 : (currentPage - 1) * perPage + 1);
+  const startItem = $derived(() => (totalItems === 0 ? 0 : (currentPage - 1) * perPage + 1));
   const endItem = $derived(() => Math.min(currentPage * perPage, totalItems));
 
   // visiblePages: number of middle numeric buttons to show (not counting first/last)
   const visiblePages = 5;
 
   // stable id to query the pagination DOM if needed (fallback)
-  const paginationId = `pagination-${Math.random().toString(36).slice(2,9)}`;
-  const perPageSelectId = `dpc-perpage-${Math.random().toString(36).slice(2,7)}`;
+  const paginationId = `pagination-${Math.random().toString(36).slice(2, 9)}`;
+  const perPageSelectId = `dpc-perpage-${Math.random().toString(36).slice(2, 7)}`;
 
   // pages array for Pagination component (condensed with ellipses)
   const pages = $derived(() => {
@@ -120,7 +125,10 @@
 
     // If small number of pages, show all
     if (total <= visiblePages + 2) {
-      return Array.from({ length: total }, (_, i) => ({ name: String(i + 1), active: i + 1 === current }));
+      return Array.from({ length: total }, (_, i) => ({
+        name: String(i + 1),
+        active: i + 1 === current,
+      }));
     }
 
     const pagesArr = [];
@@ -155,7 +163,10 @@
       // compute right jump (midpoint of hidden range end+1..total-1)
       const rightHiddenStart = end + 1;
       const rightHiddenEnd = total - 1;
-      const rightJump = Math.min(rightHiddenEnd, Math.ceil((rightHiddenStart + rightHiddenEnd) / 2));
+      const rightJump = Math.min(
+        rightHiddenEnd,
+        Math.ceil((rightHiddenStart + rightHiddenEnd) / 2),
+      );
       pagesArr.push({ name: '…', active: false, ellipsis: 'right', jump: rightJump });
     }
 
@@ -189,8 +200,8 @@
     }
     if (!ul) return;
     // Ensure the <ul> has Tailwind utility classes for layout
-    ul.classList.remove('flex','gap-0.5','p-0','m-0','list-none','items-center');
-    ul.classList.add('flex','gap-0.5','p-0','m-0','list-none','items-center');
+    ul.classList.remove('flex', 'gap-0.5', 'p-0', 'm-0', 'list-none', 'items-center');
+    ul.classList.add('flex', 'gap-0.5', 'p-0', 'm-0', 'list-none', 'items-center');
     const lis = Array.from(ul.children || []);
     // Build a list of page-button <li>s (skip prev/next controls) by checking their textContent
     const pageLis = [];
@@ -216,32 +227,57 @@
       // Apply Tailwind utility classes instead of inline styles
       // Remove any previously-applied utility classes we manage
       btn.classList.remove(
-        'px-2','py-1','text-sm','border','border-gray-300','bg-transparent','min-w-[2rem]',
-        'inline-flex','items-center','justify-center','transition-colors','hover:bg-gray-100',
-        'bg-green-100','text-green-600','border-transparent','opacity-60','cursor-default','pointer-events-none',
-        'tw-ellipsis'
+        'px-2',
+        'py-1',
+        'text-sm',
+        'border',
+        'border-gray-300',
+        'bg-transparent',
+        'min-w-[2rem]',
+        'inline-flex',
+        'items-center',
+        'justify-center',
+        'transition-colors',
+        'hover:bg-gray-100',
+        'bg-green-100',
+        'text-green-600',
+        'border-transparent',
+        'opacity-60',
+        'cursor-default',
+        'pointer-events-none',
+        'tw-ellipsis',
       );
 
       // Base Tailwind classes for pagination buttons
       btn.classList.add(
-        'px-2','py-1','text-sm','border','border-gray-300','bg-transparent','min-w-[2rem]',
-        'inline-flex','items-center','justify-center','transition-colors','hover:bg-gray-100'
+        'px-2',
+        'py-1',
+        'text-sm',
+        'border',
+        'border-gray-300',
+        'bg-transparent',
+        'min-w-[2rem]',
+        'inline-flex',
+        'items-center',
+        'justify-center',
+        'transition-colors',
+        'hover:bg-gray-100',
       );
 
       // active page styling
       if (pageObj.active) {
-        btn.classList.add('bg-green-100','text-green-600','border-transparent');
+        btn.classList.add('bg-green-100', 'text-green-600', 'border-transparent');
         btn.setAttribute('aria-current', 'page');
       } else {
         btn.removeAttribute('aria-current');
-        btn.classList.remove('bg-green-100','text-green-600','border-transparent');
+        btn.classList.remove('bg-green-100', 'text-green-600', 'border-transparent');
       }
 
       // disabled styling
       if (btn.disabled || btn.getAttribute('aria-disabled') === 'true') {
-        btn.classList.add('opacity-60','cursor-default','pointer-events-none');
+        btn.classList.add('opacity-60', 'cursor-default', 'pointer-events-none');
       } else {
-        btn.classList.remove('opacity-60','cursor-default','pointer-events-none');
+        btn.classList.remove('opacity-60', 'cursor-default', 'pointer-events-none');
       }
 
       if (pageObj.name === '…' && typeof pageObj['jump'] === 'number') {
@@ -250,7 +286,7 @@
         // restore native tooltip for compatibility (browser tooltip)
         btn.setAttribute('title', `Jump to page ${pageObj['jump']}`);
         // visually indicate ellipsis (smaller text) via Tailwind
-        btn.classList.add('text-sm','opacity-90');
+        btn.classList.add('text-sm', 'opacity-90');
       }
     });
   }
@@ -269,7 +305,10 @@
     if (!paginationContainerEl) return;
     const run = () => requestAnimationFrame(() => requestAnimationFrame(() => decorateEllipsis()));
     _observer = new MutationObserver(run);
-    const root = paginationContainerEl instanceof Element ? paginationContainerEl : document.querySelector(`[data-pagination-id="${paginationId}"]`);
+    const root =
+      paginationContainerEl instanceof Element
+        ? paginationContainerEl
+        : document.querySelector(`[data-pagination-id="${paginationId}"]`);
     if (root) _observer.observe(root, { childList: true, subtree: true, attributes: true });
     // initial run
     run();
@@ -302,7 +341,7 @@
 
     // Map clicked li to decide what to do. If clicked is not a page button (i.e. prev/next),
     // do nothing here because the Pagination component already calls the `previous`/`next` callbacks.
-    const clickedIsPage = pageLis.some(p => p.li === li);
+    const clickedIsPage = pageLis.some((p) => p.li === li);
     if (!clickedIsPage) {
       return; // rely on Pagination's built-in previous/next handling to avoid double-invocation
     }
@@ -310,7 +349,7 @@
     const pageList = pages();
 
     // Map clicked li to page index
-    const pageIdx = pageLis.findIndex(p => p.li === li);
+    const pageIdx = pageLis.findIndex((p) => p.li === li);
     if (pageIdx < 0 || pageIdx >= pageList.length) return;
     const pageObj = pageList[pageIdx];
     if (!pageObj) return;
@@ -334,16 +373,16 @@
         <div class="flex items-center gap-1 relative">
           <button
             type="button"
-            class={
-              "inline-flex items-center gap-2 px-3 py-1 text-sm rounded-md border transition-colors focus:outline-none focus-visible:ring-2 focus-visible:ring-offset-2 focus-visible:ring-green-500 dark:focus-visible:ring-green-400 " +
+            class={'inline-flex items-center gap-2 px-3 py-1 text-sm rounded-md border transition-colors focus:outline-none focus-visible:ring-2 focus-visible:ring-offset-2 focus-visible:ring-green-500 dark:focus-visible:ring-green-400 ' +
               (filtersVisible
                 ? 'bg-slate-100 dark:bg-slate-700 border-slate-300 dark:border-slate-600 text-slate-900 dark:text-slate-100'
-                : 'bg-transparent border-transparent text-slate-700 dark:text-slate-300 hover:bg-slate-100 dark:hover:bg-slate-700')
-            }
+                : 'bg-transparent border-transparent text-slate-700 dark:text-slate-300 hover:bg-slate-100 dark:hover:bg-slate-700')}
             aria-pressed={filtersVisible}
             aria-label="Toggle filters"
             title="Filters"
-            onclick={() => { filtersVisible = !filtersVisible; }}
+            onclick={() => {
+              filtersVisible = !filtersVisible;
+            }}
           >
             <!-- Funnel icon (Flowbite icon component) -->
             <FilterOutline class="h-4 w-4 shrink-0" />
@@ -352,12 +391,23 @@
 
           {#if activeFilterCount() > 0}
             <!-- positioned badge -->
-            <span class="absolute top-0 right-0 -translate-y-1/2 translate-x-1/2 inline-flex items-center justify-center h-5 min-w-[1.25rem] px-1.5 rounded-full bg-green-600 text-white text-xs font-medium">{activeFilterCount()}</span>
+            <span
+              class="absolute top-0 right-0 -translate-y-1/2 translate-x-1/2 inline-flex items-center justify-center h-5 min-w-[1.25rem] px-1.5 rounded-full bg-green-600 text-white text-xs font-medium"
+              >{activeFilterCount()}</span
+            >
           {/if}
         </div>
 
-        <Search size="sm" bind:value={search} placeholder="Search..." clearable
-                clearableOnClick={() => { search = ''; searchchange?.({ search }); }} />
+        <Search
+          size="sm"
+          bind:value={search}
+          placeholder="Search..."
+          clearable
+          clearableOnClick={() => {
+            search = '';
+            searchchange?.({ search });
+          }}
+        />
       </div>
     </div>
 
@@ -369,14 +419,17 @@
 
       <!-- Per-page selector -->
       <div class="flex items-center gap-2">
-        <Select id={perPageSelectId} size="sm"
-                items={perPageOptions} bind:value={perPage}
-        />
+        <Select id={perPageSelectId} size="sm" items={perPageOptions} bind:value={perPage} />
       </div>
     </div>
 
     <!-- Pagination navigation: use Pagination with chevrons and page buttons -->
-    <div bind:this={paginationContainerEl} data-pagination-id={paginationId} class="flex items-center gap-0.5" aria-label="Pagination">
+    <div
+      bind:this={paginationContainerEl}
+      data-pagination-id={paginationId}
+      class="flex items-center gap-0.5"
+      aria-label="Pagination"
+    >
       <Pagination
         pages={pages()}
         {previous}
@@ -387,16 +440,40 @@
         {#snippet prevContent()}
           <span class="sr-only">Previous</span>
           <!-- Left chevron SVG (replaces ChevronLeftOutline) -->
-          <svg class="shrink-0 h-6 w-6" xmlns="http://www.w3.org/2000/svg" fill="none" viewBox="0 0 24 24" stroke="currentColor" aria-hidden="true">
-            <path stroke-linecap="round" stroke-linejoin="round" stroke-width="1" d="M15 19l-7-7 7-7" />
+          <svg
+            class="shrink-0 h-6 w-6"
+            xmlns="http://www.w3.org/2000/svg"
+            fill="none"
+            viewBox="0 0 24 24"
+            stroke="currentColor"
+            aria-hidden="true"
+          >
+            <path
+              stroke-linecap="round"
+              stroke-linejoin="round"
+              stroke-width="1"
+              d="M15 19l-7-7 7-7"
+            />
           </svg>
         {/snippet}
 
         {#snippet nextContent()}
           <span class="sr-only">Next</span>
           <!-- Right chevron SVG (replaces ChevronRightOutline) -->
-          <svg class="shrink-0 h-6 w-6" xmlns="http://www.w3.org/2000/svg" fill="none" viewBox="0 0 24 24" stroke="currentColor" aria-hidden="true">
-            <path stroke-linecap="round" stroke-linejoin="round" stroke-width="1" d="M9 5l7 7-7 7" />
+          <svg
+            class="shrink-0 h-6 w-6"
+            xmlns="http://www.w3.org/2000/svg"
+            fill="none"
+            viewBox="0 0 24 24"
+            stroke="currentColor"
+            aria-hidden="true"
+          >
+            <path
+              stroke-linecap="round"
+              stroke-linejoin="round"
+              stroke-width="1"
+              d="M9 5l7 7-7 7"
+            />
           </svg>
         {/snippet}
       </Pagination>
@@ -404,15 +481,20 @@
   </div>
 </div>
 
-<FiltersModal bind:open={filtersVisible}
-              columnFilters={columnFilters}
-              activeFilters={activeFilters}
-              filterChange={(...args) => { try { return filterChange(...args); } catch (e) {} }}
-              direction={direction}
-              showCounts={showCounts}
-              className={className}
+<FiltersModal
+  bind:open={filtersVisible}
+  {columnFilters}
+  {activeFilters}
+  filterChange={(...args) => {
+    try {
+      return filterChange(...args);
+    } catch (e) {}
+  }}
+  {direction}
+  {showCounts}
+  {className}
 />
 
 <style>
-   @import '../lib/dist/styles.css';
+  @import '../lib/dist/styles.css';
 </style>

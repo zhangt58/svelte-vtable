@@ -11,5 +11,5 @@ export {
   countActiveFilters,
   clearAllFilters,
   filtersToSearchParams,
-  searchParamsToFilters
+  searchParamsToFilters,
 } from './filterUtils.js';

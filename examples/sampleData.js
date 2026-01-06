@@ -2,13 +2,54 @@
 
 // Generate a larger sample dataset (1000 rows) deterministically using a simple LCG PRNG.
 const firstNames = [
-  'Alice', 'Bob', 'Carol', 'David', 'Eve', 'Frank', 'Grace', 'Henry', 'Ivy', 'Jack', 'Kelly', 'Leo',
-  'Mia', 'Noah', 'Olivia', 'Paul', 'Quinn', 'Rose', 'Sam', 'Tina', 'Uma', 'Victor', 'Wendy', 'Xavier',
-  'Yara', 'Zane'
+  'Alice',
+  'Bob',
+  'Carol',
+  'David',
+  'Eve',
+  'Frank',
+  'Grace',
+  'Henry',
+  'Ivy',
+  'Jack',
+  'Kelly',
+  'Leo',
+  'Mia',
+  'Noah',
+  'Olivia',
+  'Paul',
+  'Quinn',
+  'Rose',
+  'Sam',
+  'Tina',
+  'Uma',
+  'Victor',
+  'Wendy',
+  'Xavier',
+  'Yara',
+  'Zane',
 ];
 const lastNames = [
-  'Johnson', 'Smith', 'Williams', 'Brown', 'Davis', 'Miller', 'Wilson', 'Moore', 'Taylor', 'Anderson', 'Thomas', 'Jackson',
-  'White', 'Harris', 'Martin', 'Thompson', 'Garcia', 'Martinez', 'Robinson', 'Clark'
+  'Johnson',
+  'Smith',
+  'Williams',
+  'Brown',
+  'Davis',
+  'Miller',
+  'Wilson',
+  'Moore',
+  'Taylor',
+  'Anderson',
+  'Thomas',
+  'Jackson',
+  'White',
+  'Harris',
+  'Martin',
+  'Thompson',
+  'Garcia',
+  'Martinez',
+  'Robinson',
+  'Clark',
 ];
 const departments = ['Engineering', 'Marketing', 'Sales', 'HR', 'Support', 'Product', 'Finance'];
 const statuses = ['Active', 'Inactive', 'On Leave'];
@@ -17,7 +58,7 @@ const levels = ['Junior', 'Mid', 'Senior', 'Lead'];
 // Small linear congruential generator for deterministic pseudo-random numbers
 function lcg(seed) {
   let state = seed >>> 0;
-  return function() {
+  return function () {
     // Constants from Numerical Recipes
     state = (1664525 * state + 1013904223) >>> 0;
     return state / 0x100000000;
@@ -36,11 +77,56 @@ function makeName() {
 
 // Word bank for description generation (kept fairly small for determinism and readability)
 const descWords = [
-  'research', 'development', 'system', 'analysis', 'design', 'implementation', 'performance', 'scalable', 'robust', 'user',
-  'interface', 'algorithm', 'optimization', 'prototype', 'feature', 'integration', 'testing', 'deployment', 'cloud', 'service',
-  'database', 'management', 'security', 'protocol', 'model', 'training', 'evaluation', 'experiment', 'data', 'visualization',
-  'component', 'module', 'workflow', 'automation', 'script', 'library', 'package', 'version', 'support', 'maintenance',
-  'policy', 'regression', 'benchmark', 'latency', 'throughput', 'cache', 'index', 'query', 'pipeline', 'stream'
+  'research',
+  'development',
+  'system',
+  'analysis',
+  'design',
+  'implementation',
+  'performance',
+  'scalable',
+  'robust',
+  'user',
+  'interface',
+  'algorithm',
+  'optimization',
+  'prototype',
+  'feature',
+  'integration',
+  'testing',
+  'deployment',
+  'cloud',
+  'service',
+  'database',
+  'management',
+  'security',
+  'protocol',
+  'model',
+  'training',
+  'evaluation',
+  'experiment',
+  'data',
+  'visualization',
+  'component',
+  'module',
+  'workflow',
+  'automation',
+  'script',
+  'library',
+  'package',
+  'version',
+  'support',
+  'maintenance',
+  'policy',
+  'regression',
+  'benchmark',
+  'latency',
+  'throughput',
+  'cache',
+  'index',
+  'query',
+  'pipeline',
+  'stream',
 ];
 
 // Create a deterministic description: mix of short and long descriptions
@@ -91,7 +177,7 @@ const generatedData = Array.from({ length: 1000 }, (_, i) => {
     department: pick(departments),
     status: pick(statuses),
     level: pick(levels),
-    description: makeDescription()
+    description: makeDescription(),
   };
 });
 
@@ -101,7 +187,7 @@ export const allData = generatedData;
 export const filterColumns = [
   { key: 'department', label: 'Department' },
   { key: 'status', label: 'Status' },
-  { key: 'level', label: 'Level' }
+  { key: 'level', label: 'Level' },
 ];
 
 // Define table columns for DataTable
@@ -111,5 +197,5 @@ export const tableColumns = [
   { key: 'department', label: 'Department', stretch: 2 },
   { key: 'status', label: 'Status', stretch: 1.5 },
   { key: 'level', label: 'Level', stretch: 1.5 },
-  { key: 'description', label: 'Description', stretch: 4 }
+  { key: 'description', label: 'Description', stretch: 4 },
 ];

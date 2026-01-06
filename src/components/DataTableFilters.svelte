@@ -34,7 +34,7 @@
     populateThreshold = 200,
     // If true, render dropdowns inline (in-flow) so opening them expands the parent container.
     // If false, render as absolutely-positioned overlays (old behavior).
-    dropdownInline = true
+    dropdownInline = true,
   } = $props();
 
   // Internal state for selected options per column
@@ -48,7 +48,7 @@
     const initial = {};
     for (const col of columnFilters) {
       const len = Array.isArray(col.uniqueValues) ? col.uniqueValues.length : 0;
-      initial[col.key] = (populateThreshold <= 0) || len <= populateThreshold;
+      initial[col.key] = populateThreshold <= 0 || len <= populateThreshold;
     }
     loadedOptions = initial;
   });
@@ -81,9 +81,11 @@
     }
 
     try {
-      (/** @type {any} */ (filterChange))(payload);
+      /** @type {any} */ (filterChange)(payload);
     } catch (err) {
-      try { console.error('filterChange threw:', err); } catch (e) {}
+      try {
+        console.error('filterChange threw:', err);
+      } catch (e) {}
     }
   }
 
@@ -110,7 +112,7 @@
 
     if (current.includes(value)) {
       // Remove the value
-      updated = current.filter(v => v !== value);
+      updated = current.filter((v) => v !== value);
     } else {
       // Add the value
       updated = [...current, value];
@@ -142,7 +144,7 @@
 
   // Check if any filters are active
   const hasActiveFilters = $derived(() => {
-    return Object.values(selections).some(arr => arr && arr.length > 0);
+    return Object.values(selections).some((arr) => arr && arr.length > 0);
   });
 
   // Count active filters
@@ -187,7 +189,7 @@
     function updateState() {
       virtualScroll = {
         ...virtualScroll,
-        [key]: { scrollTop: node.scrollTop, height: node.clientHeight }
+        [key]: { scrollTop: node.scrollTop, height: node.clientHeight },
       };
     }
 
@@ -219,7 +221,7 @@
         const copy = { ...virtualScroll };
         delete copy[key];
         virtualScroll = copy;
-      }
+      },
     };
   }
 
@@ -250,7 +252,7 @@
     const q = (searchQueries[column.key] || '').toString().trim().toLowerCase();
     let filtered = raw;
     if (q) {
-      filtered = raw.filter(v => {
+      filtered = raw.filter((v) => {
         const text = v === null || v === undefined ? '(empty)' : String(v);
         return text.toLowerCase().includes(q);
       });
@@ -285,7 +287,7 @@
       return a.i - b.i;
     });
 
-    return withIndex.map(x => x.v);
+    return withIndex.map((x) => x.v);
   }
 
   // Toggle sort mode for a column. If the same mode is clicked again,
@@ -308,12 +310,16 @@
     const newDir = sortDirs[columnKey] || 'asc';
     try {
       // notify parent if it wants to react to sort changes
-      (/** @type {any} */ (sortChange))({ columnKey, mode, dir: newDir });
+      /** @type {any} */ (sortChange)({ columnKey, mode, dir: newDir });
     } catch (err) {
-      try { console.debug('sortChange callback threw', err); } catch (e) {}
+      try {
+        console.debug('sortChange callback threw', err);
+      } catch (e) {}
     }
     // debug log
-    try { console.debug('toggleSortMode', columnKey, mode, sortDirs[columnKey]); } catch (e) {}
+    try {
+      console.debug('toggleSortMode', columnKey, mode, sortDirs[columnKey]);
+    } catch (e) {}
   }
 
   // Clear selection for a column (from within dropdown)
@@ -332,7 +338,7 @@
   function invertSelection(columnKey, values) {
     const current = new Set(selections[columnKey] || []);
     const next = [];
-    for (const v of (Array.isArray(values) ? values : [])) {
+    for (const v of Array.isArray(values) ? values : []) {
       if (!current.has(v)) next.push(v);
     }
     selections = { ...selections, [columnKey]: next };
@@ -360,17 +366,20 @@
 
   // Check if all dropdowns are open
   const allDropdownsOpen = $derived.by(() => {
-    return columnFilters.every(col => openDropdowns[col.key]);
+    return columnFilters.every((col) => openDropdowns[col.key]);
   });
 
   // Check if all dropdowns are closed
   const allDropdownsClosed = $derived.by(() => {
-    return columnFilters.every(col => !openDropdowns[col.key]);
+    return columnFilters.every((col) => !openDropdowns[col.key]);
   });
 </script>
 
-<div class="p-2 bg-gray-50 rounded-md border border-gray-200 dark:bg-gray-800 dark:border-gray-700 {className}"
-     class:horizontal={direction === 'horizontal'} class:vertical={direction === 'vertical'}>
+<div
+  class="p-2 bg-gray-50 rounded-md border border-gray-200 dark:bg-gray-800 dark:border-gray-700 {className}"
+  class:horizontal={direction === 'horizontal'}
+  class:vertical={direction === 'vertical'}
+>
   <div class="flex justify-between items-center mb-2 flex-wrap gap-1">
     <!-- Left controls: Show All, Close All -->
     <div class="flex items-center gap-1 flex-wrap">
@@ -407,7 +416,11 @@
     </div>
   </div>
 
-  <div class="grid gap-2" class:grid-horizontal={direction === 'horizontal'} class:grid-vertical={direction === 'vertical'}>
+  <div
+    class="grid gap-2"
+    class:grid-horizontal={direction === 'horizontal'}
+    class:grid-vertical={direction === 'vertical'}
+  >
     {#each columnFilters as column (column.key)}
       {@const isActive = selections[column.key]?.length > 0}
       {@const isOpen = openDropdowns[column.key]}
@@ -418,26 +431,28 @@
       <div class="flex flex-col min-w-0 relative">
         <button
           id="filter-{column.key}"
-          class="w-full flex justify-between items-center px-3 py-2 text-sm text-gray-700 dark:text-gray-300 bg-white dark:bg-gray-700 border border-gray-300 dark:border-gray-600 rounded-md hover:border-gray-400 dark:hover:border-gray-500 focus:outline-none focus:border-blue-500 dark:focus:border-blue-400 focus:ring-2 focus:ring-blue-100 dark:focus:ring-blue-900 transition-all cursor-pointer gap-2 {isActive ? 'border-green-500 dark:border-green-400 bg-green-50 dark:bg-green-900/20' : ''}"
+          class="w-full flex justify-between items-center px-3 py-2 text-sm text-gray-700 dark:text-gray-300 bg-white dark:bg-gray-700 border border-gray-300 dark:border-gray-600 rounded-md hover:border-gray-400 dark:hover:border-gray-500 focus:outline-none focus:border-blue-500 dark:focus:border-blue-400 focus:ring-2 focus:ring-blue-100 dark:focus:ring-blue-900 transition-all cursor-pointer gap-2 {isActive
+            ? 'border-green-500 dark:border-green-400 bg-green-50 dark:bg-green-900/20'
+            : ''}"
           onclick={() => toggleDropdown(column.key)}
           type="button"
         >
           <span class="flex-1 text-left whitespace-nowrap overflow-hidden text-ellipsis min-w-0">
-              {column.label || column.key}
+            {column.label || column.key}
           </span>
           {#if isActive}
             <Badge color="green" rounded class="ml-1">{selections[column.key].length}</Badge>
           {/if}
-          <ChevronDownOutline class="w-5 h-5 shrink-0 transition-transform {isOpen ? 'rotate-180' : ''}" />
+          <ChevronDownOutline
+            class="w-5 h-5 shrink-0 transition-transform {isOpen ? 'rotate-180' : ''}"
+          />
         </button>
 
         {#if isOpen}
           <div
-            class={
-              (dropdownInline
-                ? `mt-1 bg-white dark:bg-gray-700 border border-gray-300 dark:border-gray-600 rounded-md shadow-lg dark:shadow-gray-900 max-h-64 flex flex-col dropdown-menu`
-                : `absolute top-full mt-1 left-0 right-0 bg-white dark:bg-gray-700 border border-gray-300 dark:border-gray-600 rounded-md shadow-lg dark:shadow-gray-900 max-h-64 flex flex-col dropdown-menu`)
-            }
+            class={dropdownInline
+              ? `mt-1 bg-white dark:bg-gray-700 border border-gray-300 dark:border-gray-600 rounded-md shadow-lg dark:shadow-gray-900 max-h-64 flex flex-col dropdown-menu`
+              : `absolute top-full mt-1 left-0 right-0 bg-white dark:bg-gray-700 border border-gray-300 dark:border-gray-600 rounded-md shadow-lg dark:shadow-gray-900 max-h-64 flex flex-col dropdown-menu`}
             tabindex="-1"
             data-column={column.key}
           >
@@ -461,8 +476,13 @@
                   >
                     <span class="text-sm font-semibold">Aa</span>
                     <ArrowDownOutline
-                      class={"w-3 h-3 transition-transform " + (currentSortMode === 'name' ? 'text-blue-900 dark:text-blue-100' : 'text-gray-400 dark:text-gray-500')}
-                      style={currentSortMode === 'name' && currentSortDir === 'asc' ? 'transform: rotate(180deg);' : ''}
+                      class={'w-3 h-3 transition-transform ' +
+                        (currentSortMode === 'name'
+                          ? 'text-blue-900 dark:text-blue-100'
+                          : 'text-gray-400 dark:text-gray-500')}
+                      style={currentSortMode === 'name' && currentSortDir === 'asc'
+                        ? 'transform: rotate(180deg);'
+                        : ''}
                       aria-hidden="true"
                     />
                   </button>
@@ -478,16 +498,18 @@
                     >
                       <span class="text-sm font-semibold">#</span>
                       <ArrowDownOutline
-                        class={"w-3 h-3 transition-transform " + (currentSortMode === 'count' ? 'text-blue-900 dark:text-blue-100' : 'text-gray-400 dark:text-gray-500')}
-                        style={currentSortMode === 'count' && currentSortDir === 'asc' ? 'transform: rotate(180deg);' : ''}
+                        class={'w-3 h-3 transition-transform ' +
+                          (currentSortMode === 'count'
+                            ? 'text-blue-900 dark:text-blue-100'
+                            : 'text-gray-400 dark:text-gray-500')}
+                        style={currentSortMode === 'count' && currentSortDir === 'asc'
+                          ? 'transform: rotate(180deg);'
+                          : ''}
                         aria-hidden="true"
                       />
                     </button>
                   {/if}
-
-
                 </div>
-
               </div>
             </div>
 
@@ -504,9 +526,30 @@
                     title="Check all"
                   >
                     <!-- Checked square icon (higher contrast) -->
-                    <svg class="w-4 h-4 text-gray-800 dark:text-white" viewBox="0 0 24 24" fill="none" aria-hidden="true">
-                      <rect x="3" y="3" width="18" height="18" rx="2" stroke="currentColor" stroke-width="2.5" fill="none" />
-                      <path d="M7 13l3 3 7-7" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round" fill="none" />
+                    <svg
+                      class="w-4 h-4 text-gray-800 dark:text-white"
+                      viewBox="0 0 24 24"
+                      fill="none"
+                      aria-hidden="true"
+                    >
+                      <rect
+                        x="3"
+                        y="3"
+                        width="18"
+                        height="18"
+                        rx="2"
+                        stroke="currentColor"
+                        stroke-width="2.5"
+                        fill="none"
+                      />
+                      <path
+                        d="M7 13l3 3 7-7"
+                        stroke="currentColor"
+                        stroke-width="2"
+                        stroke-linecap="round"
+                        stroke-linejoin="round"
+                        fill="none"
+                      />
                     </svg>
                     <span class="text-sm text-gray-800 dark:text-gray-100 select-none">All</span>
                   </button>
@@ -520,10 +563,39 @@
                     title="Invert selection"
                   >
                     <!-- Half-checked square icon (left half filled) - higher contrast -->
-                    <svg class="w-4 h-4 text-gray-800 dark:text-white" viewBox="0 0 24 24" fill="none" aria-hidden="true">
-                      <rect x="3" y="3" width="18" height="18" rx="2" stroke="currentColor" stroke-width="2.5" fill="none" />
-                      <rect x="4" y="4" width="8.5" height="16" fill="currentColor" opacity="0.28" stroke="none" />
-                      <path d="M7 13l3 3 7-7" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round" fill="none" />
+                    <svg
+                      class="w-4 h-4 text-gray-800 dark:text-white"
+                      viewBox="0 0 24 24"
+                      fill="none"
+                      aria-hidden="true"
+                    >
+                      <rect
+                        x="3"
+                        y="3"
+                        width="18"
+                        height="18"
+                        rx="2"
+                        stroke="currentColor"
+                        stroke-width="2.5"
+                        fill="none"
+                      />
+                      <rect
+                        x="4"
+                        y="4"
+                        width="8.5"
+                        height="16"
+                        fill="currentColor"
+                        opacity="0.28"
+                        stroke="none"
+                      />
+                      <path
+                        d="M7 13l3 3 7-7"
+                        stroke="currentColor"
+                        stroke-width="2"
+                        stroke-linecap="round"
+                        stroke-linejoin="round"
+                        fill="none"
+                      />
                     </svg>
                     <span class="text-sm text-gray-800 dark:text-gray-100 select-none">Invert</span>
                   </button>
@@ -537,8 +609,22 @@
                     title="Uncheck all"
                   >
                     <!-- Empty square icon (higher contrast stroke) -->
-                    <svg class="w-4 h-4 text-gray-800 dark:text-white" viewBox="0 0 24 24" fill="none" aria-hidden="true">
-                      <rect x="3" y="3" width="18" height="18" rx="2" stroke="currentColor" stroke-width="2" fill="none" />
+                    <svg
+                      class="w-4 h-4 text-gray-800 dark:text-white"
+                      viewBox="0 0 24 24"
+                      fill="none"
+                      aria-hidden="true"
+                    >
+                      <rect
+                        x="3"
+                        y="3"
+                        width="18"
+                        height="18"
+                        rx="2"
+                        stroke="currentColor"
+                        stroke-width="2"
+                        fill="none"
+                      />
                     </svg>
                     <span class="text-sm text-gray-800 dark:text-gray-100 select-none">None</span>
                   </button>
@@ -557,66 +643,80 @@
                   <button
                     class="ml-2 px-2 py-1 text-xs rounded bg-gray-100 dark:bg-gray-600 text-gray-800 dark:text-white border border-gray-200 hover:bg-gray-200 dark:hover:bg-gray-500"
                     type="button"
-                    onclick={() => loadedOptions = { ...loadedOptions, [column.key]: true }}
+                    onclick={() => (loadedOptions = { ...loadedOptions, [column.key]: true })}
                   >
                     Load options
                   </button>
                 </div>
-              {:else}
-                {#if sortedValues.length > virtualThreshold}
-                  {@const v = getVirtualSlice(column, sortedValues)}
+              {:else if sortedValues.length > virtualThreshold}
+                {@const v = getVirtualSlice(column, sortedValues)}
 
-                  <div style="height:{v.totalHeight}px; position:relative;">
-                    <div style="position:absolute; top:{v.top}px; left:0; right:0;">
-                      {#each v.slice as value, idx (idx)}
-                        {@const isSelected = selections[column.key]?.includes(value)}
-                        {@const displayValue = value === null || value === undefined ? '(empty)' : String(value)}
-
-                        <label class="flex items-center gap-1 px-2 py-1 cursor-pointer rounded-sm hover:bg-gray-100 dark:hover:bg-gray-600 transition-colors" style="height:{virtualItemHeight}px; box-sizing:border-box;">
-                          <input
-                            type="checkbox"
-                            checked={isSelected}
-                            onchange={() => toggleSelection(column.key, value)}
-                            class="w-4 h-4 shrink-0 cursor-pointer accent-blue-500"
-                          />
-                          <span class="flex-1 text-sm text-gray-700 dark:text-gray-300 select-none min-w-0 overflow-hidden text-ellipsis">{displayValue}</span>
-                          {#if showCounts && column.counts && column.counts[value] !== undefined}
-                            <span class="text-xs text-gray-500 dark:text-gray-400 ml-auto shrink-0">({column.counts[value]})</span>
-                          {/if}
-                        </label>
-                      {/each}
-                    </div>
-                  </div>
-
-                {:else}
-                  {#if sortedValues.length > 0}
-                    {#each sortedValues as value, idx (idx)}
+                <div style="height:{v.totalHeight}px; position:relative;">
+                  <div style="position:absolute; top:{v.top}px; left:0; right:0;">
+                    {#each v.slice as value, idx (idx)}
                       {@const isSelected = selections[column.key]?.includes(value)}
-                      {@const displayValue = value === null || value === undefined ? '(empty)' : String(value)}
+                      {@const displayValue =
+                        value === null || value === undefined ? '(empty)' : String(value)}
 
-                      <label class="flex items-center gap-1 px-2 py-1 cursor-pointer rounded-sm hover:bg-gray-100 dark:hover:bg-gray-600 transition-colors">
+                      <label
+                        class="flex items-center gap-1 px-2 py-1 cursor-pointer rounded-sm hover:bg-gray-100 dark:hover:bg-gray-600 transition-colors"
+                        style="height:{virtualItemHeight}px; box-sizing:border-box;"
+                      >
                         <input
                           type="checkbox"
                           checked={isSelected}
                           onchange={() => toggleSelection(column.key, value)}
                           class="w-4 h-4 shrink-0 cursor-pointer accent-blue-500"
                         />
-                        <span class="flex-1 text-sm text-gray-700 dark:text-gray-300 select-none min-w-0 overflow-hidden text-ellipsis">{displayValue}</span>
+                        <span
+                          class="flex-1 text-sm text-gray-700 dark:text-gray-300 select-none min-w-0 overflow-hidden text-ellipsis"
+                          >{displayValue}</span
+                        >
                         {#if showCounts && column.counts && column.counts[value] !== undefined}
-                          <span class="text-xs text-gray-500 dark:text-gray-400 ml-auto shrink-0">({column.counts[value]})</span>
+                          <span class="text-xs text-gray-500 dark:text-gray-400 ml-auto shrink-0"
+                            >({column.counts[value]})</span
+                          >
                         {/if}
                       </label>
                     {/each}
-                  {:else}
-                    <div class="p-4 text-center text-sm text-gray-400 dark:text-gray-500">No values available</div>
-                  {/if}
-                {/if}
+                  </div>
+                </div>
+              {:else if sortedValues.length > 0}
+                {#each sortedValues as value, idx (idx)}
+                  {@const isSelected = selections[column.key]?.includes(value)}
+                  {@const displayValue =
+                    value === null || value === undefined ? '(empty)' : String(value)}
+
+                  <label
+                    class="flex items-center gap-1 px-2 py-1 cursor-pointer rounded-sm hover:bg-gray-100 dark:hover:bg-gray-600 transition-colors"
+                  >
+                    <input
+                      type="checkbox"
+                      checked={isSelected}
+                      onchange={() => toggleSelection(column.key, value)}
+                      class="w-4 h-4 shrink-0 cursor-pointer accent-blue-500"
+                    />
+                    <span
+                      class="flex-1 text-sm text-gray-700 dark:text-gray-300 select-none min-w-0 overflow-hidden text-ellipsis"
+                      >{displayValue}</span
+                    >
+                    {#if showCounts && column.counts && column.counts[value] !== undefined}
+                      <span class="text-xs text-gray-500 dark:text-gray-400 ml-auto shrink-0"
+                        >({column.counts[value]})</span
+                      >
+                    {/if}
+                  </label>
+                {/each}
+              {:else}
+                <div class="p-4 text-center text-sm text-gray-400 dark:text-gray-500">
+                  No values available
+                </div>
               {/if}
             </div>
           </div>
         {/if}
-        </div>
-      {/each}
+      </div>
+    {/each}
   </div>
 </div>
 
