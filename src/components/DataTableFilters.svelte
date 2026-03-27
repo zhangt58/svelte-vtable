@@ -243,6 +243,17 @@
     return { slice, start, end, top, totalHeight };
   }
 
+  // --- Helper: extract a numeric sort key from a value ---
+  // Returns the number itself if numeric, the first number found in a string,
+  // or 0 if no number can be found.
+  function extractNumber(v) {
+    if (v === null || v === undefined) return 0;
+    if (typeof v === 'number') return v;
+    const s = String(v);
+    const match = s.match(/-?\d+(\.\d+)?/);
+    return match ? parseFloat(match[0]) : 0;
+  }
+
   // --- Helper: return the values for a column after applying search + sort ---
   function getSortedValues(column) {
     // column.uniqueValues is expected to be an array of possible values
@@ -274,6 +285,13 @@
         const cb = Number(column.counts[vb] ?? 0);
         if (ca !== cb) return (ca - cb) * dir * -1; // higher counts first when desc
         // fallback to name compare
+      }
+
+      if (mode === 'number') {
+        const na = extractNumber(va);
+        const nb = extractNumber(vb);
+        if (na !== nb) return (na - nb) * dir;
+        // fallback to name compare for equal numeric values
       }
 
       // compare by name
@@ -474,13 +492,41 @@
                     title="Sort by name"
                     type="button"
                   >
-                    <span class="text-sm font-semibold">Aa</span>
+                    <span class="flex flex-col items-center leading-none font-semibold" style="font-size:0.6rem;">
+                      <span>A</span>
+                      <span>Z</span>
+                    </span>
                     <ArrowDownOutline
                       class={'w-3 h-3 transition-transform ' +
                         (currentSortMode === 'name'
                           ? 'text-blue-900 dark:text-blue-100'
                           : 'text-gray-400 dark:text-gray-500')}
                       style={currentSortMode === 'name' && currentSortDir === 'asc'
+                        ? 'transform: rotate(180deg);'
+                        : ''}
+                      aria-hidden="true"
+                    />
+                  </button>
+
+                  <button
+                    class="p-0.5 flex-1 flex items-center justify-center gap-1 text-sm text-gray-600 dark:text-gray-400 bg-transparent border border-gray-200 dark:border-gray-700 rounded hover:bg-gray-100 dark:hover:bg-gray-700 hover:border-gray-300 dark:hover:border-gray-600 hover:text-gray-700 dark:hover:text-gray-300 transition-all"
+                    class:bg-blue-100={currentSortMode === 'number'}
+                    class:dark:bg-blue-900={currentSortMode === 'number'}
+                    onclick={() => toggleSortMode(column.key, 'number')}
+                    title="Sort by number"
+                    aria-label="Sort by number"
+                    type="button"
+                  >
+                    <span class="flex flex-col items-center leading-none font-semibold" style="font-size:0.6rem;">
+                      <span>0</span>
+                      <span>9</span>
+                    </span>
+                    <ArrowDownOutline
+                      class={'w-3 h-3 transition-transform ' +
+                        (currentSortMode === 'number'
+                          ? 'text-blue-900 dark:text-blue-100'
+                          : 'text-gray-400 dark:text-gray-500')}
+                      style={currentSortMode === 'number' && currentSortDir === 'asc'
                         ? 'transform: rotate(180deg);'
                         : ''}
                       aria-hidden="true"
