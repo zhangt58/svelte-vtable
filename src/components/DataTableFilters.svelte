@@ -492,7 +492,10 @@
                     title="Sort by name"
                     type="button"
                   >
-                    <span class="text-sm font-semibold">Aa</span>
+                    <span class="flex flex-col items-center leading-none font-semibold" style="font-size:0.6rem;">
+                      <span>A</span>
+                      <span>Z</span>
+                    </span>
                     <ArrowDownOutline
                       class={'w-3 h-3 transition-transform ' +
                         (currentSortMode === 'name'
@@ -514,7 +517,10 @@
                     aria-label="Sort by number"
                     type="button"
                   >
-                    <span class="text-sm font-semibold">1→9</span>
+                    <span class="flex flex-col items-center leading-none font-semibold" style="font-size:0.6rem;">
+                      <span>0</span>
+                      <span>9</span>
+                    </span>
                     <ArrowDownOutline
                       class={'w-3 h-3 transition-transform ' +
                         (currentSortMode === 'number'
