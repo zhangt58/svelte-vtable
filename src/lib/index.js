@@ -7,6 +7,7 @@ export {
   getUniqueValuesWithCounts,
   buildColumnFilters,
   applyFilters,
+  matchesDateRange,
   hasActiveFilters,
   countActiveFilters,
   clearAllFilters,

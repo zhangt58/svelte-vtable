@@ -171,12 +171,19 @@ function randomWords(count) {
 
 const generatedData = Array.from({ length: 1000 }, (_, i) => {
   const id = i + 1;
+  // Generate a deterministic hire date between 2018-01-01 and 2024-12-31
+  const baseMs = new Date('2018-01-01').getTime();
+  const rangeMs = new Date('2024-12-31').getTime() - baseMs;
+  const hireDateMs = baseMs + Math.floor(rand() * rangeMs);
+  const hireDateObj = new Date(hireDateMs);
+  const hireDate = hireDateObj.toISOString().slice(0, 10); // YYYY-MM-DD
   return {
     id,
     name: makeName(),
     department: pick(departments),
     status: pick(statuses),
     level: pick(levels),
+    hireDate,
     description: makeDescription(),
   };
 });
@@ -188,6 +195,7 @@ export const filterColumns = [
   { key: 'department', label: 'Department' },
   { key: 'status', label: 'Status' },
   { key: 'level', label: 'Level' },
+  { key: 'hireDate', label: 'Hire Date', type: 'daterange' },
 ];
 
 // Define table columns for DataTable
@@ -197,5 +205,6 @@ export const tableColumns = [
   { key: 'department', label: 'Department', stretch: 2 },
   { key: 'status', label: 'Status', stretch: 1.5 },
   { key: 'level', label: 'Level', stretch: 1.5 },
+  { key: 'hireDate', label: 'Hire Date', stretch: 2 },
   { key: 'description', label: 'Description', stretch: 4 },
 ];
