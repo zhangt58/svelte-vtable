@@ -96,11 +96,16 @@
     flushEmit();
   });
 
+  // Helper: is this column a date/datetime range filter?
+  function isDateRangeColumn(col) {
+    return col.type === 'daterange' || col.type === 'datetimerange';
+  }
+
   // Initialize selections from activeFilters
   $effect(() => {
     const newSelections = {};
     for (const col of columnFilters) {
-      newSelections[col.key] = activeFilters[col.key] || [];
+      newSelections[col.key] = activeFilters[col.key] ?? (isDateRangeColumn(col) ? {} : []);
     }
     selections = newSelections;
   });
@@ -126,15 +131,17 @@
 
   // Clear all selections for a column
   function clearColumn(columnKey) {
-    selections = { ...selections, [columnKey]: [] };
-    scheduleEmit(columnKey, []);
+    const col = columnFilters.find((c) => c.key === columnKey);
+    const empty = isDateRangeColumn(col) ? {} : [];
+    selections = { ...selections, [columnKey]: empty };
+    scheduleEmit(columnKey, empty);
   }
 
   // Clear all filters
   function clearAllFilters() {
     const cleared = {};
     for (const col of columnFilters) {
-      cleared[col.key] = [];
+      cleared[col.key] = isDateRangeColumn(col) ? {} : [];
     }
     selections = cleared;
 
@@ -144,12 +151,20 @@
 
   // Check if any filters are active
   const hasActiveFilters = $derived(() => {
-    return Object.values(selections).some((arr) => arr && arr.length > 0);
+    return Object.values(selections).some((val) => {
+      if (Array.isArray(val)) return val.length > 0;
+      if (val && typeof val === 'object') return !!(val.from || val.to);
+      return false;
+    });
   });
 
   // Count active filters
   const activeFilterCount = $derived(() => {
-    return Object.values(selections).reduce((sum, arr) => sum + (arr?.length || 0), 0);
+    return Object.values(selections).reduce((sum, val) => {
+      if (Array.isArray(val)) return sum + (val?.length || 0);
+      if (val && typeof val === 'object' && (val.from || val.to)) return sum + 1;
+      return sum;
+    }, 0);
   });
 
   // Toggle dropdown visibility for a column
@@ -368,6 +383,14 @@
     clearColumn(columnKey);
   }
 
+  // Handle a date/datetime range input change
+  function handleDateRangeChange(columnKey, field, value) {
+    const current = selections[columnKey] || {};
+    const updated = { ...current, [field]: value };
+    selections = { ...selections, [columnKey]: updated };
+    scheduleEmit(columnKey, updated);
+  }
+
   // Show all dropdowns
   function showAllDropdowns() {
     const allOpen = {};
@@ -440,7 +463,10 @@
     class:grid-vertical={direction === 'vertical'}
   >
     {#each columnFilters as column (column.key)}
-      {@const isActive = selections[column.key]?.length > 0}
+      {@const _sel = selections[column.key]}
+      {@const isActive = Array.isArray(_sel)
+        ? _sel.length > 0
+        : !!(_sel?.from || _sel?.to)}
       {@const isOpen = openDropdowns[column.key]}
       {@const sortedValues = getSortedValues(column)}
       {@const currentSortMode = sortModes[column.key] || 'name'}
@@ -459,7 +485,11 @@
             {column.label || column.key}
           </span>
           {#if isActive}
-            <Badge color="green" rounded class="ml-1">{selections[column.key].length}</Badge>
+            {#if Array.isArray(_sel)}
+              <Badge color="green" rounded class="ml-1">{_sel.length}</Badge>
+            {:else}
+              <Badge color="green" rounded class="ml-1">range</Badge>
+            {/if}
           {/if}
           <ChevronDownOutline
             class="w-5 h-5 shrink-0 transition-transform {isOpen ? 'rotate-180' : ''}"
@@ -474,291 +504,346 @@
             tabindex="-1"
             data-column={column.key}
           >
-            <div class="px-1 py-1 border-b border-gray-200 dark:border-gray-600">
-              <div class="flex items-center gap-1 w-full min-w-0">
-                <input
-                  type="text"
-                  placeholder="Filter..."
-                  class="p-1 flex-1 min-w-0 px-2 py-1 text-xs border border-gray-200 dark:border-gray-600 rounded bg-white dark:bg-gray-700 text-gray-700 dark:text-gray-200 focus:outline-none focus:border-blue-500"
-                  bind:value={searchQueries[column.key]}
-                />
-
-                <div class="flex items-center gap-1">
-                  <button
-                    class="p-0.5 flex-1 flex items-center justify-center gap-1 text-sm text-gray-600 dark:text-gray-400 bg-transparent border border-gray-200 dark:border-gray-700 rounded hover:bg-gray-100 dark:hover:bg-gray-700 hover:border-gray-300 dark:hover:border-gray-600 hover:text-gray-700 dark:hover:text-gray-300 transition-all"
-                    class:bg-blue-100={currentSortMode === 'name'}
-                    class:dark:bg-blue-900={currentSortMode === 'name'}
-                    onclick={() => toggleSortMode(column.key, 'name')}
-                    title="Sort by name"
-                    type="button"
+            {#if isDateRangeColumn(column)}
+              <!-- Date / datetime range picker UI -->
+              {@const inputType = column.type === 'datetimerange' ? 'datetime-local' : 'date'}
+              {@const dateRange = selections[column.key] || {}}
+              <div class="p-3 flex flex-col gap-2">
+                <div class="flex items-center gap-2">
+                  <label
+                    class="text-xs font-medium text-gray-500 dark:text-gray-400 w-8 shrink-0"
+                    for="filter-{column.key}-from"
                   >
-                    <span class="flex flex-col items-center leading-none font-semibold" style="font-size:0.6rem;">
-                      <span>A</span>
-                      <span>Z</span>
-                    </span>
-                    <ArrowDownOutline
-                      class={'w-3 h-3 transition-transform ' +
-                        (currentSortMode === 'name'
-                          ? 'text-blue-900 dark:text-blue-100'
-                          : 'text-gray-400 dark:text-gray-500')}
-                      style={currentSortMode === 'name' && currentSortDir === 'asc'
-                        ? 'transform: rotate(180deg);'
-                        : ''}
-                      aria-hidden="true"
-                    />
-                  </button>
-
-                  <button
-                    class="p-0.5 flex-1 flex items-center justify-center gap-1 text-sm text-gray-600 dark:text-gray-400 bg-transparent border border-gray-200 dark:border-gray-700 rounded hover:bg-gray-100 dark:hover:bg-gray-700 hover:border-gray-300 dark:hover:border-gray-600 hover:text-gray-700 dark:hover:text-gray-300 transition-all"
-                    class:bg-blue-100={currentSortMode === 'number'}
-                    class:dark:bg-blue-900={currentSortMode === 'number'}
-                    onclick={() => toggleSortMode(column.key, 'number')}
-                    title="Sort by number"
-                    aria-label="Sort by number"
-                    type="button"
+                    From
+                  </label>
+                  <input
+                    id="filter-{column.key}-from"
+                    type={inputType}
+                    class="flex-1 min-w-0 px-2 py-1 text-xs border border-gray-200 dark:border-gray-600 rounded bg-white dark:bg-gray-800 text-gray-700 dark:text-gray-200 focus:outline-none focus:border-blue-500 dark:focus:border-blue-400"
+                    value={dateRange.from || ''}
+                    oninput={(e) =>
+                      handleDateRangeChange(column.key, 'from', e.currentTarget.value)}
+                  />
+                </div>
+                <div class="flex items-center gap-2">
+                  <label
+                    class="text-xs font-medium text-gray-500 dark:text-gray-400 w-8 shrink-0"
+                    for="filter-{column.key}-to"
                   >
-                    <span class="flex flex-col items-center leading-none font-semibold" style="font-size:0.6rem;">
-                      <span>0</span>
-                      <span>9</span>
-                    </span>
-                    <ArrowDownOutline
-                      class={'w-3 h-3 transition-transform ' +
-                        (currentSortMode === 'number'
-                          ? 'text-blue-900 dark:text-blue-100'
-                          : 'text-gray-400 dark:text-gray-500')}
-                      style={currentSortMode === 'number' && currentSortDir === 'asc'
-                        ? 'transform: rotate(180deg);'
-                        : ''}
-                      aria-hidden="true"
-                    />
+                    To
+                  </label>
+                  <input
+                    id="filter-{column.key}-to"
+                    type={inputType}
+                    class="flex-1 min-w-0 px-2 py-1 text-xs border border-gray-200 dark:border-gray-600 rounded bg-white dark:bg-gray-800 text-gray-700 dark:text-gray-200 focus:outline-none focus:border-blue-500 dark:focus:border-blue-400"
+                    value={dateRange.to || ''}
+                    oninput={(e) =>
+                      handleDateRangeChange(column.key, 'to', e.currentTarget.value)}
+                  />
+                </div>
+                {#if dateRange.from || dateRange.to}
+                  <button
+                    type="button"
+                    class="mt-1 self-start px-2 py-0.5 text-xs text-red-600 border border-red-400 rounded hover:bg-red-50 dark:hover:bg-red-900/20 transition-colors"
+                    onclick={() => clearColumn(column.key)}
+                  >
+                    Clear range
                   </button>
+                {/if}
+              </div>
+            {:else}
+              <!-- Value-selection filter UI (checkboxes) -->
+              <div class="px-1 py-1 border-b border-gray-200 dark:border-gray-600">
+                <div class="flex items-center gap-1 w-full min-w-0">
+                  <input
+                    type="text"
+                    placeholder="Filter..."
+                    class="p-1 flex-1 min-w-0 px-2 py-1 text-xs border border-gray-200 dark:border-gray-600 rounded bg-white dark:bg-gray-700 text-gray-700 dark:text-gray-200 focus:outline-none focus:border-blue-500"
+                    bind:value={searchQueries[column.key]}
+                  />
 
-                  {#if showCounts && column.counts}
+                  <div class="flex items-center gap-1">
                     <button
                       class="p-0.5 flex-1 flex items-center justify-center gap-1 text-sm text-gray-600 dark:text-gray-400 bg-transparent border border-gray-200 dark:border-gray-700 rounded hover:bg-gray-100 dark:hover:bg-gray-700 hover:border-gray-300 dark:hover:border-gray-600 hover:text-gray-700 dark:hover:text-gray-300 transition-all"
-                      class:bg-blue-100={currentSortMode === 'count'}
-                      class:dark:bg-blue-900={currentSortMode === 'count'}
-                      onclick={() => toggleSortMode(column.key, 'count')}
-                      title="Sort by count"
+                      class:bg-blue-100={currentSortMode === 'name'}
+                      class:dark:bg-blue-900={currentSortMode === 'name'}
+                      onclick={() => toggleSortMode(column.key, 'name')}
+                      title="Sort by name"
                       type="button"
                     >
-                      <span class="text-sm font-semibold">#</span>
+                      <span class="flex flex-col items-center leading-none font-semibold" style="font-size:0.6rem;">
+                        <span>A</span>
+                        <span>Z</span>
+                      </span>
                       <ArrowDownOutline
                         class={'w-3 h-3 transition-transform ' +
-                          (currentSortMode === 'count'
+                          (currentSortMode === 'name'
                             ? 'text-blue-900 dark:text-blue-100'
                             : 'text-gray-400 dark:text-gray-500')}
-                        style={currentSortMode === 'count' && currentSortDir === 'asc'
+                        style={currentSortMode === 'name' && currentSortDir === 'asc'
                           ? 'transform: rotate(180deg);'
                           : ''}
                         aria-hidden="true"
                       />
                     </button>
-                  {/if}
-                </div>
-              </div>
-            </div>
 
-            <!-- Action row: Check all / Invert / Uncheck all (icon buttons) -->
-            <div class="px-2 py-1 border-b border-gray-100 dark:border-gray-600">
-              <div class="flex items-center justify-between">
-                <div class="flex items-center gap-1">
-                  <button
-                    type="button"
-                    class="p-1 rounded-md flex items-center gap-1 text-gray-600 dark:text-gray-300 hover:bg-gray-100 dark:hover:bg-gray-600 disabled:opacity-50 disabled:cursor-not-allowed"
-                    onclick={() => checkAll(column.key, sortedValues)}
-                    disabled={sortedValues.length === 0}
-                    aria-label="Check all"
-                    title="Check all"
-                  >
-                    <!-- Checked square icon (higher contrast) -->
-                    <svg
-                      class="w-4 h-4 text-gray-800 dark:text-white"
-                      viewBox="0 0 24 24"
-                      fill="none"
-                      aria-hidden="true"
+                    <button
+                      class="p-0.5 flex-1 flex items-center justify-center gap-1 text-sm text-gray-600 dark:text-gray-400 bg-transparent border border-gray-200 dark:border-gray-700 rounded hover:bg-gray-100 dark:hover:bg-gray-700 hover:border-gray-300 dark:hover:border-gray-600 hover:text-gray-700 dark:hover:text-gray-300 transition-all"
+                      class:bg-blue-100={currentSortMode === 'number'}
+                      class:dark:bg-blue-900={currentSortMode === 'number'}
+                      onclick={() => toggleSortMode(column.key, 'number')}
+                      title="Sort by number"
+                      aria-label="Sort by number"
+                      type="button"
                     >
-                      <rect
-                        x="3"
-                        y="3"
-                        width="18"
-                        height="18"
-                        rx="2"
-                        stroke="currentColor"
-                        stroke-width="2.5"
-                        fill="none"
+                      <span class="flex flex-col items-center leading-none font-semibold" style="font-size:0.6rem;">
+                        <span>0</span>
+                        <span>9</span>
+                      </span>
+                      <ArrowDownOutline
+                        class={'w-3 h-3 transition-transform ' +
+                          (currentSortMode === 'number'
+                            ? 'text-blue-900 dark:text-blue-100'
+                            : 'text-gray-400 dark:text-gray-500')}
+                        style={currentSortMode === 'number' && currentSortDir === 'asc'
+                          ? 'transform: rotate(180deg);'
+                          : ''}
+                        aria-hidden="true"
                       />
-                      <path
-                        d="M7 13l3 3 7-7"
-                        stroke="currentColor"
-                        stroke-width="2"
-                        stroke-linecap="round"
-                        stroke-linejoin="round"
-                        fill="none"
-                      />
-                    </svg>
-                    <span class="text-sm text-gray-800 dark:text-gray-100 select-none">All</span>
-                  </button>
+                    </button>
 
-                  <button
-                    type="button"
-                    class="p-1 rounded-md flex items-center gap-1 text-gray-600 dark:text-gray-300 hover:bg-gray-100 dark:hover:bg-gray-600 disabled:opacity-50 disabled:cursor-not-allowed"
-                    onclick={() => invertSelection(column.key, sortedValues)}
-                    disabled={sortedValues.length === 0}
-                    aria-label="Invert selection"
-                    title="Invert selection"
-                  >
-                    <!-- Half-checked square icon (left half filled) - higher contrast -->
-                    <svg
-                      class="w-4 h-4 text-gray-800 dark:text-white"
-                      viewBox="0 0 24 24"
-                      fill="none"
-                      aria-hidden="true"
-                    >
-                      <rect
-                        x="3"
-                        y="3"
-                        width="18"
-                        height="18"
-                        rx="2"
-                        stroke="currentColor"
-                        stroke-width="2.5"
-                        fill="none"
-                      />
-                      <rect
-                        x="4"
-                        y="4"
-                        width="8.5"
-                        height="16"
-                        fill="currentColor"
-                        opacity="0.28"
-                        stroke="none"
-                      />
-                      <path
-                        d="M7 13l3 3 7-7"
-                        stroke="currentColor"
-                        stroke-width="2"
-                        stroke-linecap="round"
-                        stroke-linejoin="round"
-                        fill="none"
-                      />
-                    </svg>
-                    <span class="text-sm text-gray-800 dark:text-gray-100 select-none">Invert</span>
-                  </button>
-
-                  <button
-                    type="button"
-                    class="p-1 rounded-md flex items-center gap-1 text-gray-600 dark:text-gray-300 hover:bg-gray-100 dark:hover:bg-gray-600 disabled:opacity-50 disabled:cursor-not-allowed"
-                    onclick={() => checkNone(column.key)}
-                    disabled={sortedValues.length === 0}
-                    aria-label="Uncheck all"
-                    title="Uncheck all"
-                  >
-                    <!-- Empty square icon (higher contrast stroke) -->
-                    <svg
-                      class="w-4 h-4 text-gray-800 dark:text-white"
-                      viewBox="0 0 24 24"
-                      fill="none"
-                      aria-hidden="true"
-                    >
-                      <rect
-                        x="3"
-                        y="3"
-                        width="18"
-                        height="18"
-                        rx="2"
-                        stroke="currentColor"
-                        stroke-width="2"
-                        fill="none"
-                      />
-                    </svg>
-                    <span class="text-sm text-gray-800 dark:text-gray-100 select-none">None</span>
-                  </button>
-                </div>
-
-                <div class="pr-1">
-                  <Badge color="blue" rounded title="Total options">{sortedValues.length}</Badge>
-                </div>
-              </div>
-            </div>
-
-            <div class="p-1 overflow-y-auto flex-1" use:registerList={{ key: column.key }}>
-              {#if sortedValues.length > populateThreshold && !loadedOptions[column.key]}
-                <div class="p-1 text-sm text-gray-700 dark:text-gray-200">
-                  Too many options ({sortedValues.length}) to render by default.
-                  <button
-                    class="ml-2 px-2 py-1 text-xs rounded bg-gray-100 dark:bg-gray-600 text-gray-800 dark:text-white border border-gray-200 hover:bg-gray-200 dark:hover:bg-gray-500"
-                    type="button"
-                    onclick={() => (loadedOptions = { ...loadedOptions, [column.key]: true })}
-                  >
-                    Load options
-                  </button>
-                </div>
-              {:else if sortedValues.length > virtualThreshold}
-                {@const v = getVirtualSlice(column, sortedValues)}
-
-                <div style="height:{v.totalHeight}px; position:relative;">
-                  <div style="position:absolute; top:{v.top}px; left:0; right:0;">
-                    {#each v.slice as value, idx (idx)}
-                      {@const isSelected = selections[column.key]?.includes(value)}
-                      {@const displayValue =
-                        value === null || value === undefined ? '(empty)' : String(value)}
-
-                      <label
-                        class="flex items-center gap-1 px-2 py-1 cursor-pointer rounded-sm hover:bg-gray-100 dark:hover:bg-gray-600 transition-colors"
-                        style="height:{virtualItemHeight}px; box-sizing:border-box;"
+                    {#if showCounts && column.counts}
+                      <button
+                        class="p-0.5 flex-1 flex items-center justify-center gap-1 text-sm text-gray-600 dark:text-gray-400 bg-transparent border border-gray-200 dark:border-gray-700 rounded hover:bg-gray-100 dark:hover:bg-gray-700 hover:border-gray-300 dark:hover:border-gray-600 hover:text-gray-700 dark:hover:text-gray-300 transition-all"
+                        class:bg-blue-100={currentSortMode === 'count'}
+                        class:dark:bg-blue-900={currentSortMode === 'count'}
+                        onclick={() => toggleSortMode(column.key, 'count')}
+                        title="Sort by count"
+                        type="button"
                       >
-                        <input
-                          type="checkbox"
-                          checked={isSelected}
-                          onchange={() => toggleSelection(column.key, value)}
-                          class="w-4 h-4 shrink-0 cursor-pointer accent-blue-500"
+                        <span class="text-sm font-semibold">#</span>
+                        <ArrowDownOutline
+                          class={'w-3 h-3 transition-transform ' +
+                            (currentSortMode === 'count'
+                              ? 'text-blue-900 dark:text-blue-100'
+                              : 'text-gray-400 dark:text-gray-500')}
+                          style={currentSortMode === 'count' && currentSortDir === 'asc'
+                            ? 'transform: rotate(180deg);'
+                            : ''}
+                          aria-hidden="true"
                         />
-                        <span
-                          class="flex-1 text-sm text-gray-700 dark:text-gray-300 select-none min-w-0 overflow-hidden text-ellipsis"
-                          >{displayValue}</span
-                        >
-                        {#if showCounts && column.counts && column.counts[value] !== undefined}
-                          <span class="text-xs text-gray-500 dark:text-gray-400 ml-auto shrink-0"
-                            >({column.counts[value]})</span
-                          >
-                        {/if}
-                      </label>
-                    {/each}
+                      </button>
+                    {/if}
                   </div>
                 </div>
-              {:else if sortedValues.length > 0}
-                {#each sortedValues as value, idx (idx)}
-                  {@const isSelected = selections[column.key]?.includes(value)}
-                  {@const displayValue =
-                    value === null || value === undefined ? '(empty)' : String(value)}
+              </div>
 
-                  <label
-                    class="flex items-center gap-1 px-2 py-1 cursor-pointer rounded-sm hover:bg-gray-100 dark:hover:bg-gray-600 transition-colors"
-                  >
-                    <input
-                      type="checkbox"
-                      checked={isSelected}
-                      onchange={() => toggleSelection(column.key, value)}
-                      class="w-4 h-4 shrink-0 cursor-pointer accent-blue-500"
-                    />
-                    <span
-                      class="flex-1 text-sm text-gray-700 dark:text-gray-300 select-none min-w-0 overflow-hidden text-ellipsis"
-                      >{displayValue}</span
+              <!-- Action row: Check all / Invert / Uncheck all (icon buttons) -->
+              <div class="px-2 py-1 border-b border-gray-100 dark:border-gray-600">
+                <div class="flex items-center justify-between">
+                  <div class="flex items-center gap-1">
+                    <button
+                      type="button"
+                      class="p-1 rounded-md flex items-center gap-1 text-gray-600 dark:text-gray-300 hover:bg-gray-100 dark:hover:bg-gray-600 disabled:opacity-50 disabled:cursor-not-allowed"
+                      onclick={() => checkAll(column.key, sortedValues)}
+                      disabled={sortedValues.length === 0}
+                      aria-label="Check all"
+                      title="Check all"
                     >
-                    {#if showCounts && column.counts && column.counts[value] !== undefined}
-                      <span class="text-xs text-gray-500 dark:text-gray-400 ml-auto shrink-0"
-                        >({column.counts[value]})</span
+                      <!-- Checked square icon (higher contrast) -->
+                      <svg
+                        class="w-4 h-4 text-gray-800 dark:text-white"
+                        viewBox="0 0 24 24"
+                        fill="none"
+                        aria-hidden="true"
                       >
-                    {/if}
-                  </label>
-                {/each}
-              {:else}
-                <div class="p-4 text-center text-sm text-gray-400 dark:text-gray-500">
-                  No values available
+                        <rect
+                          x="3"
+                          y="3"
+                          width="18"
+                          height="18"
+                          rx="2"
+                          stroke="currentColor"
+                          stroke-width="2.5"
+                          fill="none"
+                        />
+                        <path
+                          d="M7 13l3 3 7-7"
+                          stroke="currentColor"
+                          stroke-width="2"
+                          stroke-linecap="round"
+                          stroke-linejoin="round"
+                          fill="none"
+                        />
+                      </svg>
+                      <span class="text-sm text-gray-800 dark:text-gray-100 select-none">All</span>
+                    </button>
+
+                    <button
+                      type="button"
+                      class="p-1 rounded-md flex items-center gap-1 text-gray-600 dark:text-gray-300 hover:bg-gray-100 dark:hover:bg-gray-600 disabled:opacity-50 disabled:cursor-not-allowed"
+                      onclick={() => invertSelection(column.key, sortedValues)}
+                      disabled={sortedValues.length === 0}
+                      aria-label="Invert selection"
+                      title="Invert selection"
+                    >
+                      <!-- Half-checked square icon (left half filled) - higher contrast -->
+                      <svg
+                        class="w-4 h-4 text-gray-800 dark:text-white"
+                        viewBox="0 0 24 24"
+                        fill="none"
+                        aria-hidden="true"
+                      >
+                        <rect
+                          x="3"
+                          y="3"
+                          width="18"
+                          height="18"
+                          rx="2"
+                          stroke="currentColor"
+                          stroke-width="2.5"
+                          fill="none"
+                        />
+                        <rect
+                          x="4"
+                          y="4"
+                          width="8.5"
+                          height="16"
+                          fill="currentColor"
+                          opacity="0.28"
+                          stroke="none"
+                        />
+                        <path
+                          d="M7 13l3 3 7-7"
+                          stroke="currentColor"
+                          stroke-width="2"
+                          stroke-linecap="round"
+                          stroke-linejoin="round"
+                          fill="none"
+                        />
+                      </svg>
+                      <span class="text-sm text-gray-800 dark:text-gray-100 select-none"
+                        >Invert</span
+                      >
+                    </button>
+
+                    <button
+                      type="button"
+                      class="p-1 rounded-md flex items-center gap-1 text-gray-600 dark:text-gray-300 hover:bg-gray-100 dark:hover:bg-gray-600 disabled:opacity-50 disabled:cursor-not-allowed"
+                      onclick={() => checkNone(column.key)}
+                      disabled={sortedValues.length === 0}
+                      aria-label="Uncheck all"
+                      title="Uncheck all"
+                    >
+                      <!-- Empty square icon (higher contrast stroke) -->
+                      <svg
+                        class="w-4 h-4 text-gray-800 dark:text-white"
+                        viewBox="0 0 24 24"
+                        fill="none"
+                        aria-hidden="true"
+                      >
+                        <rect
+                          x="3"
+                          y="3"
+                          width="18"
+                          height="18"
+                          rx="2"
+                          stroke="currentColor"
+                          stroke-width="2"
+                          fill="none"
+                        />
+                      </svg>
+                      <span class="text-sm text-gray-800 dark:text-gray-100 select-none"
+                        >None</span
+                      >
+                    </button>
+                  </div>
+
+                  <div class="pr-1">
+                    <Badge color="blue" rounded title="Total options">{sortedValues.length}</Badge>
+                  </div>
                 </div>
-              {/if}
-            </div>
+              </div>
+
+              <div class="p-1 overflow-y-auto flex-1 max-h-48" use:registerList={{ key: column.key }}>
+                {#if sortedValues.length > populateThreshold && !loadedOptions[column.key]}
+                  <div class="p-1 text-sm text-gray-700 dark:text-gray-200">
+                    Too many options ({sortedValues.length}) to render by default.
+                    <button
+                      class="ml-2 px-2 py-1 text-xs rounded bg-gray-100 dark:bg-gray-600 text-gray-800 dark:text-white border border-gray-200 hover:bg-gray-200 dark:hover:bg-gray-500"
+                      type="button"
+                      onclick={() => (loadedOptions = { ...loadedOptions, [column.key]: true })}
+                    >
+                      Load options
+                    </button>
+                  </div>
+                {:else if sortedValues.length > virtualThreshold}
+                  {@const v = getVirtualSlice(column, sortedValues)}
+
+                  <div style="height:{v.totalHeight}px; position:relative;">
+                    <div style="position:absolute; top:{v.top}px; left:0; right:0;">
+                      {#each v.slice as value, idx (idx)}
+                        {@const isSelected = selections[column.key]?.includes(value)}
+                        {@const displayValue =
+                          value === null || value === undefined ? '(empty)' : String(value)}
+
+                        <label
+                          class="flex items-center gap-1 px-2 py-1 cursor-pointer rounded-sm hover:bg-gray-100 dark:hover:bg-gray-600 transition-colors"
+                          style="height:{virtualItemHeight}px; box-sizing:border-box;"
+                        >
+                          <input
+                            type="checkbox"
+                            checked={isSelected}
+                            onchange={() => toggleSelection(column.key, value)}
+                            class="w-4 h-4 shrink-0 cursor-pointer accent-blue-500"
+                          />
+                          <span
+                            class="flex-1 text-sm text-gray-700 dark:text-gray-300 select-none min-w-0 overflow-hidden text-ellipsis"
+                            >{displayValue}</span
+                          >
+                          {#if showCounts && column.counts && column.counts[value] !== undefined}
+                            <span
+                              class="text-xs text-gray-500 dark:text-gray-400 ml-auto shrink-0"
+                              >({column.counts[value]})</span
+                            >
+                          {/if}
+                        </label>
+                      {/each}
+                    </div>
+                  </div>
+                {:else if sortedValues.length > 0}
+                  {#each sortedValues as value, idx (idx)}
+                    {@const isSelected = selections[column.key]?.includes(value)}
+                    {@const displayValue =
+                      value === null || value === undefined ? '(empty)' : String(value)}
+
+                    <label
+                      class="flex items-center gap-1 px-2 py-1 cursor-pointer rounded-sm hover:bg-gray-100 dark:hover:bg-gray-600 transition-colors"
+                    >
+                      <input
+                        type="checkbox"
+                        checked={isSelected}
+                        onchange={() => toggleSelection(column.key, value)}
+                        class="w-4 h-4 shrink-0 cursor-pointer accent-blue-500"
+                      />
+                      <span
+                        class="flex-1 text-sm text-gray-700 dark:text-gray-300 select-none min-w-0 overflow-hidden text-ellipsis"
+                        >{displayValue}</span
+                      >
+                      {#if showCounts && column.counts && column.counts[value] !== undefined}
+                        <span class="text-xs text-gray-500 dark:text-gray-400 ml-auto shrink-0"
+                          >({column.counts[value]})</span
+                        >
+                      {/if}
+                    </label>
+                  {/each}
+                {:else}
+                  <div class="p-4 text-center text-sm text-gray-400 dark:text-gray-500">
+                    No values available
+                  </div>
+                {/if}
+              </div>
+            {/if}
           </div>
         {/if}
       </div>
