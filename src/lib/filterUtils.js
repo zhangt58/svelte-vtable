@@ -88,9 +88,7 @@ export function matchesDateRange(value, from, to) {
 
   if (to) {
     // Extend date-only "to" to the end of that day so it is fully inclusive
-    const toDate = /^\d{4}-\d{2}-\d{2}$/.test(to)
-      ? new Date(to + 'T23:59:59.999')
-      : new Date(to);
+    const toDate = /^\d{4}-\d{2}-\d{2}$/.test(to) ? new Date(to + 'T23:59:59.999') : new Date(to);
     if (!isNaN(toDate.getTime()) && itemDate > toDate) return false;
   }
 

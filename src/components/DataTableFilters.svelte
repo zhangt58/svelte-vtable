@@ -464,9 +464,7 @@
   >
     {#each columnFilters as column (column.key)}
       {@const _sel = selections[column.key]}
-      {@const isActive = Array.isArray(_sel)
-        ? _sel.length > 0
-        : !!(_sel?.from || _sel?.to)}
+      {@const isActive = Array.isArray(_sel) ? _sel.length > 0 : !!(_sel?.from || _sel?.to)}
       {@const isOpen = openDropdowns[column.key]}
       {@const sortedValues = getSortedValues(column)}
       {@const currentSortMode = sortModes[column.key] || 'name'}
@@ -537,8 +535,7 @@
                     type={inputType}
                     class="flex-1 min-w-0 px-2 py-1 text-xs border border-gray-200 dark:border-gray-600 rounded bg-white dark:bg-gray-800 text-gray-700 dark:text-gray-200 focus:outline-none focus:border-blue-500 dark:focus:border-blue-400"
                     value={dateRange.to || ''}
-                    oninput={(e) =>
-                      handleDateRangeChange(column.key, 'to', e.currentTarget.value)}
+                    oninput={(e) => handleDateRangeChange(column.key, 'to', e.currentTarget.value)}
                   />
                 </div>
                 {#if dateRange.from || dateRange.to}
@@ -571,7 +568,10 @@
                       title="Sort by name"
                       type="button"
                     >
-                      <span class="flex flex-col items-center leading-none font-semibold" style="font-size:0.6rem;">
+                      <span
+                        class="flex flex-col items-center leading-none font-semibold"
+                        style="font-size:0.6rem;"
+                      >
                         <span>A</span>
                         <span>Z</span>
                       </span>
@@ -596,7 +596,10 @@
                       aria-label="Sort by number"
                       type="button"
                     >
-                      <span class="flex flex-col items-center leading-none font-semibold" style="font-size:0.6rem;">
+                      <span
+                        class="flex flex-col items-center leading-none font-semibold"
+                        style="font-size:0.6rem;"
+                      >
                         <span>0</span>
                         <span>9</span>
                       </span>
@@ -753,9 +756,7 @@
                           fill="none"
                         />
                       </svg>
-                      <span class="text-sm text-gray-800 dark:text-gray-100 select-none"
-                        >None</span
-                      >
+                      <span class="text-sm text-gray-800 dark:text-gray-100 select-none">None</span>
                     </button>
                   </div>
 
@@ -765,7 +766,10 @@
                 </div>
               </div>
 
-              <div class="p-1 overflow-y-auto flex-1 max-h-48" use:registerList={{ key: column.key }}>
+              <div
+                class="p-1 overflow-y-auto flex-1 max-h-48"
+                use:registerList={{ key: column.key }}
+              >
                 {#if sortedValues.length > populateThreshold && !loadedOptions[column.key]}
                   <div class="p-1 text-sm text-gray-700 dark:text-gray-200">
                     Too many options ({sortedValues.length}) to render by default.
@@ -802,8 +806,7 @@
                             >{displayValue}</span
                           >
                           {#if showCounts && column.counts && column.counts[value] !== undefined}
-                            <span
-                              class="text-xs text-gray-500 dark:text-gray-400 ml-auto shrink-0"
+                            <span class="text-xs text-gray-500 dark:text-gray-400 ml-auto shrink-0"
                               >({column.counts[value]})</span
                             >
                           {/if}
