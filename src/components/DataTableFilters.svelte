@@ -643,11 +643,35 @@
                   {#if column.minValue}
                     <button
                       type="button"
-                      class="shrink-0 px-2 py-0.5 text-xs rounded border border-indigo-400 text-indigo-700 dark:text-indigo-300 hover:bg-indigo-50 dark:hover:bg-indigo-900/20 transition-colors"
+                      class="shrink-0 px-2 py-0.5 text-xs rounded border border-indigo-400 text-indigo-700 dark:text-indigo-300 hover:bg-indigo-50 dark:hover:bg-indigo-900/20 transition-colors flex items-center"
                       title="Set From to the earliest record ({column.minValue})"
+                      aria-label="Set From to the earliest record"
                       onclick={() => handleDateRangeChange(column.key, 'from', column.minValue)}
                     >
-                      Earliest
+                      <!-- Double-chevron-left icon (Earliest) -->
+                      <svg
+                        class="w-4 h-4 text-indigo-700 dark:text-indigo-300"
+                        viewBox="0 0 24 24"
+                        fill="none"
+                        aria-hidden="true"
+                      >
+                        <path
+                          d="M11.5 7.5L7 12l4.5 4.5"
+                          stroke="currentColor"
+                          stroke-width="2"
+                          stroke-linecap="round"
+                          stroke-linejoin="round"
+                          fill="none"
+                        />
+                        <path
+                          d="M17.5 7.5L13 12l4.5 4.5"
+                          stroke="currentColor"
+                          stroke-width="2"
+                          stroke-linecap="round"
+                          stroke-linejoin="round"
+                          fill="none"
+                        />
+                      </svg>
                     </button>
                   {/if}
                 </div>
@@ -669,11 +693,35 @@
                   {#if column.maxValue}
                     <button
                       type="button"
-                      class="shrink-0 px-2 py-0.5 text-xs rounded border border-indigo-400 text-indigo-700 dark:text-indigo-300 hover:bg-indigo-50 dark:hover:bg-indigo-900/20 transition-colors"
+                      class="shrink-0 px-2 py-0.5 text-xs rounded border border-indigo-400 text-indigo-700 dark:text-indigo-300 hover:bg-indigo-50 dark:hover:bg-indigo-900/20 transition-colors flex items-center"
                       title="Set To to the latest record ({column.maxValue})"
+                      aria-label="Set To to the latest record"
                       onclick={() => handleDateRangeChange(column.key, 'to', column.maxValue)}
                     >
-                      Latest
+                      <!-- Double-chevron-right icon (Latest) -->
+                      <svg
+                        class="w-4 h-4 text-indigo-700 dark:text-indigo-300"
+                        viewBox="0 0 24 24"
+                        fill="none"
+                        aria-hidden="true"
+                      >
+                        <path
+                          d="M12.5 7.5L17 12l-4.5 4.5"
+                          stroke="currentColor"
+                          stroke-width="2"
+                          stroke-linecap="round"
+                          stroke-linejoin="round"
+                          fill="none"
+                        />
+                        <path
+                          d="M6.5 7.5L11 12l-4.5 4.5"
+                          stroke="currentColor"
+                          stroke-width="2"
+                          stroke-linecap="round"
+                          stroke-linejoin="round"
+                          fill="none"
+                        />
+                      </svg>
                     </button>
                   {/if}
                 </div>
