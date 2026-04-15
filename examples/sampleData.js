@@ -185,6 +185,15 @@ const generatedData = Array.from({ length: 1000 }, (_, i) => {
     level: pick(levels),
     hireDate,
     description: makeDescription(),
+    // Full datetime of the same hire event (with a random hour/minute offset)
+    createdAt: (() => {
+      const addHours = Math.floor(rand() * 24);
+      const addMinutes = Math.floor(rand() * 60);
+      const d = new Date(hireDateMs + addHours * 3600000 + addMinutes * 60000);
+      // Format as YYYY-MM-DDTHH:mm (local time) for datetime-local inputs
+      const pad = (n) => String(n).padStart(2, '0');
+      return `${d.getFullYear()}-${pad(d.getMonth() + 1)}-${pad(d.getDate())}T${pad(d.getHours())}:${pad(d.getMinutes())}`;
+    })(),
   };
 });
 
@@ -196,6 +205,7 @@ export const filterColumns = [
   { key: 'status', label: 'Status' },
   { key: 'level', label: 'Level' },
   { key: 'hireDate', label: 'Hire Date', type: 'daterange' },
+  { key: 'createdAt', label: 'Created At', type: 'datetimerange' },
 ];
 
 // Define table columns for DataTable
@@ -206,5 +216,6 @@ export const tableColumns = [
   { key: 'status', label: 'Status', stretch: 1.5 },
   { key: 'level', label: 'Level', stretch: 1.5 },
   { key: 'hireDate', label: 'Hire Date', stretch: 2 },
+  { key: 'createdAt', label: 'Created At', stretch: 2 },
   { key: 'description', label: 'Description', stretch: 4 },
 ];

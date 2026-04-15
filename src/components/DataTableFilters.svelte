@@ -35,6 +35,18 @@
     // If true, render dropdowns inline (in-flow) so opening them expands the parent container.
     // If false, render as absolutely-positioned overlays (old behavior).
     dropdownInline = true,
+    // Relative-range quick-set presets shown in the datetime range picker.
+    // Each entry: { label: string, value: number, unit: 'hour'|'day'|'week'|'month'|'year' }
+    // Presets with unit 'hour' are only shown for 'datetimerange' columns.
+    relativeRangePresets = /** @type {Array<{label:string,value:number,unit:string}>} */ ([
+      { label: '1h', value: 1, unit: 'hour' },
+      { label: '6h', value: 6, unit: 'hour' },
+      { label: '12h', value: 12, unit: 'hour' },
+      { label: '1d', value: 1, unit: 'day' },
+      { label: '7d', value: 7, unit: 'day' },
+      { label: '30d', value: 30, unit: 'day' },
+      { label: '1y', value: 1, unit: 'year' },
+    ]),
   } = $props();
 
   // Internal state for selected options per column
@@ -391,6 +403,93 @@
     scheduleEmit(columnKey, updated);
   }
 
+  // --- Date-range slider helpers ---
+
+  // Parse a date-filter string (e.g. "2024-01-15" or "2024-01-15T08:30") to a ms timestamp.
+  // Uses the same rule as filterUtils.matchesDateRange: a bare YYYY-MM-DD string is treated as
+  // local midnight (appended with "T00:00:00") so slider thumb positions stay consistent with
+  // how records are matched.
+  function parseFilterDate(str) {
+    if (!str) return NaN;
+    return /^\d{4}-\d{2}-\d{2}$/.test(str)
+      ? new Date(str + 'T00:00:00').getTime()
+      : new Date(str).getTime();
+  }
+
+  // Format a timestamp back to the value expected by <input type="date"> or
+  // <input type="datetime-local">.
+  function formatAsInputValue(ms, inputType) {
+    const d = new Date(ms);
+    const pad = (n) => String(n).padStart(2, '0');
+    const dateStr = `${d.getFullYear()}-${pad(d.getMonth() + 1)}-${pad(d.getDate())}`;
+    if (inputType === 'datetime-local') {
+      return `${dateStr}T${pad(d.getHours())}:${pad(d.getMinutes())}`;
+    }
+    return dateStr;
+  }
+
+  // Handle the "from" slider thumb moving.
+  function handleFromSlider(columnKey, pct, minMs, maxMs, inputType) {
+    const current = selections[columnKey] || {};
+    const toMs = parseFilterDate(current.to);
+    let newFromMs = minMs + (pct / 100) * (maxMs - minMs);
+    // Clamp: from must not exceed to
+    if (!isNaN(toMs) && newFromMs > toMs) newFromMs = toMs;
+    const newFrom = formatAsInputValue(newFromMs, inputType);
+    const updated = { ...current, from: newFrom };
+    selections = { ...selections, [columnKey]: updated };
+    scheduleEmit(columnKey, updated);
+  }
+
+  // Handle the "to" slider thumb moving.
+  function handleToSlider(columnKey, pct, minMs, maxMs, inputType) {
+    const current = selections[columnKey] || {};
+    const fromMs = parseFilterDate(current.from);
+    let newToMs = minMs + (pct / 100) * (maxMs - minMs);
+    // Clamp: to must not be less than from
+    if (!isNaN(fromMs) && newToMs < fromMs) newToMs = fromMs;
+    const newTo = formatAsInputValue(newToMs, inputType);
+    const updated = { ...current, to: newTo };
+    selections = { ...selections, [columnKey]: updated };
+    scheduleEmit(columnKey, updated);
+  }
+
+  // Set the date range from a relative preset (e.g. "last 7 days" → from=now-7d, to=now).
+  function setRelativeRange(columnKey, value, unit) {
+    const now = new Date();
+    const from = new Date(now);
+    switch (unit) {
+      case 'hour':
+        from.setHours(from.getHours() - value);
+        break;
+      case 'day':
+        from.setDate(from.getDate() - value);
+        break;
+      case 'week':
+        from.setDate(from.getDate() - value * 7);
+        break;
+      case 'month':
+        from.setMonth(from.getMonth() - value);
+        break;
+      case 'year':
+        from.setFullYear(from.getFullYear() - value);
+        break;
+    }
+    const col = columnFilters.find((c) => c.key === columnKey);
+    const inputType = col?.type === 'datetimerange' ? 'datetime-local' : 'date';
+    const updated = {
+      from: formatAsInputValue(from.getTime(), inputType),
+      to: formatAsInputValue(now.getTime(), inputType),
+    };
+    selections = { ...selections, [columnKey]: updated };
+    scheduleEmit(columnKey, updated);
+  }
+
+  // Return the relative presets applicable to a given column type.
+  function getApplicablePresets(colType) {
+    return relativeRangePresets.filter((p) => p.unit !== 'hour' || colType === 'datetimerange');
+  }
+
   // Show all dropdowns
   function showAllDropdowns() {
     const allOpen = {};
@@ -496,9 +595,13 @@
 
         {#if isOpen}
           <div
-            class={dropdownInline
-              ? `mt-1 bg-white dark:bg-gray-700 border border-gray-300 dark:border-gray-600 rounded-md shadow-lg dark:shadow-gray-900 max-h-64 flex flex-col dropdown-menu`
-              : `absolute top-full mt-1 left-0 right-0 bg-white dark:bg-gray-700 border border-gray-300 dark:border-gray-600 rounded-md shadow-lg dark:shadow-gray-900 max-h-64 flex flex-col dropdown-menu`}
+            class={[
+              dropdownInline ? '' : 'absolute top-full left-0 right-0',
+              'mt-1 bg-white dark:bg-gray-700 border border-gray-300 dark:border-gray-600 rounded-md shadow-lg dark:shadow-gray-900 flex flex-col dropdown-menu',
+              isDateRangeColumn(column) ? 'overflow-y-auto' : 'max-h-64',
+            ]
+              .filter(Boolean)
+              .join(' ')}
             tabindex="-1"
             data-column={column.key}
           >
@@ -506,7 +609,22 @@
               <!-- Date / datetime range picker UI -->
               {@const inputType = column.type === 'datetimerange' ? 'datetime-local' : 'date'}
               {@const dateRange = selections[column.key] || {}}
+              {@const minMs = parseFilterDate(column.minValue)}
+              {@const maxMs = parseFilterDate(column.maxValue)}
+              {@const totalMs = maxMs - minMs}
+              {@const fromMs = parseFilterDate(dateRange.from)}
+              {@const toMs = parseFilterDate(dateRange.to)}
+              {@const fromPct =
+                totalMs > 0 && !isNaN(fromMs)
+                  ? Math.max(0, Math.min(100, ((fromMs - minMs) / totalMs) * 100))
+                  : 0}
+              {@const toPct =
+                totalMs > 0 && !isNaN(toMs)
+                  ? Math.max(0, Math.min(100, ((toMs - minMs) / totalMs) * 100))
+                  : 100}
+              {@const applicablePresets = getApplicablePresets(column.type)}
               <div class="p-3 flex flex-col gap-2">
+                <!-- From input + Earliest shortcut -->
                 <div class="flex items-center gap-2">
                   <label
                     class="text-xs font-medium text-gray-500 dark:text-gray-400 w-8 shrink-0"
@@ -522,7 +640,42 @@
                     oninput={(e) =>
                       handleDateRangeChange(column.key, 'from', e.currentTarget.value)}
                   />
+                  {#if column.minValue}
+                    <button
+                      type="button"
+                      class="shrink-0 px-2 py-0.5 text-xs rounded border border-indigo-400 text-indigo-700 dark:text-indigo-300 hover:bg-indigo-50 dark:hover:bg-indigo-900/20 transition-colors flex items-center"
+                      title="Set From to the earliest record ({column.minValue})"
+                      aria-label="Set From to the earliest record"
+                      onclick={() => handleDateRangeChange(column.key, 'from', column.minValue)}
+                    >
+                      <!-- Double-chevron-left icon (Earliest) -->
+                      <svg
+                        class="w-4 h-4 text-indigo-700 dark:text-indigo-300"
+                        viewBox="0 0 24 24"
+                        fill="none"
+                        aria-hidden="true"
+                      >
+                        <path
+                          d="M11.5 7.5L7 12l4.5 4.5"
+                          stroke="currentColor"
+                          stroke-width="2"
+                          stroke-linecap="round"
+                          stroke-linejoin="round"
+                          fill="none"
+                        />
+                        <path
+                          d="M17.5 7.5L13 12l4.5 4.5"
+                          stroke="currentColor"
+                          stroke-width="2"
+                          stroke-linecap="round"
+                          stroke-linejoin="round"
+                          fill="none"
+                        />
+                      </svg>
+                    </button>
+                  {/if}
                 </div>
+                <!-- To input + Latest shortcut -->
                 <div class="flex items-center gap-2">
                   <label
                     class="text-xs font-medium text-gray-500 dark:text-gray-400 w-8 shrink-0"
@@ -537,11 +690,115 @@
                     value={dateRange.to || ''}
                     oninput={(e) => handleDateRangeChange(column.key, 'to', e.currentTarget.value)}
                   />
+                  {#if column.maxValue}
+                    <button
+                      type="button"
+                      class="shrink-0 px-2 py-0.5 text-xs rounded border border-indigo-400 text-indigo-700 dark:text-indigo-300 hover:bg-indigo-50 dark:hover:bg-indigo-900/20 transition-colors flex items-center"
+                      title="Set To to the latest record ({column.maxValue})"
+                      aria-label="Set To to the latest record"
+                      onclick={() => handleDateRangeChange(column.key, 'to', column.maxValue)}
+                    >
+                      <!-- Double-chevron-right icon (Latest) -->
+                      <svg
+                        class="w-4 h-4 text-indigo-700 dark:text-indigo-300"
+                        viewBox="0 0 24 24"
+                        fill="none"
+                        aria-hidden="true"
+                      >
+                        <path
+                          d="M12.5 7.5L17 12l-4.5 4.5"
+                          stroke="currentColor"
+                          stroke-width="2"
+                          stroke-linecap="round"
+                          stroke-linejoin="round"
+                          fill="none"
+                        />
+                        <path
+                          d="M6.5 7.5L11 12l-4.5 4.5"
+                          stroke="currentColor"
+                          stroke-width="2"
+                          stroke-linecap="round"
+                          stroke-linejoin="round"
+                          fill="none"
+                        />
+                      </svg>
+                    </button>
+                  {/if}
                 </div>
+
+                <!-- Dual-range slider (only when column provides min/max) -->
+                {#if column.minValue && column.maxValue && totalMs > 0}
+                  <div class="dual-range-wrapper" aria-label="Date range slider">
+                    <!-- Background track -->
+                    <div class="dual-range-track-bg"></div>
+                    <!-- Active-range highlight -->
+                    <div
+                      class="dual-range-track-fill"
+                      style="left:{fromPct}%; right:{100 - toPct}%"
+                    ></div>
+                    <!-- From thumb -->
+                    <input
+                      type="range"
+                      class="dual-range-input"
+                      min="0"
+                      max="100"
+                      step="0.02"
+                      value={fromPct}
+                      style="z-index:{fromPct >= toPct - 2 ? 4 : 3}"
+                      oninput={(e) =>
+                        handleFromSlider(
+                          column.key,
+                          parseFloat(e.currentTarget.value),
+                          minMs,
+                          maxMs,
+                          inputType,
+                        )}
+                      aria-label="Range start"
+                    />
+                    <!-- To thumb -->
+                    <input
+                      type="range"
+                      class="dual-range-input"
+                      min="0"
+                      max="100"
+                      step="0.02"
+                      value={toPct}
+                      style="z-index:{fromPct >= toPct - 2 ? 3 : 4}"
+                      oninput={(e) =>
+                        handleToSlider(
+                          column.key,
+                          parseFloat(e.currentTarget.value),
+                          minMs,
+                          maxMs,
+                          inputType,
+                        )}
+                      aria-label="Range end"
+                    />
+                  </div>
+                {/if}
+
+                <!-- Relative-range quick buttons -->
+                {#if applicablePresets.length > 0}
+                  <div
+                    class="flex flex-wrap gap-1 pt-1 border-t border-gray-100 dark:border-gray-600"
+                  >
+                    {#each applicablePresets as preset (preset.label)}
+                      <button
+                        type="button"
+                        class="px-2 py-0.5 text-xs rounded border border-blue-400 text-blue-700 dark:text-blue-300 hover:bg-blue-50 dark:hover:bg-blue-900/20 transition-colors"
+                        title="Last {preset.value} {preset.unit}{preset.value !== 1 ? 's' : ''}"
+                        onclick={() => setRelativeRange(column.key, preset.value, preset.unit)}
+                      >
+                        Last {preset.label}
+                      </button>
+                    {/each}
+                  </div>
+                {/if}
+
                 {#if dateRange.from || dateRange.to}
                   <button
                     type="button"
-                    class="mt-1 self-start px-2 py-0.5 text-xs text-red-600 border border-red-400 rounded hover:bg-red-50 dark:hover:bg-red-900/20 transition-colors"
+                    class="self-start px-2 py-0.5 text-xs text-red-600 border border-red-400 rounded hover:bg-red-50 dark:hover:bg-red-900/20 transition-colors"
                     onclick={() => clearColumn(column.key)}
                   >
                     Clear range
@@ -880,5 +1137,89 @@
     .grid-horizontal {
       grid-template-columns: 1fr;
     }
+  }
+
+  /* ── Dual-range slider ─────────────────────────────────────────────────── */
+  .dual-range-wrapper {
+    position: relative;
+    height: 20px;
+    display: flex;
+    align-items: center;
+    margin: 4px 0;
+  }
+
+  .dual-range-track-bg {
+    position: absolute;
+    left: 0;
+    right: 0;
+    height: 4px;
+    border-radius: 2px;
+    background: #d1d5db; /* gray-300 */
+  }
+
+  :global(.dark) .dual-range-track-bg {
+    background: #4b5563; /* gray-600 */
+  }
+
+  .dual-range-track-fill {
+    position: absolute;
+    height: 4px;
+    border-radius: 2px;
+    background: #60a5fa; /* blue-400 */
+    pointer-events: none;
+  }
+
+  :global(.dark) .dual-range-track-fill {
+    background: #3b82f6; /* blue-500 */
+  }
+
+  .dual-range-input {
+    position: absolute;
+    left: 0;
+    width: 100%;
+    height: 4px;
+    background: none;
+    pointer-events: none;
+    appearance: none;
+    -webkit-appearance: none;
+    outline: none;
+    margin: 0;
+    padding: 0;
+  }
+
+  /* Webkit thumb */
+  .dual-range-input::-webkit-slider-thumb {
+    -webkit-appearance: none;
+    appearance: none;
+    pointer-events: all;
+    width: 16px;
+    height: 16px;
+    border-radius: 50%;
+    background: #3b82f6; /* blue-500 */
+    cursor: pointer;
+    border: 2px solid #ffffff;
+    box-shadow: 0 0 0 1px #3b82f6;
+    transition: background 0.15s;
+  }
+
+  .dual-range-input::-webkit-slider-thumb:hover {
+    background: #2563eb; /* blue-600 */
+  }
+
+  /* Firefox thumb */
+  .dual-range-input::-moz-range-thumb {
+    pointer-events: all;
+    width: 14px;
+    height: 14px;
+    border-radius: 50%;
+    background: #3b82f6;
+    cursor: pointer;
+    border: 2px solid #ffffff;
+    box-shadow: 0 0 0 1px #3b82f6;
+    transition: background 0.15s;
+  }
+
+  .dual-range-input::-moz-range-thumb:hover {
+    background: #2563eb;
   }
 </style>
