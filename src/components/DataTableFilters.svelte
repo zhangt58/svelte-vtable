@@ -624,7 +624,7 @@
                   : 100}
               {@const applicablePresets = getApplicablePresets(column.type)}
               <div class="p-3 flex flex-col gap-2">
-                <!-- From input -->
+                <!-- From input + Earliest shortcut -->
                 <div class="flex items-center gap-2">
                   <label
                     class="text-xs font-medium text-gray-500 dark:text-gray-400 w-8 shrink-0"
@@ -640,8 +640,18 @@
                     oninput={(e) =>
                       handleDateRangeChange(column.key, 'from', e.currentTarget.value)}
                   />
+                  {#if column.minValue}
+                    <button
+                      type="button"
+                      class="shrink-0 px-2 py-0.5 text-xs rounded border border-indigo-400 text-indigo-700 dark:text-indigo-300 hover:bg-indigo-50 dark:hover:bg-indigo-900/20 transition-colors"
+                      title="Set From to the earliest record ({column.minValue})"
+                      onclick={() => handleDateRangeChange(column.key, 'from', column.minValue)}
+                    >
+                      Earliest
+                    </button>
+                  {/if}
                 </div>
-                <!-- To input -->
+                <!-- To input + Latest shortcut -->
                 <div class="flex items-center gap-2">
                   <label
                     class="text-xs font-medium text-gray-500 dark:text-gray-400 w-8 shrink-0"
@@ -656,6 +666,16 @@
                     value={dateRange.to || ''}
                     oninput={(e) => handleDateRangeChange(column.key, 'to', e.currentTarget.value)}
                   />
+                  {#if column.maxValue}
+                    <button
+                      type="button"
+                      class="shrink-0 px-2 py-0.5 text-xs rounded border border-indigo-400 text-indigo-700 dark:text-indigo-300 hover:bg-indigo-50 dark:hover:bg-indigo-900/20 transition-colors"
+                      title="Set To to the latest record ({column.maxValue})"
+                      onclick={() => handleDateRangeChange(column.key, 'to', column.maxValue)}
+                    >
+                      Latest
+                    </button>
+                  {/if}
                 </div>
 
                 <!-- Dual-range slider (only when column provides min/max) -->
@@ -709,41 +729,23 @@
                   </div>
                 {/if}
 
-                <!-- Earliest / Latest + relative-range quick buttons -->
-                <div
-                  class="flex flex-wrap gap-1 pt-1 border-t border-gray-100 dark:border-gray-600"
-                >
-                  {#if column.minValue}
-                    <button
-                      type="button"
-                      class="px-2 py-0.5 text-xs rounded border border-indigo-400 text-indigo-700 dark:text-indigo-300 hover:bg-indigo-50 dark:hover:bg-indigo-900/20 transition-colors"
-                      title="Set From to the earliest record ({column.minValue})"
-                      onclick={() => handleDateRangeChange(column.key, 'from', column.minValue)}
-                    >
-                      Earliest
-                    </button>
-                  {/if}
-                  {#if column.maxValue}
-                    <button
-                      type="button"
-                      class="px-2 py-0.5 text-xs rounded border border-indigo-400 text-indigo-700 dark:text-indigo-300 hover:bg-indigo-50 dark:hover:bg-indigo-900/20 transition-colors"
-                      title="Set To to the latest record ({column.maxValue})"
-                      onclick={() => handleDateRangeChange(column.key, 'to', column.maxValue)}
-                    >
-                      Latest
-                    </button>
-                  {/if}
-                  {#each applicablePresets as preset (preset.label)}
-                    <button
-                      type="button"
-                      class="px-2 py-0.5 text-xs rounded border border-blue-400 text-blue-700 dark:text-blue-300 hover:bg-blue-50 dark:hover:bg-blue-900/20 transition-colors"
-                      title="Last {preset.value} {preset.unit}{preset.value !== 1 ? 's' : ''}"
-                      onclick={() => setRelativeRange(column.key, preset.value, preset.unit)}
-                    >
-                      {preset.label}
-                    </button>
-                  {/each}
-                </div>
+                <!-- Relative-range quick buttons -->
+                {#if applicablePresets.length > 0}
+                  <div
+                    class="flex flex-wrap gap-1 pt-1 border-t border-gray-100 dark:border-gray-600"
+                  >
+                    {#each applicablePresets as preset (preset.label)}
+                      <button
+                        type="button"
+                        class="px-2 py-0.5 text-xs rounded border border-blue-400 text-blue-700 dark:text-blue-300 hover:bg-blue-50 dark:hover:bg-blue-900/20 transition-colors"
+                        title="Last {preset.value} {preset.unit}{preset.value !== 1 ? 's' : ''}"
+                        onclick={() => setRelativeRange(column.key, preset.value, preset.unit)}
+                      >
+                        Last {preset.label}
+                      </button>
+                    {/each}
+                  </div>
+                {/if}
 
                 {#if dateRange.from || dateRange.to}
                   <button
