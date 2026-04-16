@@ -1,9 +1,6 @@
 <script>
   import { VirtualList } from 'svelte-virtuallists';
 
-  // shared default no-op function (accepts any args) so prop types allow being called with a payload
-  const DEFAULT_NOOP = (..._args) => {};
-
   // Runic props: accept props via $props() so the component matches the
   // project's runes-style components. Include the `select` callback prop.
   let {
@@ -17,8 +14,10 @@
     emptyMessage = 'No items to display.',
     colWidths = {},
     selected = null,
-    // external selection callback with a safe default no-op
-    selectCallback = DEFAULT_NOOP,
+    // onselect({ item, index }) — new canonical name
+    onselect = undefined,
+    // Deprecated: use onselect instead
+    selectCallback = undefined,
     // onsort({ key, dir }) is called whenever sort changes.
     // When provided, no local sorting is applied (server-side sort pattern).
     onsort = undefined,
@@ -61,25 +60,27 @@
     });
   });
 
+  // Deprecation warning flag for selectCallback (fires once per instance)
+  let _selectCallbackWarned = false;
+
   // expose selection via the callback prop (if provided)
   function selectItem(item, index) {
     selected = item;
     try {
-      callSelectCallback({ item, index });
+      if (onselect !== undefined) {
+        onselect({ item, index });
+      } else if (selectCallback !== undefined) {
+        if (!_selectCallbackWarned) {
+          console.warn(
+            '[svelte-vtable] selectCallback is deprecated and will be removed in the next major version. Use onselect instead.',
+          );
+          _selectCallbackWarned = true;
+        }
+        /** @type {any} */ (selectCallback)({ item, index });
+      }
     } catch (err) {
       try {
-        console.error('selectCallback threw:', err);
-      } catch (e) {}
-    }
-  }
-
-  // Wrapper that casts the possibly-typed callback to any before invoking so callers may pass a payload
-  function callSelectCallback(payload) {
-    try {
-      /** @type {any} */ (selectCallback)(payload);
-    } catch (err) {
-      try {
-        console.error('selectCallback threw:', err);
+        console.error('onselect threw:', err);
       } catch (e) {}
     }
   }

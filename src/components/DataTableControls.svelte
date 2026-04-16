@@ -11,23 +11,39 @@
     currentPage = 1,
     perPage = $bindable(25),
     totalItems = 0,
-    pagechange = () => {},
-    searchchange = () => {},
+    // New canonical callback names
+    onpage = undefined,
+    onsearch = undefined,
     // control visibility of DataTableFilters above the controls
     filtersVisible = false,
-    // callback when toggle changes: filterstoggle({ filtersVisible })
-    filterstoggle = () => {},
+    // callback when toggle changes: onfilterstoggle({ visible })
+    onfilterstoggle = undefined,
     // optional DataTableFilters inputs - when provided, this component will render the filters
     columnFilters = [],
     activeFilters = {},
-    /** @type {(..._args: any[]) => void} */
-    filterChange = (..._args) => {},
+    // onfilter({ key, values, allFilters }) — passed through to DataTableFilters
+    /** @type {((..._args: any[]) => void) | undefined} */
+    onfilter = undefined,
     direction = 'horizontal',
     showCounts = true,
     className = '',
-    // new callback when perPage changes
-    perpagechange = () => {},
+    // callback when perPage changes: onperpage({ perPage })
+    onperpage = undefined,
+    // Deprecated old names (compatibility shims; will be removed in next major version)
+    pagechange = undefined,
+    searchchange = undefined,
+    filterstoggle = undefined,
+    perpagechange = undefined,
+    /** @type {((..._args: any[]) => void) | undefined} */
+    filterChange = undefined,
   } = $props();
+
+  // Deprecation warning flags (fire once per instance)
+  let _pagechangeWarned = false;
+  let _searchchangeWarned = false;
+  let _filterstoggleWarned = false;
+  let _perpagechangeWarned = false;
+  let _filterChangeWarned = false;
 
   const perPageOptions = [
     { value: 10, name: '10 rows' },
@@ -60,16 +76,38 @@
     const np = Math.min(Math.max(1, Math.floor(p)), totalPages);
     if (np !== currentPage) {
       currentPage = np;
-      pagechange?.({ currentPage });
+      if (onpage !== undefined) {
+        onpage({ page: np });
+      } else if (pagechange !== undefined) {
+        if (!_pagechangeWarned) {
+          console.warn(
+            '[svelte-vtable] pagechange is deprecated and will be removed in the next major version. Use onpage instead.',
+          );
+          _pagechangeWarned = true;
+        }
+        pagechange({ currentPage: np });
+      }
     }
   }
 
   // emit search changes for parent when search updates
   $effect(() => {
-    if (typeof search !== 'undefined') searchchange?.({ search });
+    if (typeof search !== 'undefined') {
+      if (onsearch !== undefined) {
+        onsearch({ search });
+      } else if (searchchange !== undefined) {
+        if (!_searchchangeWarned) {
+          console.warn(
+            '[svelte-vtable] searchchange is deprecated and will be removed in the next major version. Use onsearch instead.',
+          );
+          _searchchangeWarned = true;
+        }
+        searchchange({ search });
+      }
+    }
   });
 
-  // call filterstoggle when filtersVisible changes (avoid on:change typing issues)
+  // call onfilterstoggle when filtersVisible changes (avoid on:change typing issues)
   let _prevFiltersVisible = undefined;
   $effect(() => {
     // initialize previous value on first run without emitting
@@ -78,9 +116,21 @@
       return;
     }
     if (filtersVisible !== _prevFiltersVisible) {
-      try {
-        filterstoggle?.({ filtersVisible });
-      } catch (err) {}
+      if (onfilterstoggle !== undefined) {
+        try {
+          onfilterstoggle({ visible: filtersVisible });
+        } catch (err) {}
+      } else if (filterstoggle !== undefined) {
+        if (!_filterstoggleWarned) {
+          console.warn(
+            '[svelte-vtable] filterstoggle is deprecated and will be removed in the next major version. Use onfilterstoggle instead.',
+          );
+          _filterstoggleWarned = true;
+        }
+        try {
+          filterstoggle({ filtersVisible });
+        } catch (err) {}
+      }
       _prevFiltersVisible = filtersVisible;
     }
   });
@@ -98,12 +148,30 @@
       _prevPerPage = perPage;
       // reset to page 1 (common UX) and notify parent
       currentPage = 1;
-      try {
-        perpagechange?.({ perPage });
-      } catch (err) {}
-      try {
-        pagechange?.({ currentPage });
-      } catch (err) {}
+      if (onperpage !== undefined) {
+        try {
+          onperpage({ perPage });
+        } catch (err) {}
+      } else if (perpagechange !== undefined) {
+        if (!_perpagechangeWarned) {
+          console.warn(
+            '[svelte-vtable] perpagechange is deprecated and will be removed in the next major version. Use onperpage instead.',
+          );
+          _perpagechangeWarned = true;
+        }
+        try {
+          perpagechange({ perPage });
+        } catch (err) {}
+      }
+      if (onpage !== undefined) {
+        try {
+          onpage({ page: currentPage });
+        } catch (err) {}
+      } else if (pagechange !== undefined) {
+        try {
+          pagechange({ currentPage });
+        } catch (err) {}
+      }
     }
   });
 
@@ -405,7 +473,11 @@
           clearable
           clearableOnClick={() => {
             search = '';
-            searchchange?.({ search });
+            if (onsearch !== undefined) {
+              onsearch({ search: '' });
+            } else if (searchchange !== undefined) {
+              searchchange({ search: '' });
+            }
           }}
         />
       </div>
@@ -485,11 +557,25 @@
   bind:open={filtersVisible}
   {columnFilters}
   {activeFilters}
-  filterChange={(...args) => {
-    try {
-      return filterChange(...args);
-    } catch (e) {}
-  }}
+  onfilter={onfilter !== undefined
+    ? onfilter
+    : filterChange !== undefined
+      ? (payload) => {
+          if (!_filterChangeWarned) {
+            console.warn(
+              '[svelte-vtable] filterChange is deprecated and will be removed in the next major version. Use onfilter instead.',
+            );
+            _filterChangeWarned = true;
+          }
+          try {
+            return filterChange({
+              columnKey: payload.key,
+              selectedValues: payload.values,
+              allFilters: payload.allFilters,
+            });
+          } catch (e) {}
+        }
+      : undefined}
   {direction}
   {showCounts}
   {className}

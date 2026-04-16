@@ -10,12 +10,18 @@
     activeFilters = {},
     /** @type {string} */
     title = 'Filters',
-    /** @type {(..._args: any[]) => void} */
-    filterChange = (..._args) => {},
+    // onfilter({ key, values, allFilters }) — new canonical name
+    onfilter = undefined,
+    // Deprecated: use onfilter instead
+    /** @type {((..._args: any[]) => void) | undefined} */
+    filterChange = undefined,
     direction = 'horizontal',
     showCounts = true,
     className = '',
   } = $props();
+
+  // Deprecation warning flag (fire once per instance)
+  let _filterChangeWarned = false;
 </script>
 
 <Modal bind:open size="lg" dismissable={false}>
@@ -33,11 +39,21 @@
   <DataTableFilters
     {columnFilters}
     {activeFilters}
-    filterChange={(payload) => {
-      try {
-        return filterChange(payload);
-      } catch (e) {}
-    }}
+    onfilter={onfilter !== undefined
+      ? onfilter
+      : filterChange !== undefined
+        ? (payload) => {
+            if (!_filterChangeWarned) {
+              console.warn(
+                '[svelte-vtable] filterChange is deprecated and will be removed in the next major version. Use onfilter instead.',
+              );
+              _filterChangeWarned = true;
+            }
+            try {
+              return filterChange({ columnKey: payload.key, selectedValues: payload.values, allFilters: payload.allFilters });
+            } catch (e) {}
+          }
+        : undefined}
     {direction}
     {showCounts}
   />

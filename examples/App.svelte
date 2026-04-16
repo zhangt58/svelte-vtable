@@ -22,11 +22,11 @@
   let perPage = $state(25);
 
   // Handle filter changes
-  function handleFilterChange({ columnKey, selectedValues, allFilters }) {
+  function handleFilterChange({ key, values, allFilters }) {
     activeFilters = { ...allFilters };
     // reset to first page when filters change
     currentPage = 1;
-    console.log('Filter changed:', { columnKey, selectedValues, allFilters });
+    console.log('Filter changed:', { key, values, allFilters });
   }
 
   // Apply filters to data using utility function, then apply search
@@ -198,7 +198,7 @@
     {columnFilters}
     {direction}
     {activeFilters}
-    filterChange={handleFilterChange}
+    onfilter={handleFilterChange}
     showCounts={true}
   />
 </div>
@@ -209,17 +209,17 @@
   <DataTableControls
     search={searchQuery}
     {currentPage}
-    pagechange={(payload) => {
-      currentPage = payload.currentPage;
+    onpage={(payload) => {
+      currentPage = payload.page;
     }}
-    searchchange={(payload) => {
+    onsearch={(payload) => {
       searchQuery = payload.search;
     }}
     bind:perPage
     totalItems={filteredData().length}
     {columnFilters}
     {activeFilters}
-    filterChange={handleFilterChange}
+    onfilter={handleFilterChange}
     {direction}
     showCounts={true}
     class="mt-1"

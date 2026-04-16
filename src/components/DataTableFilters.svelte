@@ -3,9 +3,6 @@
   import { ChevronDownOutline, ArrowDownOutline } from 'flowbite-svelte-icons';
   import { onDestroy } from 'svelte';
 
-  // shared default no-op function
-  const DEFAULT_NOOP = (..._args) => {};
-
   // Props using Svelte 5 $props()
   let {
     // columnFilters: array of { key, label, uniqueValues }
@@ -15,10 +12,14 @@
     direction = 'horizontal',
     // current active filters: { columnKey: [selectedValues] }
     activeFilters = {},
-    // Callback when filters change
-    filterChange = DEFAULT_NOOP,
-    // Optional callback when sort mode/dir changes: ( { columnKey, mode, dir } )
-    sortChange = DEFAULT_NOOP,
+    // Callback when filters change: onfilter({ key, values, allFilters })
+    onfilter = undefined,
+    // Callback when sort mode/dir changes: oncolumnsort({ key, mode, dir })
+    oncolumnsort = undefined,
+    // Deprecated: use onfilter instead
+    filterChange = undefined,
+    // Deprecated: use oncolumnsort instead
+    sortChange = undefined,
     // CSS class for the container
     className = '',
     // Whether to show filter counts
@@ -65,6 +66,10 @@
     loadedOptions = initial;
   });
 
+  // --- Deprecation warning flags (fire once per instance) ---
+  let _filterChangeWarned = false;
+  let _sortChangeWarned = false;
+
   // --- Debounced emission helpers ---
   let _emitTimer = null;
   let _pendingEmit = null;
@@ -92,12 +97,32 @@
       _emitTimer = null;
     }
 
-    try {
-      /** @type {any} */ (filterChange)(payload);
-    } catch (err) {
+    if (onfilter !== undefined) {
       try {
-        console.error('filterChange threw:', err);
-      } catch (e) {}
+        /** @type {any} */ (onfilter)({
+          key: payload.columnKey,
+          values: payload.selectedValues,
+          allFilters: payload.allFilters,
+        });
+      } catch (err) {
+        try {
+          console.error('onfilter threw:', err);
+        } catch (e) {}
+      }
+    } else if (filterChange !== undefined) {
+      if (!_filterChangeWarned) {
+        console.warn(
+          '[svelte-vtable] filterChange is deprecated and will be removed in the next major version. Use onfilter instead.',
+        );
+        _filterChangeWarned = true;
+      }
+      try {
+        /** @type {any} */ (filterChange)(payload);
+      } catch (err) {
+        try {
+          console.error('filterChange threw:', err);
+        } catch (e) {}
+      }
     }
   }
 
@@ -355,10 +380,20 @@
     const newDir = sortDirs[columnKey] || 'asc';
     try {
       // notify parent if it wants to react to sort changes
-      /** @type {any} */ (sortChange)({ columnKey, mode, dir: newDir });
+      if (oncolumnsort !== undefined) {
+        /** @type {any} */ (oncolumnsort)({ key: columnKey, mode, dir: newDir });
+      } else if (sortChange !== undefined) {
+        if (!_sortChangeWarned) {
+          console.warn(
+            '[svelte-vtable] sortChange is deprecated and will be removed in the next major version. Use oncolumnsort instead.',
+          );
+          _sortChangeWarned = true;
+        }
+        /** @type {any} */ (sortChange)({ columnKey, mode, dir: newDir });
+      }
     } catch (err) {
       try {
-        console.debug('sortChange callback threw', err);
+        console.debug('oncolumnsort callback threw', err);
       } catch (e) {}
     }
     // debug log
