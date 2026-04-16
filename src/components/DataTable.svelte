@@ -14,10 +14,8 @@
     emptyMessage = 'No items to display.',
     colWidths = {},
     selected = null,
-    // onselect({ item, index }) — new canonical name
+    // onselect({ item, index }) — called when a row is selected
     onselect = undefined,
-    // Deprecated: use onselect instead
-    selectCallback = undefined,
     // onsort({ key, dir }) is called whenever sort changes.
     // When provided, no local sorting is applied (server-side sort pattern).
     onsort = undefined,
@@ -60,23 +58,12 @@
     });
   });
 
-  // Deprecation warning flag for selectCallback (fires once per instance)
-  let _selectCallbackWarned = false;
-
   // expose selection via the callback prop (if provided)
   function selectItem(item, index) {
     selected = item;
     try {
       if (onselect !== undefined) {
         onselect({ item, index });
-      } else if (selectCallback !== undefined) {
-        if (!_selectCallbackWarned) {
-          console.warn(
-            '[svelte-vtable] selectCallback is deprecated and will be removed in the next major version. Use onselect instead.',
-          );
-          _selectCallbackWarned = true;
-        }
-        /** @type {any} */ (selectCallback)({ item, index });
       }
     } catch (err) {
       try {

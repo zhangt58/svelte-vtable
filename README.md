@@ -118,7 +118,6 @@ A virtualized table component for efficient rendering of large datasets. The com
 | `colWidths`      | `object \| Array` | `{}`                     | Column width configuration (stretch weights or pixel values) |
 | `selected`       | `any`             | `null`                   | Currently selected item                                      |
 | `onselect`       | `function`        | `undefined`              | Callback when a row is selected: `({item, index}) => void`   |
-| `selectCallback` | `function`        | `undefined`              | **Deprecated.** Use `onselect` instead.                      |
 | `onsort`         | `function`        | `undefined`              | Callback when sort changes: `({key, dir}) => void`. When provided, local sorting is skipped (server-side sort pattern). Omit entirely (do not pass `() => {}`) to enable local sorting. |
 | `rowSnippet`     | `Snippet`         | required                 | Svelte 5 snippet for rendering rows                          |
 
@@ -209,11 +208,6 @@ Controls component for search and pagination.
 | `onfilterstoggle` | `function` | `undefined` | Callback when filters panel toggled: `({visible}) => void`         |
 | `onperpage`       | `function` | `undefined` | Callback when per-page changes: `({perPage}) => void`              |
 | `onfilter`        | `function` | `undefined` | Callback when filters change (passed through to DataTableFilters): `({key, values, allFilters}) => void` |
-| `pagechange`      | `function` | `undefined` | **Deprecated.** Use `onpage` instead.                              |
-| `searchchange`    | `function` | `undefined` | **Deprecated.** Use `onsearch` instead.                            |
-| `filterstoggle`   | `function` | `undefined` | **Deprecated.** Use `onfilterstoggle` instead.                     |
-| `perpagechange`   | `function` | `undefined` | **Deprecated.** Use `onperpage` instead.                           |
-| `filterChange`    | `function` | `undefined` | **Deprecated.** Use `onfilter` instead.                            |
 
 ### DataTableFilters
 
@@ -228,8 +222,6 @@ Multi-select filter component with flexible layout options. Implements OR logic 
 | `activeFilters`  | `Object`                     | `{}`           | Current active filters `{ columnKey: [selectedValues] }` |
 | `onfilter`       | `function`                   | `undefined`    | Callback when filters change: `({key, values, allFilters}) => void` |
 | `oncolumnsort`   | `function`                   | `undefined`    | Callback when column sort changes: `({key, mode, dir}) => void` |
-| `filterChange`   | `function`                   | `undefined`    | **Deprecated.** Use `onfilter` instead.                  |
-| `sortChange`     | `function`                   | `undefined`    | **Deprecated.** Use `oncolumnsort` instead.              |
 | `className`      | `string`                     | `''`           | Additional CSS classes                                   |
 | `showCounts`     | `boolean`                    | `true`         | Whether to show value counts                             |
 

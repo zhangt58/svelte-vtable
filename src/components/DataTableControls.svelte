@@ -11,7 +11,6 @@
     currentPage = 1,
     perPage = $bindable(25),
     totalItems = 0,
-    // New canonical callback names
     onpage = undefined,
     onsearch = undefined,
     // control visibility of DataTableFilters above the controls
@@ -29,21 +28,7 @@
     className = '',
     // callback when perPage changes: onperpage({ perPage })
     onperpage = undefined,
-    // Deprecated old names (compatibility shims; will be removed in next major version)
-    pagechange = undefined,
-    searchchange = undefined,
-    filterstoggle = undefined,
-    perpagechange = undefined,
-    /** @type {((..._args: any[]) => void) | undefined} */
-    filterChange = undefined,
   } = $props();
-
-  // Deprecation warning flags (fire once per instance)
-  let _pagechangeWarned = false;
-  let _searchchangeWarned = false;
-  let _filterstoggleWarned = false;
-  let _perpagechangeWarned = false;
-  let _filterChangeWarned = false;
 
   const perPageOptions = [
     { value: 10, name: '10 rows' },
@@ -78,14 +63,6 @@
       currentPage = np;
       if (onpage !== undefined) {
         onpage({ page: np });
-      } else if (pagechange !== undefined) {
-        if (!_pagechangeWarned) {
-          console.warn(
-            '[svelte-vtable] pagechange is deprecated and will be removed in the next major version. Use onpage instead.',
-          );
-          _pagechangeWarned = true;
-        }
-        pagechange({ currentPage: np });
       }
     }
   }
@@ -95,14 +72,6 @@
     if (typeof search !== 'undefined') {
       if (onsearch !== undefined) {
         onsearch({ search });
-      } else if (searchchange !== undefined) {
-        if (!_searchchangeWarned) {
-          console.warn(
-            '[svelte-vtable] searchchange is deprecated and will be removed in the next major version. Use onsearch instead.',
-          );
-          _searchchangeWarned = true;
-        }
-        searchchange({ search });
       }
     }
   });
@@ -119,16 +88,6 @@
       if (onfilterstoggle !== undefined) {
         try {
           onfilterstoggle({ visible: filtersVisible });
-        } catch (err) {}
-      } else if (filterstoggle !== undefined) {
-        if (!_filterstoggleWarned) {
-          console.warn(
-            '[svelte-vtable] filterstoggle is deprecated and will be removed in the next major version. Use onfilterstoggle instead.',
-          );
-          _filterstoggleWarned = true;
-        }
-        try {
-          filterstoggle({ filtersVisible });
         } catch (err) {}
       }
       _prevFiltersVisible = filtersVisible;
@@ -152,24 +111,10 @@
         try {
           onperpage({ perPage });
         } catch (err) {}
-      } else if (perpagechange !== undefined) {
-        if (!_perpagechangeWarned) {
-          console.warn(
-            '[svelte-vtable] perpagechange is deprecated and will be removed in the next major version. Use onperpage instead.',
-          );
-          _perpagechangeWarned = true;
-        }
-        try {
-          perpagechange({ perPage });
-        } catch (err) {}
       }
       if (onpage !== undefined) {
         try {
           onpage({ page: currentPage });
-        } catch (err) {}
-      } else if (pagechange !== undefined) {
-        try {
-          pagechange({ currentPage });
         } catch (err) {}
       }
     }
@@ -475,8 +420,6 @@
             search = '';
             if (onsearch !== undefined) {
               onsearch({ search: '' });
-            } else if (searchchange !== undefined) {
-              searchchange({ search: '' });
             }
           }}
         />
@@ -557,25 +500,7 @@
   bind:open={filtersVisible}
   {columnFilters}
   {activeFilters}
-  onfilter={onfilter !== undefined
-    ? onfilter
-    : filterChange !== undefined
-      ? (payload) => {
-          if (!_filterChangeWarned) {
-            console.warn(
-              '[svelte-vtable] filterChange is deprecated and will be removed in the next major version. Use onfilter instead.',
-            );
-            _filterChangeWarned = true;
-          }
-          try {
-            return filterChange({
-              columnKey: payload.key,
-              selectedValues: payload.values,
-              allFilters: payload.allFilters,
-            });
-          } catch (e) {}
-        }
-      : undefined}
+  {onfilter}
   {direction}
   {showCounts}
   {className}
