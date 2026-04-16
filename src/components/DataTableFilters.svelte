@@ -162,7 +162,7 @@
   }
 
   // Check if any filters are active
-  const hasActiveFilters = $derived(() => {
+  const hasActiveFilters = $derived.by(() => {
     return Object.values(selections).some((val) => {
       if (Array.isArray(val)) return val.length > 0;
       if (val && typeof val === 'object') return !!(val.from || val.to);
@@ -171,7 +171,7 @@
   });
 
   // Count active filters
-  const activeFilterCount = $derived(() => {
+  const activeFilterCount = $derived.by(() => {
     return Object.values(selections).reduce((sum, val) => {
       if (Array.isArray(val)) return sum + (val?.length || 0);
       if (val && typeof val === 'object' && (val.from || val.to)) return sum + 1;
@@ -543,8 +543,8 @@
 
     <!-- Right controls: active badge and Clear All -->
     <div class="flex items-center gap-2 flex-wrap">
-      {#if hasActiveFilters()}
-        <Badge color="blue" rounded>{activeFilterCount()} active</Badge>
+      {#if hasActiveFilters}
+        <Badge color="blue" rounded>{activeFilterCount} active</Badge>
         <button
           class="px-3 py-1 text-sm text-red-600 bg-transparent border border-red-600 rounded-md hover:bg-red-600 hover:text-white transition-all cursor-pointer"
           onclick={clearAllFilters}
