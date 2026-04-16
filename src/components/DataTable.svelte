@@ -150,19 +150,8 @@
 
   // Compute column width by key (fallback to even distribution)
   function calcColWidth(key) {
-    try {
-      const norm = normalizeColWidths();
-      if (norm && norm[key] !== undefined) return String(norm[key]);
-
-      // Fallback: accept CSS string widths passed directly (e.g. '120px')
-      const v = effectiveColWidths[key];
-      if (typeof v === 'string') {
-        const s = v.trim();
-        if (!s.endsWith('%')) return s;
-      }
-    } catch (err) {
-      // ignore and fall through to defaults
-    }
+    const norm = normalizeColWidths();
+    if (norm[key] !== undefined) return String(norm[key]);
     const n = Math.max(1, effectiveVisibleKeys.length);
     return Math.floor(100 / n) + '%';
   }

@@ -84,9 +84,9 @@ const columnFilters = buildColumnFilters(data, columns);
 
 ---
 
-## Previous releases
+## [0.1.0]
 
-### Breaking Changes (v0.1.x)
+### Breaking Changes
 
 All callback props have been renamed to follow the `on<EventName>` camelCase convention. The old prop names are **removed** — update your code using the migration guide below.
 

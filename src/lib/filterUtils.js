@@ -32,11 +32,11 @@ export function getUniqueValuesWithCounts(data, key) {
  * @returns {Array} Column filters configuration for DataTableFilters
  */
 export function buildColumnFilters(data, columns) {
+  const isDateRangeType = (ft) => ft === 'daterange' || ft === 'datetimerange';
   return columns
     .filter((col) => col.filterType !== 'none')
     .map((col) => {
-    const isDateRange = col.filterType === 'daterange' || col.filterType === 'datetimerange';
-    if (isDateRange) {
+    if (isDateRangeType(col.filterType)) {
       // Scan data to find the min/max timestamps for this column so the UI can
       // offer a dual-range slider and Earliest/Latest shortcut buttons.
       let minMs = Infinity;
