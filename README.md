@@ -78,10 +78,10 @@ npm install svelte@^5.0.0 tailwindcss@^4.0.0 flowbite-svelte@^1.0.0 flowbite-sve
 <DataTable
   {items}
   {visibleKeys}
-  sortKey={ui.sortKey}
-  sortDir={ui.sortDir}
-  sortCallback={(key) => {
-    /* handle sort */
+  bind:sortKey={ui.sortKey}
+  bind:sortDir={ui.sortDir}
+  onsort={({ key, dir }) => {
+    /* optionally trigger a server fetch here */
   }}
   selectCallback={(detail) => {
     /* handle selection */
@@ -110,15 +110,15 @@ A virtualized table component for efficient rendering of large datasets. The com
 | ---------------- | ----------------- | ------------------------ | ------------------------------------------------------------ |
 | `items`          | `Array`           | `[]`                     | Array of data items to display                               |
 | `visibleKeys`    | `Array`           | `[]`                     | Array of keys/titles to display as column headers            |
-| `sortKey`        | `string \| null`  | `null`                   | Current sort key (column header)                             |
-| `sortDir`        | `'asc' \| 'desc'` | `'asc'`                  | Sort direction                                               |
+| `sortKey`        | `string \| null`  | `null`                   | Current sort key (column header); supports `bind:sortKey`    |
+| `sortDir`        | `'asc' \| 'desc'` | `'asc'`                  | Sort direction; supports `bind:sortDir`                      |
 | `className`      | `string`          | `''`                     | Additional CSS classes                                       |
 | `style`          | `string`          | `''`                     | Inline styles                                                |
 | `emptyMessage`   | `string`          | `'No items to display.'` | Message when no items                                        |
 | `colWidths`      | `object \| Array` | `{}`                     | Column width configuration (stretch weights or pixel values) |
 | `selected`       | `any`             | `null`                   | Currently selected item                                      |
 | `selectCallback` | `function`        | `() => {}`               | Callback when a row is selected: `({item, index}) => void`   |
-| `sortCallback`   | `function`        | `defaultSort`            | Callback when sorting: `(headerKey) => void`                 |
+| `onsort`         | `function`        | `undefined`              | Callback when sort changes: `({key, dir}) => void`. When provided, local sorting is skipped (server-side sort pattern). Omit entirely (do not pass `() => {}`) to enable local sorting. |
 | `rowSnippet`     | `Snippet`         | required                 | Svelte 5 snippet for rendering rows                          |
 
 #### Row Snippet Parameters

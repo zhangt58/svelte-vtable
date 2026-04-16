@@ -4,18 +4,41 @@
   // shared default no-op function (accepts any args) so prop types allow being called with a payload
   const DEFAULT_NOOP = (..._args) => {};
 
-  // Default sort behavior: sort by the header string alphabetically, toggling asc/desc
-  // and actually sort the items array
-  function defaultSort(key) {
-    if (sortKey === key) {
-      sortDir = sortDir === 'asc' ? 'desc' : 'asc';
-    } else {
-      sortKey = key;
-      sortDir = 'asc';
-    }
+  // Runic props: accept props via $props() so the component matches the
+  // project's runes-style components. Include the `select` callback prop.
+  let {
+    items = [],
+    visibleKeys = [],
+    // sortKey/sortDir are bindable so parents can observe or control sort state.
+    sortKey = $bindable(null),
+    sortDir = $bindable('asc'),
+    className = '',
+    style = '',
+    emptyMessage = 'No items to display.',
+    colWidths = {},
+    selected = null,
+    // external selection callback with a safe default no-op
+    selectCallback = DEFAULT_NOOP,
+    // onsort({ key, dir }) is called whenever sort changes.
+    // When provided, no local sorting is applied (server-side sort pattern).
+    onsort = undefined,
+    // New prop: allow consumers to disable virtualization (useful when paginating by fixed item counts)
+    // If `virtualize` is false we ask the wrapped VirtualList to render as a normal list/table
+    // by setting its `isDisabled` prop. Default: true (virtualization enabled).
+    virtualize = true,
+    // <slot> -> @render migration
+    rowSnippet,
+  } = $props();
 
-    // Actually sort the items array
-    items = [...items].sort((a, b) => {
+  // Internal sorted array derived from items + current sort state.
+  // When onsort is provided the parent manages sorting (server-side), so we
+  // pass items through unchanged. Otherwise we sort locally.
+  const sortedItems = $derived.by(() => {
+    if (onsort !== undefined || !sortKey) return items;
+
+    const key = sortKey;
+    const dir = sortDir;
+    return [...items].sort((a, b) => {
       const aVal = a[key];
       const bVal = b[key];
 
@@ -34,36 +57,9 @@
         sensitivity: 'base',
       });
 
-      // Apply sort direction
-      return sortDir === 'asc' ? comparison : -comparison;
+      return dir === 'asc' ? comparison : -comparison;
     });
-  }
-
-  // Runic props: accept props via $props() so the component matches the
-  // project's runes-style components. Include the `select` callback prop.
-  let {
-    items = [],
-    visibleKeys = [],
-    // treat sortKey/sortDir as normal props; parent may control them and
-    // provide a `sort` callback to update them.
-    sortKey = null,
-    sortDir = 'asc',
-    className = '',
-    style = '',
-    emptyMessage = 'No items to display.',
-    colWidths = {},
-    selected = null,
-    // external selection callback with a safe default no-op
-    selectCallback = DEFAULT_NOOP,
-    // new prop name: sortCallback defaulting to `defaultSort` (alphabetical string sort)
-    sortCallback = defaultSort,
-    // New prop: allow consumers to disable virtualization (useful when paginating by fixed item counts)
-    // If `virtualize` is false we ask the wrapped VirtualList to render as a normal list/table
-    // by setting its `isDisabled` prop. Default: true (virtualization enabled).
-    virtualize = true,
-    // <slot> -> @render migration
-    rowSnippet,
-  } = $props();
+  });
 
   // expose selection via the callback prop (if provided)
   function selectItem(item, index) {
@@ -88,15 +84,21 @@
     }
   }
 
-  // When header is clicked update the exported sortKey/sortDir so parents
-  // using bind:sortKey / bind:sortDir receive updates (no event dispatching).
+  // When a header is clicked, toggle/update sortKey and sortDir, then notify
+  // the parent via onsort. Parents using bind:sortKey / bind:sortDir will
+  // receive the updated values automatically.
   function handleSort(key) {
-    // Delegate sorting to the configured callback (by default `defaultSort` will run)
+    if (sortKey === key) {
+      sortDir = sortDir === 'asc' ? 'desc' : 'asc';
+    } else {
+      sortKey = key;
+      sortDir = 'asc';
+    }
     try {
-      sortCallback(key);
+      if (onsort) onsort({ key: sortKey, dir: sortDir });
     } catch (err) {
       try {
-        console.error('sortCallback threw:', err);
+        console.error('onsort threw:', err);
       } catch (e) {}
     }
   }
@@ -201,7 +203,7 @@
          by setting `isDisabled`. This ensures pagination based on item counts shows the
          exact number of rows expected (useful when rows have variable height). -->
     <VirtualList
-      {items}
+      items={sortedItems}
       isTable
       isDisabled={!virtualize}
       class="datatable-table max-w-full max-h-full overflow-auto"
