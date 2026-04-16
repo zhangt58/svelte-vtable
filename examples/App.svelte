@@ -3,10 +3,11 @@
   import { DataTable, DataTableControls } from '@zhangt58/svelte-vtable';
   import { buildColumnFilters, applyFilters, countActiveFilters } from '../src/lib/filterUtils.js';
   import { DarkMode } from 'flowbite-svelte';
-  import { allData, filterColumns, tableColumns } from './sampleData.js';
+  import { allData, columnDefs } from './sampleData.js';
 
-  // Build column filters using utility function
-  let columnFilters = $state(buildColumnFilters(allData, filterColumns));
+  // Build column filters from the unified columnDefs array.
+  // Columns with filterType:'none' are automatically excluded.
+  let columnFilters = $state(buildColumnFilters(allData, columnDefs));
 
   // Track active filters
   let activeFilters = $state({});
@@ -26,7 +27,6 @@
     activeFilters = { ...allFilters };
     // reset to first page when filters change
     currentPage = 1;
-    console.log('Filter changed:', { key, values, allFilters });
   }
 
   // Apply filters to data using utility function, then apply search
@@ -36,7 +36,7 @@
     if (q.length > 0) {
       const low = q.toLowerCase();
       items = items.filter((it) =>
-        tableColumns.some((c) =>
+        columnDefs.some((c) =>
           String(it[c.key] ?? '')
             .toLowerCase()
             .includes(low),
@@ -66,31 +66,7 @@
 
   // Count active filters using utility function
   const activeCount = $derived(() => countActiveFilters(activeFilters));
-
-  // Create column width mapping for DataTable
-  const colWidths = Object.fromEntries(tableColumns.map((col) => [col.key, col.stretch]));
-
-  // Touch derived values to avoid "unused variable" warnings in this example file
-  $effect(() => {
-    // call derived to register usage and reference colWidths
-    try {
-      void activeCount();
-    } catch (e) {}
-    try {
-      void colWidths;
-    } catch (e) {}
-  });
 </script>
-
-{#snippet rowSnippet({ item, index, select, selected })}
-  <tr class="hover:bg-gray-50 dark:hover:bg-gray-700">
-    {#each tableColumns as col}
-      <td class="p-3 border-b border-gray-200 dark:border-gray-600 text-gray-900 dark:text-gray-200"
-        >{item[col.key]}</td
-      >
-    {/each}
-  </tr>
-{/snippet}
 
 <div class="mb-8">
   <h1 class="text-3xl font-bold text-gray-900 dark:text-gray-100 mb-8">
@@ -206,6 +182,12 @@
 <div
   class="mt-2 p-4 bg-gray-50 border border-gray-200 rounded-lg dark:bg-gray-800 dark:border-gray-700"
 >
+  <p class="text-sm text-gray-500 dark:text-gray-400 mb-3">
+    A single <code>columnDefs</code> array drives headers, widths, sorting, filters, and default
+    cell rendering — no separate <code>visibleKeys</code>, <code>colWidths</code>, or
+    <code>rowSnippet</code> required.
+  </p>
+
   <DataTableControls
     search={searchQuery}
     {currentPage}
@@ -224,14 +206,67 @@
     showCounts={true}
     class="mt-1"
   />
+
+  <div class="text-sm text-gray-500 dark:text-gray-400 mt-1 mb-1">
+    {activeCount()} active filter(s) · {filteredData().length} total records
+  </div>
+
   {#if filteredData().length > 0}
     <div class="mt-2">
+      <!--
+        Pass `columns` instead of `visibleKeys`+`colWidths`+`rowSnippet`.
+        The DataTable renders a default row, using each column's `cellSnippet`
+        when provided, or the raw value otherwise.
+
+        Snippets must be defined in a Svelte component — they are merged into
+        the columnDefs array here before being passed as the `columns` prop.
+      -->
+
+      <!-- Cell snippet: id — monospace "#N" label -->
+      {#snippet idCell({ value })}
+        <span class="font-mono text-gray-400 dark:text-gray-500 text-xs">#{value}</span>
+      {/snippet}
+
+      <!-- Cell snippet: status — colour-coded badge -->
+      {#snippet statusCell({ value })}
+        {@const cls =
+          value === 'Active'
+            ? 'bg-green-100 text-green-800 dark:bg-green-900/40 dark:text-green-300'
+            : value === 'Inactive'
+              ? 'bg-red-100 text-red-800 dark:bg-red-900/40 dark:text-red-300'
+              : 'bg-amber-100 text-amber-800 dark:bg-amber-900/40 dark:text-amber-300'}
+        <span
+          class="inline-flex items-center px-2 py-0.5 rounded-full text-xs font-medium {cls}"
+        >{value}</span>
+      {/snippet}
+
+      <!-- Cell snippet: level — colour-coded pill -->
+      {#snippet levelCell({ value })}
+        {@const cls =
+          value === 'Lead'
+            ? 'bg-rose-100 text-rose-800 dark:bg-rose-900/40 dark:text-rose-300'
+            : value === 'Senior'
+              ? 'bg-violet-100 text-violet-800 dark:bg-violet-900/40 dark:text-violet-300'
+              : value === 'Mid'
+                ? 'bg-blue-100 text-blue-800 dark:bg-blue-900/40 dark:text-blue-300'
+                : 'bg-sky-100 text-sky-800 dark:bg-sky-900/40 dark:text-sky-300'}
+        <span
+          class="inline-flex items-center px-2 py-0.5 rounded-full text-xs font-medium {cls}"
+        >{value}</span>
+      {/snippet}
+
       <DataTable
         items={pagedData()}
-        visibleKeys={tableColumns.map((col) => col.key)}
+        columns={columnDefs.map((c) =>
+          c.key === 'id'
+            ? { ...c, cellSnippet: idCell }
+            : c.key === 'status'
+              ? { ...c, cellSnippet: statusCell }
+              : c.key === 'level'
+                ? { ...c, cellSnippet: levelCell }
+                : c,
+        )}
         class="border border-gray-200 dark:border-gray-600 rounded overflow-auto scrollbar-thin"
-        {rowSnippet}
-        {colWidths}
         virtualize={false}
         style="height:400px; overflow:auto;"
       />

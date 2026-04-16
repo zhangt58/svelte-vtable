@@ -6,6 +6,88 @@ All notable changes to this project will be documented in this file.
 
 ### Breaking Changes
 
+#### Unified `columns` prop replaces legacy `visibleKeys`, `colWidths`, and `rowSnippet`
+
+The `DataTable` component now requires a single `columns: ColumnDef[]` prop. The
+`visibleKeys`, `colWidths`, and `rowSnippet` props have been **removed**.
+
+| Removed prop | Replacement |
+|---|---|
+| `visibleKeys` | `columns[].key` |
+| `colWidths` | `columns[].width` |
+| `rowSnippet` | `columns[].cellSnippet` (per-column) |
+
+**Before:**
+
+```svelte
+<DataTable
+  items={rows}
+  visibleKeys={['id', 'name', 'department']}
+  colWidths={{ id: 1, name: 3, department: 2 }}
+  {rowSnippet}
+/>
+```
+
+**After:**
+
+```js
+const columns = [
+  { key: 'id',         label: 'ID',         width: 1 },
+  { key: 'name',       label: 'Name',       width: 3 },
+  { key: 'department', label: 'Department', width: 2 },
+];
+```
+
+```svelte
+<DataTable {items} {columns} />
+```
+
+Custom cell rendering is now done per-column via the `cellSnippet` field of a `ColumnDef`
+instead of a single `rowSnippet` covering all columns.
+
+#### `buildColumnFilters` now requires `ColumnDef[]`
+
+The `buildColumnFilters` utility previously accepted legacy column objects with a `type`
+field (`{ key, label, type }`). It now only accepts `ColumnDef` objects using the
+`filterType` field. Update any calls that pass the old format.
+
+**Before:**
+
+```js
+const filterColumns = [
+  { key: 'department', label: 'Department' },
+  { key: 'hireDate',   label: 'Hire Date', type: 'daterange' },
+];
+const columnFilters = buildColumnFilters(data, filterColumns);
+```
+
+**After:**
+
+```js
+const columns = [
+  { key: 'department', label: 'Department', filterType: 'value' },
+  { key: 'hireDate',   label: 'Hire Date',  filterType: 'daterange' },
+];
+const columnFilters = buildColumnFilters(data, columns);
+```
+
+### Added
+
+- **`ColumnDef` interface** — a single unified column definition object that replaces the
+  separate `visibleKeys`, `colWidths`, and filter-column arrays. Export it from
+  `@zhangt58/svelte-vtable` as a JSDoc `@typedef`.
+- **`columns` prop on `DataTable`** — accepts `ColumnDef[]` to configure visible columns,
+  widths, sort behaviour, and custom header/cell rendering.
+- **Auto row rendering** — when `columns` is provided, `DataTable` renders a default `<tr>`
+  using each column's optional `cellSnippet` or the raw value, so no custom `rowSnippet` is
+  needed for standard use cases.
+
+---
+
+## [0.1.0]
+
+### Breaking Changes
+
 All callback props have been renamed to follow the `on<EventName>` camelCase convention. The old prop names are **removed** — update your code using the migration guide below.
 
 | Component | Old name | New name | New payload |
