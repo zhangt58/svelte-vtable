@@ -5,52 +5,39 @@
   // project's runes-style components. Include the `select` callback prop.
   let {
     items = [],
-    // New unified column definitions. When provided, visibleKeys and colWidths
-    // are derived from this array and do not need to be passed separately.
+    // Unified column definitions array (required).
     // @type {import('../lib/index.js').ColumnDef[]}
-    columns = undefined,
-    // Legacy props — still supported for backward compatibility.
-    // When `columns` is provided these are ignored unless they are also explicitly set.
-    visibleKeys = [],
+    columns = [],
     // sortKey/sortDir are bindable so parents can observe or control sort state.
     sortKey = $bindable(null),
     sortDir = $bindable('asc'),
     className = '',
     style = '',
     emptyMessage = 'No items to display.',
-    colWidths = {},
     selected = null,
     // onselect({ item, index }) — called when a row is selected
     onselect = undefined,
     // onsort({ key, dir }) is called whenever sort changes.
     // When provided, no local sorting is applied (server-side sort pattern).
     onsort = undefined,
-    // New prop: allow consumers to disable virtualization (useful when paginating by fixed item counts)
+    // Allow consumers to disable virtualization (useful when paginating by fixed item counts).
     // If `virtualize` is false we ask the wrapped VirtualList to render as a normal list/table
     // by setting its `isDisabled` prop. Default: true (virtualization enabled).
     virtualize = true,
-    // <slot> -> @render migration. Optional when `columns` with cellSnippets is provided.
-    rowSnippet = undefined,
   } = $props();
 
-  // --- Derived values from ColumnDef[] or legacy props ---
+  // --- Derived values from ColumnDef[] ---
 
   // Keys of columns to display.
-  const effectiveVisibleKeys = $derived(columns ? columns.map((c) => c.key) : visibleKeys);
+  const effectiveVisibleKeys = $derived(columns.map((c) => c.key));
 
   // Width configuration: build an object keyed by column key.
-  // When `columns` is provided, use the `width` field (default 1).
-  // Otherwise fall back to the legacy `colWidths` prop.
   const effectiveColWidths = $derived(
-    columns
-      ? Object.fromEntries(columns.map((c) => [c.key, c.width ?? 1]))
-      : colWidths,
+    Object.fromEntries(columns.map((c) => [c.key, c.width ?? 1])),
   );
 
-  // Fast lookup map: key → ColumnDef (only populated when `columns` is provided).
-  const colDefMap = $derived(
-    columns ? Object.fromEntries(columns.map((c) => [c.key, c])) : {},
-  );
+  // Fast lookup map: key → ColumnDef.
+  const colDefMap = $derived(Object.fromEntries(columns.map((c) => [c.key, c])));
 
   // Internal sorted array derived from items + current sort state.
   // When onsort is provided the parent manages sorting (server-side), so we
@@ -116,38 +103,25 @@
     }
   }
 
-  // Normalize colWidths: handle object or array input, treat numeric as stretch weights.
-  // NOTE: percentage strings (e.g. '30%') are no longer supported and will be ignored with a warning.
+  // Normalize colWidths: treat numeric values as stretch weights and pass through CSS strings.
   function normalizeColWidths() {
     const map = {};
     const keys = effectiveVisibleKeys;
     const widths = effectiveColWidths;
 
-    // Build an ordered list of entries for effectiveVisibleKeys
-    const entries = keys.map((key, i) => {
-      let v;
-      if (Array.isArray(widths)) v = widths[i];
-      else if (widths && typeof widths === 'object') v = widths[key];
-      else v = undefined;
-      return { key, v };
-    });
-
-    // Collect numeric stretch weights and pass-through non-percent strings
     const numeric = [];
     const otherStrings = [];
 
-    for (const e of entries) {
-      const v = e.v;
+    for (const key of keys) {
+      const v = widths[key];
       if (typeof v === 'number' && !Number.isNaN(v)) {
-        numeric.push({ key: e.key, w: v });
+        numeric.push({ key, w: v });
       } else if (typeof v === 'string') {
         const s = v.trim();
-        if (s.endsWith('%')) {
-          // Percent strings are intentionally unsupported now - ignore silently
-        } else {
-          // keep other string units (e.g., '120px')
-          otherStrings.push({ key: e.key, v: s });
+        if (!s.endsWith('%')) {
+          otherStrings.push({ key, v: s });
         }
+        // percent strings are intentionally unsupported — ignore silently
       }
     }
 
@@ -166,7 +140,7 @@
       });
     }
 
-    // Copy through non-percent strings (e.g. '120px')
+    // Copy through non-percent CSS strings (e.g. '120px')
     for (const o of otherStrings) {
       map[o.key] = o.v;
     }
@@ -175,39 +149,22 @@
   }
 
   // Compute column width by key (fallback to even distribution)
-  function calcColWidth(key, index) {
+  function calcColWidth(key) {
     try {
       const norm = normalizeColWidths();
       if (norm && norm[key] !== undefined) return String(norm[key]);
 
-      // Fallbacks: accept string widths (e.g. '120px') passed directly by the user.
-      const widths = effectiveColWidths;
-      if (Array.isArray(widths) && widths[index] !== undefined) {
-        const v = widths[index];
-        if (typeof v === 'string') {
-          const s = v.trim();
-          if (!s.endsWith('%')) {
-            return v; // e.g. '120px'
-          }
-          // percent strings are ignored silently
-        }
-      }
-      if (typeof widths === 'object' && widths[key] !== undefined) {
-        const v = widths[key];
-        if (typeof v === 'string') {
-          const s = v.trim();
-          if (!s.endsWith('%')) {
-            return v; // e.g. '120px'
-          }
-          // percent strings are ignored silently
-        }
+      // Fallback: accept CSS string widths passed directly (e.g. '120px')
+      const v = effectiveColWidths[key];
+      if (typeof v === 'string') {
+        const s = v.trim();
+        if (!s.endsWith('%')) return s;
       }
     } catch (err) {
       // ignore and fall through to defaults
     }
     const n = Math.max(1, effectiveVisibleKeys.length);
-    const pct = Math.floor(100 / n);
-    return pct + '%';
+    return Math.floor(100 / n) + '%';
   }
 </script>
 
@@ -225,18 +182,18 @@
       <!-- colgroup enforces the column widths so table-layout: fixed distributes as intended -->
       {#snippet header()}
         <colgroup>
-          {#each effectiveVisibleKeys as key, i}
-            <col style="width: {calcColWidth(key, i)}" />
+          {#each effectiveVisibleKeys as key}
+            <col style="width: {calcColWidth(key)}" />
           {/each}
         </colgroup>
         <thead class="sticky-header">
           <tr>
-            {#each effectiveVisibleKeys as key, i}
+            {#each effectiveVisibleKeys as key}
               {@const colDef = colDefMap[key]}
               {@const label = colDef?.label ?? key}
               {@const isSortable = colDef?.sortable !== false}
               <th
-                style="width: {calcColWidth(key, i)}"
+                style="width: {calcColWidth(key)}"
                 class={isSortable ? 'cursor-pointer select-none' : 'select-none'}
                 onclick={isSortable ? () => handleSort(key) : undefined}
                 aria-sort={sortKey === key
@@ -262,22 +219,21 @@
       {/snippet}
 
       {#snippet vl_slot({ index, item })}
-        {#if rowSnippet}
-          {@render rowSnippet({ item, index, select: () => selectItem(item, index), selected })}
-        {:else if columns}
-          <!-- Default row rendering when columns is provided but rowSnippet is not -->
-          <tr>
-            {#each columns as col}
-              <td>
-                {#if col.cellSnippet}
-                  {@render col.cellSnippet({ item, value: item[col.key], index })}
-                {:else}
-                  {item[col.key] ?? ''}
-                {/if}
-              </td>
-            {/each}
-          </tr>
-        {/if}
+        <!-- Default row rendering using each column's cellSnippet or raw value -->
+        <tr
+          onclick={() => selectItem(item, index)}
+          class={selected === item ? 'selected' : ''}
+        >
+          {#each columns as col}
+            <td>
+              {#if col.cellSnippet}
+                {@render col.cellSnippet({ item, value: item[col.key], index })}
+              {:else}
+                {item[col.key] ?? ''}
+              {/if}
+            </td>
+          {/each}
+        </tr>
       {/snippet}
     </VirtualList>
   {:else}

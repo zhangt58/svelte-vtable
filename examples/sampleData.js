@@ -199,31 +199,10 @@ const generatedData = Array.from({ length: 1000 }, (_, i) => {
 
 export const allData = generatedData;
 
-// Define columns to filter on (legacy format)
-export const filterColumns = [
-  { key: 'department', label: 'Department' },
-  { key: 'status', label: 'Status' },
-  { key: 'level', label: 'Level' },
-  { key: 'hireDate', label: 'Hire Date', type: 'daterange' },
-  { key: 'createdAt', label: 'Created At', type: 'datetimerange' },
-];
-
-// Define table columns for DataTable (legacy format)
-export const tableColumns = [
-  { key: 'id', label: 'ID', stretch: 1 },
-  { key: 'name', label: 'Name', stretch: 3 },
-  { key: 'department', label: 'Department', stretch: 2 },
-  { key: 'status', label: 'Status', stretch: 1.5 },
-  { key: 'level', label: 'Level', stretch: 1.5 },
-  { key: 'hireDate', label: 'Hire Date', stretch: 2 },
-  { key: 'createdAt', label: 'Created At', stretch: 2 },
-  { key: 'description', label: 'Description', stretch: 4 },
-];
-
 /**
  * Unified ColumnDef array — combines table column config (width, label) with
  * filter config (filterType) in a single array.  Pass this as the `columns`
- * prop to DataTable and to buildColumnFilters() in place of the separate
+ * prop to DataTable and to buildColumnFilters() in place of the old separate
  * `tableColumns` / `filterColumns` arrays.
  *
  * @type {import('../src/lib/index.js').ColumnDef[]}

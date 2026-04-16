@@ -39,6 +39,5 @@ export {
  *   `{ key, label, sortKey, sortDir }`.
  * @property {import('svelte').Snippet<[{item: T, value: unknown, index: number}]>} [cellSnippet]
  *   Custom Svelte 5 snippet rendered inside each `<td>` for this column.
- *   Receives `{ item, value, index }`. Used for default row rendering when
- *   no `rowSnippet` is provided on `DataTable`.
+ *   Receives `{ item, value, index }`. When omitted the raw value is rendered.
  */
