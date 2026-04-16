@@ -199,7 +199,7 @@ const generatedData = Array.from({ length: 1000 }, (_, i) => {
 
 export const allData = generatedData;
 
-// Define columns to filter on
+// Define columns to filter on (legacy format)
 export const filterColumns = [
   { key: 'department', label: 'Department' },
   { key: 'status', label: 'Status' },
@@ -208,7 +208,7 @@ export const filterColumns = [
   { key: 'createdAt', label: 'Created At', type: 'datetimerange' },
 ];
 
-// Define table columns for DataTable
+// Define table columns for DataTable (legacy format)
 export const tableColumns = [
   { key: 'id', label: 'ID', stretch: 1 },
   { key: 'name', label: 'Name', stretch: 3 },
@@ -218,4 +218,23 @@ export const tableColumns = [
   { key: 'hireDate', label: 'Hire Date', stretch: 2 },
   { key: 'createdAt', label: 'Created At', stretch: 2 },
   { key: 'description', label: 'Description', stretch: 4 },
+];
+
+/**
+ * Unified ColumnDef array — combines table column config (width, label) with
+ * filter config (filterType) in a single array.  Pass this as the `columns`
+ * prop to DataTable and to buildColumnFilters() in place of the separate
+ * `tableColumns` / `filterColumns` arrays.
+ *
+ * @type {import('../src/lib/index.js').ColumnDef[]}
+ */
+export const columnDefs = [
+  { key: 'id',          label: 'ID',           width: 1,   sortable: true,  filterType: 'none' },
+  { key: 'name',        label: 'Name',          width: 3,   sortable: true,  filterType: 'none' },
+  { key: 'department',  label: 'Department',    width: 2,   sortable: true,  filterType: 'value' },
+  { key: 'status',      label: 'Status',        width: 1.5, sortable: true,  filterType: 'value' },
+  { key: 'level',       label: 'Level',         width: 1.5, sortable: true,  filterType: 'value' },
+  { key: 'hireDate',    label: 'Hire Date',     width: 2,   sortable: true,  filterType: 'daterange' },
+  { key: 'createdAt',   label: 'Created At',    width: 2,   sortable: true,  filterType: 'datetimerange' },
+  { key: 'description', label: 'Description',   width: 4,   sortable: false, filterType: 'none' },
 ];

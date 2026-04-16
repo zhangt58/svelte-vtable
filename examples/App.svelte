@@ -3,7 +3,11 @@
   import { DataTable, DataTableControls } from '@zhangt58/svelte-vtable';
   import { buildColumnFilters, applyFilters, countActiveFilters } from '../src/lib/filterUtils.js';
   import { DarkMode } from 'flowbite-svelte';
-  import { allData, filterColumns, tableColumns } from './sampleData.js';
+  import { allData, filterColumns, tableColumns, columnDefs } from './sampleData.js';
+
+  // -------------------------------------------------------------------------
+  // Legacy API demo (visibleKeys + colWidths)
+  // -------------------------------------------------------------------------
 
   // Build column filters using utility function
   let columnFilters = $state(buildColumnFilters(allData, filterColumns));
@@ -80,6 +84,58 @@
       void colWidths;
     } catch (e) {}
   });
+
+  // -------------------------------------------------------------------------
+  // New columns API demo (ColumnDef[])
+  // -------------------------------------------------------------------------
+
+  // Build column filters from the unified columnDefs array.
+  // Columns with filterType:'none' are automatically excluded.
+  let columnDefsFilters = $state(buildColumnFilters(allData, columnDefs));
+
+  let activeFilters2 = $state({});
+  let searchQuery2 = $state('');
+  let currentPage2 = $state(1);
+  let perPage2 = $state(25);
+
+  function handleFilterChange2({ key, values, allFilters }) {
+    activeFilters2 = { ...allFilters };
+    currentPage2 = 1;
+  }
+
+  const filteredData2 = $derived(() => {
+    let items = applyFilters(allData, activeFilters2) || [];
+    const q = String(searchQuery2 || '').trim();
+    if (q.length > 0) {
+      const low = q.toLowerCase();
+      items = items.filter((it) =>
+        columnDefs.some((c) =>
+          String(it[c.key] ?? '')
+            .toLowerCase()
+            .includes(low),
+        ),
+      );
+    }
+    return items;
+  });
+
+  let _prevSearch2 = '';
+  $effect(() => {
+    const q = String(searchQuery2 || '');
+    if (q !== _prevSearch2) {
+      currentPage2 = 1;
+      _prevSearch2 = q;
+    }
+  });
+
+  const pagedData2 = $derived(() => {
+    const items = filteredData2() || [];
+    const cp = Math.max(1, Math.floor(currentPage2 || 1));
+    const start = (cp - 1) * perPage2;
+    return items.slice(start, start + perPage2);
+  });
+
+  const activeCount2 = $derived(() => countActiveFilters(activeFilters2));
 </script>
 
 {#snippet rowSnippet({ item, index, select, selected })}
@@ -203,9 +259,13 @@
   />
 </div>
 
+<!-- Legacy API demo -->
 <div
   class="mt-2 p-4 bg-gray-50 border border-gray-200 rounded-lg dark:bg-gray-800 dark:border-gray-700"
 >
+  <h2 class="text-lg font-semibold text-gray-700 dark:text-gray-200 mb-2">
+    Legacy API: <code>visibleKeys</code> + <code>colWidths</code>
+  </h2>
   <DataTableControls
     search={searchQuery}
     {currentPage}
@@ -232,6 +292,72 @@
         class="border border-gray-200 dark:border-gray-600 rounded overflow-auto scrollbar-thin"
         {rowSnippet}
         {colWidths}
+        virtualize={false}
+        style="height:400px; overflow:auto;"
+      />
+    </div>
+  {:else}
+    <div class="p-8 text-center text-gray-400 dark:text-gray-400 italic">
+      No records match the selected filters. Try adjusting or clearing filters.
+    </div>
+  {/if}
+</div>
+
+<!-- New columns API demo -->
+<div
+  class="mt-6 p-4 bg-gray-50 border border-gray-200 rounded-lg dark:bg-gray-800 dark:border-gray-700"
+>
+  <h2 class="text-lg font-semibold text-gray-700 dark:text-gray-200 mb-1">
+    New API: unified <code>columns: ColumnDef[]</code>
+  </h2>
+  <p class="text-sm text-gray-500 dark:text-gray-400 mb-3">
+    A single <code>columnDefs</code> array drives headers, widths, sorting, filters, and default
+    cell rendering — no separate <code>visibleKeys</code>, <code>colWidths</code>, or
+    <code>rowSnippet</code> required.
+  </p>
+
+  <DataTableFilters
+    columnFilters={columnDefsFilters}
+    {direction}
+    activeFilters={activeFilters2}
+    onfilter={handleFilterChange2}
+    showCounts={true}
+  />
+
+  <DataTableControls
+    search={searchQuery2}
+    currentPage={currentPage2}
+    onpage={(payload) => {
+      currentPage2 = payload.page;
+    }}
+    onsearch={(payload) => {
+      searchQuery2 = payload.search;
+    }}
+    bind:perPage={perPage2}
+    totalItems={filteredData2().length}
+    columnFilters={columnDefsFilters}
+    activeFilters={activeFilters2}
+    onfilter={handleFilterChange2}
+    {direction}
+    showCounts={true}
+    class="mt-1"
+  />
+
+  <div class="text-sm text-gray-500 dark:text-gray-400 mt-1 mb-1">
+    {activeCount2()} active filter(s) · {filteredData2().length} total records
+  </div>
+
+  {#if filteredData2().length > 0}
+    <div class="mt-2">
+      <!--
+        Pass `columns` instead of `visibleKeys`+`colWidths`+`rowSnippet`.
+        The DataTable renders a default row (using each column's cellSnippet
+        when provided, or the raw value otherwise).
+      -->
+      <DataTable
+        items={pagedData2()}
+        columns={columnDefs}
+        class="border border-gray-200 dark:border-gray-600 rounded overflow-auto scrollbar-thin"
         virtualize={false}
         style="height:400px; overflow:auto;"
       />

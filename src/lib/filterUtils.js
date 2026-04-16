@@ -25,15 +25,31 @@ export function getUniqueValuesWithCounts(data, key) {
 }
 
 /**
- * Build column filters configuration from data and column definitions
+ * Build column filters configuration from data and column definitions.
+ * Accepts both legacy `{key, label, type?}` objects and new `ColumnDef`
+ * objects that carry a `filterType` field. Columns with `filterType: 'none'`
+ * are excluded from the returned array.
  * @param {Array} data - Array of data objects
- * @param {Array} columns - Array of column definitions {key, label, type?}
- *   Supported types: 'value' (default), 'daterange', 'datetimerange'
+ * @param {Array} columns - Array of column definitions.
+ *   Legacy shape: `{key, label, type?}` where `type` is
+ *     `'value'` | `'daterange'` | `'datetimerange'`.
+ *   ColumnDef shape: `{key, label?, filterType?}` where `filterType` is
+ *     `'value'` | `'daterange'` | `'datetimerange'` | `'none'`.
  * @returns {Array} Column filters configuration for DataTableFilters
  */
 export function buildColumnFilters(data, columns) {
-  return columns.map((col) => {
-    const isDateRange = col.type === 'daterange' || col.type === 'datetimerange';
+  return columns
+    .filter((col) => {
+      // ColumnDef uses filterType; legacy columns use type.
+      // Exclude columns explicitly opted out of filtering.
+      const ft = col.filterType ?? col.type;
+      return ft !== 'none';
+    })
+    .map((col) => {
+    // Resolve the effective filter type: prefer ColumnDef's filterType,
+    // then fall back to the legacy type field.
+    const effectiveType = col.filterType ?? col.type;
+    const isDateRange = effectiveType === 'daterange' || effectiveType === 'datetimerange';
     if (isDateRange) {
       // Scan data to find the min/max timestamps for this column so the UI can
       // offer a dual-range slider and Earliest/Latest shortcut buttons.
@@ -62,12 +78,12 @@ export function buildColumnFilters(data, columns) {
         const d = new Date(ms);
         return `${d.getFullYear()}-${pad(d.getMonth() + 1)}-${pad(d.getDate())}T${pad(d.getHours())}:${pad(d.getMinutes())}`;
       };
-      const fmt = col.type === 'datetimerange' ? fmtDatetime : fmtDate;
+      const fmt = effectiveType === 'datetimerange' ? fmtDatetime : fmtDate;
 
       return {
         key: col.key,
         label: col.label || col.key,
-        type: col.type,
+        type: effectiveType,
         uniqueValues: [],
         counts: {},
         minValue: hasRange ? fmt(minMs) : null,
@@ -78,7 +94,7 @@ export function buildColumnFilters(data, columns) {
     return {
       key: col.key,
       label: col.label || col.key,
-      type: col.type || 'value',
+      type: effectiveType || 'value',
       uniqueValues,
       counts,
     };

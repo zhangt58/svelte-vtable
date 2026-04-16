@@ -5,6 +5,12 @@
   // project's runes-style components. Include the `select` callback prop.
   let {
     items = [],
+    // New unified column definitions. When provided, visibleKeys and colWidths
+    // are derived from this array and do not need to be passed separately.
+    // @type {import('../lib/index.js').ColumnDef[]}
+    columns = undefined,
+    // Legacy props — still supported for backward compatibility.
+    // When `columns` is provided these are ignored unless they are also explicitly set.
     visibleKeys = [],
     // sortKey/sortDir are bindable so parents can observe or control sort state.
     sortKey = $bindable(null),
@@ -23,9 +29,28 @@
     // If `virtualize` is false we ask the wrapped VirtualList to render as a normal list/table
     // by setting its `isDisabled` prop. Default: true (virtualization enabled).
     virtualize = true,
-    // <slot> -> @render migration
-    rowSnippet,
+    // <slot> -> @render migration. Optional when `columns` with cellSnippets is provided.
+    rowSnippet = undefined,
   } = $props();
+
+  // --- Derived values from ColumnDef[] or legacy props ---
+
+  // Keys of columns to display.
+  const effectiveVisibleKeys = $derived(columns ? columns.map((c) => c.key) : visibleKeys);
+
+  // Width configuration: build an object keyed by column key.
+  // When `columns` is provided, use the `width` field (default 1).
+  // Otherwise fall back to the legacy `colWidths` prop.
+  const effectiveColWidths = $derived(
+    columns
+      ? Object.fromEntries(columns.map((c) => [c.key, c.width ?? 1]))
+      : colWidths,
+  );
+
+  // Fast lookup map: key → ColumnDef (only populated when `columns` is provided).
+  const colDefMap = $derived(
+    columns ? Object.fromEntries(columns.map((c) => [c.key, c])) : {},
+  );
 
   // Internal sorted array derived from items + current sort state.
   // When onsort is provided the parent manages sorting (server-side), so we
@@ -95,12 +120,14 @@
   // NOTE: percentage strings (e.g. '30%') are no longer supported and will be ignored with a warning.
   function normalizeColWidths() {
     const map = {};
+    const keys = effectiveVisibleKeys;
+    const widths = effectiveColWidths;
 
-    // Build an ordered list of entries for visibleKeys
-    const entries = visibleKeys.map((key, i) => {
+    // Build an ordered list of entries for effectiveVisibleKeys
+    const entries = keys.map((key, i) => {
       let v;
-      if (Array.isArray(colWidths)) v = colWidths[i];
-      else if (colWidths && typeof colWidths === 'object') v = colWidths[key];
+      if (Array.isArray(widths)) v = widths[i];
+      else if (widths && typeof widths === 'object') v = widths[key];
       else v = undefined;
       return { key, v };
     });
@@ -154,10 +181,9 @@
       if (norm && norm[key] !== undefined) return String(norm[key]);
 
       // Fallbacks: accept string widths (e.g. '120px') passed directly by the user.
-      // Numeric values should be provided as stretch weights and will be handled
-      // by normalizeColWidths(); if we encounter numeric values here, warn and ignore them.
-      if (Array.isArray(colWidths) && colWidths[index] !== undefined) {
-        const v = colWidths[index];
+      const widths = effectiveColWidths;
+      if (Array.isArray(widths) && widths[index] !== undefined) {
+        const v = widths[index];
         if (typeof v === 'string') {
           const s = v.trim();
           if (!s.endsWith('%')) {
@@ -166,8 +192,8 @@
           // percent strings are ignored silently
         }
       }
-      if (typeof colWidths === 'object' && colWidths[key] !== undefined) {
-        const v = colWidths[key];
+      if (typeof widths === 'object' && widths[key] !== undefined) {
+        const v = widths[key];
         if (typeof v === 'string') {
           const s = v.trim();
           if (!s.endsWith('%')) {
@@ -179,7 +205,7 @@
     } catch (err) {
       // ignore and fall through to defaults
     }
-    const n = Math.max(1, visibleKeys.length);
+    const n = Math.max(1, effectiveVisibleKeys.length);
     const pct = Math.floor(100 / n);
     return pct + '%';
   }
@@ -199,29 +225,36 @@
       <!-- colgroup enforces the column widths so table-layout: fixed distributes as intended -->
       {#snippet header()}
         <colgroup>
-          {#each visibleKeys as key, i}
+          {#each effectiveVisibleKeys as key, i}
             <col style="width: {calcColWidth(key, i)}" />
           {/each}
         </colgroup>
         <thead class="sticky-header">
           <tr>
-            {#each visibleKeys as key, i}
+            {#each effectiveVisibleKeys as key, i}
+              {@const colDef = colDefMap[key]}
+              {@const label = colDef?.label ?? key}
+              {@const isSortable = colDef?.sortable !== false}
               <th
                 style="width: {calcColWidth(key, i)}"
-                class="cursor-pointer select-none"
-                onclick={() => handleSort(key)}
+                class={isSortable ? 'cursor-pointer select-none' : 'select-none'}
+                onclick={isSortable ? () => handleSort(key) : undefined}
                 aria-sort={sortKey === key
                   ? sortDir === 'asc'
                     ? 'ascending'
                     : 'descending'
                   : 'none'}
               >
-                <div class="inline-flex items-center gap-1">
-                  <span>{key}</span>
-                  {#if sortKey === key}
-                    <span aria-hidden="true">{sortDir === 'asc' ? '▲' : '▼'}</span>
-                  {/if}
-                </div>
+                {#if colDef?.headerSnippet}
+                  {@render colDef.headerSnippet({ key, label, sortKey, sortDir })}
+                {:else}
+                  <div class="inline-flex items-center gap-1">
+                    <span>{label}</span>
+                    {#if sortKey === key}
+                      <span aria-hidden="true">{sortDir === 'asc' ? '▲' : '▼'}</span>
+                    {/if}
+                  </div>
+                {/if}
               </th>
             {/each}
           </tr>
@@ -229,7 +262,22 @@
       {/snippet}
 
       {#snippet vl_slot({ index, item })}
-        {@render rowSnippet({ item, index, select: () => selectItem(item, index), selected })}
+        {#if rowSnippet}
+          {@render rowSnippet({ item, index, select: () => selectItem(item, index), selected })}
+        {:else if columns}
+          <!-- Default row rendering when columns is provided but rowSnippet is not -->
+          <tr>
+            {#each columns as col}
+              <td>
+                {#if col.cellSnippet}
+                  {@render col.cellSnippet({ item, value: item[col.key], index })}
+                {:else}
+                  {item[col.key] ?? ''}
+                {/if}
+              </td>
+            {/each}
+          </tr>
+        {/if}
       {/snippet}
     </VirtualList>
   {:else}
