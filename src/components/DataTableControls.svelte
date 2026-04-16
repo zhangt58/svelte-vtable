@@ -37,7 +37,7 @@
   ];
 
   // count of active filters (sum of selected values per column)
-  const activeFilterCount = $derived(() => {
+  const activeFilterCount = $derived.by(() => {
     try {
       return Object.values(activeFilters || {}).reduce(
         (sum, v) => sum + (Array.isArray(v) ? v.length : 0),
@@ -49,15 +49,15 @@
   });
 
   // totalPages derived from totalItems and perPage
-  const totalPages = $derived(() => Math.max(1, Math.ceil(totalItems / perPage)));
+  const totalPages = $derived(Math.max(1, Math.ceil(totalItems / perPage)));
 
   // clamp currentPage into valid range whenever currentPage or totalPages change
   $effect(() => {
-    currentPage = Math.min(Math.max(1, +currentPage || 1), totalPages());
+    currentPage = Math.min(Math.max(1, +currentPage || 1), totalPages);
   });
 
   function goTo(p) {
-    const np = Math.min(Math.max(1, Math.floor(p)), totalPages());
+    const np = Math.min(Math.max(1, Math.floor(p)), totalPages);
     if (np !== currentPage) {
       currentPage = np;
       pagechange?.({ currentPage });
@@ -108,8 +108,8 @@
   });
 
   // Calculate range for display
-  const startItem = $derived(() => (totalItems === 0 ? 0 : (currentPage - 1) * perPage + 1));
-  const endItem = $derived(() => Math.min(currentPage * perPage, totalItems));
+  const startItem = $derived(totalItems === 0 ? 0 : (currentPage - 1) * perPage + 1);
+  const endItem = $derived(Math.min(currentPage * perPage, totalItems));
 
   // visiblePages: number of middle numeric buttons to show (not counting first/last)
   const visiblePages = 5;
@@ -119,8 +119,8 @@
   const perPageSelectId = `dpc-perpage-${Math.random().toString(36).slice(2, 7)}`;
 
   // pages array for Pagination component (condensed with ellipses)
-  const pages = $derived(() => {
-    const total = totalPages();
+  const pages = $derived.by(() => {
+    const total = totalPages;
     const current = Math.min(Math.max(1, Math.floor(currentPage)), total);
 
     // If small number of pages, show all
@@ -189,7 +189,7 @@
 
   function decorateEllipsis() {
     if (!paginationContainerEl) return;
-    const pageList = pages();
+    const pageList = pages;
     // find the <ul> inside the pagination container
     let ul = null;
     if (paginationContainerEl && typeof paginationContainerEl.querySelector === 'function') {
@@ -293,7 +293,7 @@
 
   // run decoration whenever pages or currentPage change
   $effect(() => {
-    pages();
+    pages;
     currentPage;
     // schedule decoration after the browser has painted the updated DOM
     requestAnimationFrame(() => requestAnimationFrame(() => decorateEllipsis()));
@@ -323,7 +323,7 @@
   function handlePaginationClick(e) {
     const el = e.target instanceof Element ? e.target.closest('button, a') : null;
     if (!el) return;
-    // find the parent li index so we can map to pages()
+    // find the parent li index so we can map to pages
     const li = el.closest('li');
     if (!li) return;
     const ul = li.parentElement;
@@ -346,7 +346,7 @@
       return; // rely on Pagination's built-in previous/next handling to avoid double-invocation
     }
 
-    const pageList = pages();
+    const pageList = pages;
 
     // Map clicked li to page index
     const pageIdx = pageLis.findIndex((p) => p.li === li);
@@ -389,11 +389,11 @@
             <span class="text-sm">Filters</span>
           </button>
 
-          {#if activeFilterCount() > 0}
+          {#if activeFilterCount > 0}
             <!-- positioned badge -->
             <span
               class="absolute top-0 right-0 -translate-y-1/2 translate-x-1/2 inline-flex items-center justify-center h-5 min-w-[1.25rem] px-1.5 rounded-full bg-green-600 text-white text-xs font-medium"
-              >{activeFilterCount()}</span
+              >{activeFilterCount}</span
             >
           {/if}
         </div>
@@ -414,7 +414,7 @@
     <!-- Range count badge + per-page selector -->
     <div class="flex-2 flex items-center gap-2">
       <Badge rounded color="gray">
-        Showing {startItem()} to {endItem()} of {totalItems}
+        Showing {startItem} to {endItem} of {totalItems}
       </Badge>
 
       <!-- Per-page selector -->
@@ -431,7 +431,7 @@
       aria-label="Pagination"
     >
       <Pagination
-        pages={pages()}
+        pages={pages}
         {previous}
         {next}
         ariaLabel="Pagination"
