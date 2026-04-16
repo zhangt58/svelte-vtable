@@ -205,6 +205,9 @@ export const allData = generatedData;
  * prop to DataTable and to buildColumnFilters() in place of the old separate
  * `tableColumns` / `filterColumns` arrays.
  *
+ * Note: `cellSnippet` values require Svelte snippet syntax and must be
+ * attached in the consuming Svelte component (see examples/App.svelte).
+ *
  * @type {import('../src/lib/index.js').ColumnDef[]}
  */
 export const columnDefs = [

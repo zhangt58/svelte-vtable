@@ -215,12 +215,57 @@
     <div class="mt-2">
       <!--
         Pass `columns` instead of `visibleKeys`+`colWidths`+`rowSnippet`.
-        The DataTable renders a default row (using each column's cellSnippet
-        when provided, or the raw value otherwise).
+        The DataTable renders a default row, using each column's `cellSnippet`
+        when provided, or the raw value otherwise.
+
+        Snippets must be defined in a Svelte component — they are merged into
+        the columnDefs array here before being passed as the `columns` prop.
       -->
+
+      <!-- Cell snippet: id — monospace "#N" label -->
+      {#snippet idCell({ value })}
+        <span class="font-mono text-gray-400 dark:text-gray-500 text-xs">#{value}</span>
+      {/snippet}
+
+      <!-- Cell snippet: status — colour-coded badge -->
+      {#snippet statusCell({ value })}
+        {@const cls =
+          value === 'Active'
+            ? 'bg-green-100 text-green-800 dark:bg-green-900/40 dark:text-green-300'
+            : value === 'Inactive'
+              ? 'bg-red-100 text-red-800 dark:bg-red-900/40 dark:text-red-300'
+              : 'bg-amber-100 text-amber-800 dark:bg-amber-900/40 dark:text-amber-300'}
+        <span
+          class="inline-flex items-center px-2 py-0.5 rounded-full text-xs font-medium {cls}"
+        >{value}</span>
+      {/snippet}
+
+      <!-- Cell snippet: level — colour-coded pill -->
+      {#snippet levelCell({ value })}
+        {@const cls =
+          value === 'Lead'
+            ? 'bg-rose-100 text-rose-800 dark:bg-rose-900/40 dark:text-rose-300'
+            : value === 'Senior'
+              ? 'bg-violet-100 text-violet-800 dark:bg-violet-900/40 dark:text-violet-300'
+              : value === 'Mid'
+                ? 'bg-blue-100 text-blue-800 dark:bg-blue-900/40 dark:text-blue-300'
+                : 'bg-sky-100 text-sky-800 dark:bg-sky-900/40 dark:text-sky-300'}
+        <span
+          class="inline-flex items-center px-2 py-0.5 rounded-full text-xs font-medium {cls}"
+        >{value}</span>
+      {/snippet}
+
       <DataTable
         items={pagedData()}
-        columns={columnDefs}
+        columns={columnDefs.map((c) =>
+          c.key === 'id'
+            ? { ...c, cellSnippet: idCell }
+            : c.key === 'status'
+              ? { ...c, cellSnippet: statusCell }
+              : c.key === 'level'
+                ? { ...c, cellSnippet: levelCell }
+                : c,
+        )}
         class="border border-gray-200 dark:border-gray-600 rounded overflow-auto scrollbar-thin"
         virtualize={false}
         style="height:400px; overflow:auto;"
