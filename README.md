@@ -61,7 +61,7 @@ npm install svelte@^5.0.0 tailwindcss@^4.0.0 flowbite-svelte@^1.0.0 flowbite-sve
 <DataTableFilters
   {columnFilters}
   {activeFilters}
-  filterChange={({ allFilters }) => (activeFilters = allFilters)}
+  onfilter={({ allFilters }) => (activeFilters = allFilters)}
 />
 
 <!-- Search and pagination controls -->
@@ -70,8 +70,8 @@ npm install svelte@^5.0.0 tailwindcss@^4.0.0 flowbite-svelte@^1.0.0 flowbite-sve
   currentPage={ui.currentPage}
   perPage={ui.perPage}
   totalItems={items.length}
-  pagechange={(e) => (ui.currentPage = e.currentPage)}
-  searchchange={(e) => (ui.searchQuery = e.search)}
+  onpage={({ page }) => (ui.currentPage = page)}
+  onsearch={({ search }) => (ui.searchQuery = search)}
 />
 
 <!-- Virtualized table -->
@@ -83,7 +83,7 @@ npm install svelte@^5.0.0 tailwindcss@^4.0.0 flowbite-svelte@^1.0.0 flowbite-sve
   onsort={({ key, dir }) => {
     /* optionally trigger a server fetch here */
   }}
-  selectCallback={(detail) => {
+  onselect={({ item, index }) => {
     /* handle selection */
   }}
   {colWidths}
@@ -117,7 +117,7 @@ A virtualized table component for efficient rendering of large datasets. The com
 | `emptyMessage`   | `string`          | `'No items to display.'` | Message when no items                                        |
 | `colWidths`      | `object \| Array` | `{}`                     | Column width configuration (stretch weights or pixel values) |
 | `selected`       | `any`             | `null`                   | Currently selected item                                      |
-| `selectCallback` | `function`        | `() => {}`               | Callback when a row is selected: `({item, index}) => void`   |
+| `onselect`       | `function`        | `undefined`              | Callback when a row is selected: `({item, index}) => void`   |
 | `onsort`         | `function`        | `undefined`              | Callback when sort changes: `({key, dir}) => void`. When provided, local sorting is skipped (server-side sort pattern). Omit entirely (do not pass `() => {}`) to enable local sorting. |
 | `rowSnippet`     | `Snippet`         | required                 | Svelte 5 snippet for rendering rows                          |
 
@@ -197,14 +197,17 @@ Controls component for search and pagination.
 
 #### Props
 
-| Prop           | Type       | Default    | Description                                          |
-| -------------- | ---------- | ---------- | ---------------------------------------------------- |
-| `search`       | `string`   | `''`       | Current search query                                 |
-| `currentPage`  | `number`   | `1`        | Current page number                                  |
-| `perPage`      | `number`   | `25`       | Items per page                                       |
-| `totalItems`   | `number`   | `0`        | Total number of items                                |
-| `pagechange`   | `function` | `() => {}` | Callback for page changes: `({currentPage}) => void` |
-| `searchchange` | `function` | `() => {}` | Callback for search changes: `({search}) => void`    |
+| Prop              | Type       | Default     | Description                                                        |
+| ----------------- | ---------- | ----------- | ------------------------------------------------------------------ |
+| `search`          | `string`   | `''`        | Current search query                                               |
+| `currentPage`     | `number`   | `1`         | Current page number                                                |
+| `perPage`         | `number`   | `25`        | Items per page                                                     |
+| `totalItems`      | `number`   | `0`         | Total number of items                                              |
+| `onpage`          | `function` | `undefined` | Callback for page changes: `({page}) => void`                      |
+| `onsearch`        | `function` | `undefined` | Callback for search changes: `({search}) => void`                  |
+| `onfilterstoggle` | `function` | `undefined` | Callback when filters panel toggled: `({visible}) => void`         |
+| `onperpage`       | `function` | `undefined` | Callback when per-page changes: `({perPage}) => void`              |
+| `onfilter`        | `function` | `undefined` | Callback when filters change (passed through to DataTableFilters): `({key, values, allFilters}) => void` |
 
 ### DataTableFilters
 
@@ -212,14 +215,15 @@ Multi-select filter component with flexible layout options. Implements OR logic 
 
 #### Props
 
-| Prop            | Type                         | Default        | Description                                              |
-| --------------- | ---------------------------- | -------------- | -------------------------------------------------------- |
-| `columnFilters` | `Array`                      | `[]`           | Array of filter configurations (see below)               |
-| `direction`     | `'horizontal' \| 'vertical'` | `'horizontal'` | Layout direction for filter grid                         |
-| `activeFilters` | `Object`                     | `{}`           | Current active filters `{ columnKey: [selectedValues] }` |
-| `filterChange`  | `function`                   | `() => {}`     | Callback when filters change                             |
-| `className`     | `string`                     | `''`           | Additional CSS classes                                   |
-| `showCounts`    | `boolean`                    | `true`         | Whether to show value counts                             |
+| Prop             | Type                         | Default        | Description                                              |
+| ---------------- | ---------------------------- | -------------- | -------------------------------------------------------- |
+| `columnFilters`  | `Array`                      | `[]`           | Array of filter configurations (see below)               |
+| `direction`      | `'horizontal' \| 'vertical'` | `'horizontal'` | Layout direction for filter grid                         |
+| `activeFilters`  | `Object`                     | `{}`           | Current active filters `{ columnKey: [selectedValues] }` |
+| `onfilter`       | `function`                   | `undefined`    | Callback when filters change: `({key, values, allFilters}) => void` |
+| `oncolumnsort`   | `function`                   | `undefined`    | Callback when column sort changes: `({key, mode, dir}) => void` |
+| `className`      | `string`                     | `''`           | Additional CSS classes                                   |
+| `showCounts`     | `boolean`                    | `true`         | Whether to show value counts                             |
 
 #### columnFilters Structure
 
@@ -284,7 +288,7 @@ Example usage with data filtering:
 <DataTableFilters
   {columnFilters}
   {activeFilters}
-  filterChange={({ allFilters }) => (activeFilters = allFilters)}
+  onfilter={({ allFilters }) => (activeFilters = allFilters)}
   direction="horizontal"
   showCounts={true}
 />

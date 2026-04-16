@@ -11,22 +11,23 @@
     currentPage = 1,
     perPage = $bindable(25),
     totalItems = 0,
-    pagechange = () => {},
-    searchchange = () => {},
+    onpage = undefined,
+    onsearch = undefined,
     // control visibility of DataTableFilters above the controls
     filtersVisible = false,
-    // callback when toggle changes: filterstoggle({ filtersVisible })
-    filterstoggle = () => {},
+    // callback when toggle changes: onfilterstoggle({ visible })
+    onfilterstoggle = undefined,
     // optional DataTableFilters inputs - when provided, this component will render the filters
     columnFilters = [],
     activeFilters = {},
-    /** @type {(..._args: any[]) => void} */
-    filterChange = (..._args) => {},
+    // onfilter({ key, values, allFilters }) — passed through to DataTableFilters
+    /** @type {((..._args: any[]) => void) | undefined} */
+    onfilter = undefined,
     direction = 'horizontal',
     showCounts = true,
     className = '',
-    // new callback when perPage changes
-    perpagechange = () => {},
+    // callback when perPage changes: onperpage({ perPage })
+    onperpage = undefined,
   } = $props();
 
   const perPageOptions = [
@@ -60,16 +61,22 @@
     const np = Math.min(Math.max(1, Math.floor(p)), totalPages);
     if (np !== currentPage) {
       currentPage = np;
-      pagechange?.({ currentPage });
+      if (onpage !== undefined) {
+        onpage({ page: np });
+      }
     }
   }
 
   // emit search changes for parent when search updates
   $effect(() => {
-    if (typeof search !== 'undefined') searchchange?.({ search });
+    if (typeof search !== 'undefined') {
+      if (onsearch !== undefined) {
+        onsearch({ search });
+      }
+    }
   });
 
-  // call filterstoggle when filtersVisible changes (avoid on:change typing issues)
+  // call onfilterstoggle when filtersVisible changes (avoid on:change typing issues)
   let _prevFiltersVisible = undefined;
   $effect(() => {
     // initialize previous value on first run without emitting
@@ -78,9 +85,11 @@
       return;
     }
     if (filtersVisible !== _prevFiltersVisible) {
-      try {
-        filterstoggle?.({ filtersVisible });
-      } catch (err) {}
+      if (onfilterstoggle !== undefined) {
+        try {
+          onfilterstoggle({ visible: filtersVisible });
+        } catch (err) {}
+      }
       _prevFiltersVisible = filtersVisible;
     }
   });
@@ -98,12 +107,16 @@
       _prevPerPage = perPage;
       // reset to page 1 (common UX) and notify parent
       currentPage = 1;
-      try {
-        perpagechange?.({ perPage });
-      } catch (err) {}
-      try {
-        pagechange?.({ currentPage });
-      } catch (err) {}
+      if (onperpage !== undefined) {
+        try {
+          onperpage({ perPage });
+        } catch (err) {}
+      }
+      if (onpage !== undefined) {
+        try {
+          onpage({ page: currentPage });
+        } catch (err) {}
+      }
     }
   });
 
@@ -405,7 +418,9 @@
           clearable
           clearableOnClick={() => {
             search = '';
-            searchchange?.({ search });
+            if (onsearch !== undefined) {
+              onsearch({ search: '' });
+            }
           }}
         />
       </div>
@@ -485,11 +500,7 @@
   bind:open={filtersVisible}
   {columnFilters}
   {activeFilters}
-  filterChange={(...args) => {
-    try {
-      return filterChange(...args);
-    } catch (e) {}
-  }}
+  {onfilter}
   {direction}
   {showCounts}
   {className}

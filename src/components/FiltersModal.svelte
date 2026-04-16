@@ -10,8 +10,8 @@
     activeFilters = {},
     /** @type {string} */
     title = 'Filters',
-    /** @type {(..._args: any[]) => void} */
-    filterChange = (..._args) => {},
+    // onfilter({ key, values, allFilters })
+    onfilter = undefined,
     direction = 'horizontal',
     showCounts = true,
     className = '',
@@ -33,11 +33,7 @@
   <DataTableFilters
     {columnFilters}
     {activeFilters}
-    filterChange={(payload) => {
-      try {
-        return filterChange(payload);
-      } catch (e) {}
-    }}
+    {onfilter}
     {direction}
     {showCounts}
   />
