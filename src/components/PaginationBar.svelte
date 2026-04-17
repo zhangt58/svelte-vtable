@@ -7,11 +7,7 @@
    *  - currentPage: number
    *  - onpage: (page: number) => void
    */
-  let {
-    pages = [],
-    currentPage = 1,
-    onpage = undefined,
-  } = $props();
+  let { pages = [], currentPage = 1, onpage = undefined } = $props();
 
   // Derive total pages from the last entry in the pages array (always the last page number).
   const lastPage = $derived(pages.length > 0 ? +pages[pages.length - 1].name || 1 : 1);
@@ -80,12 +76,7 @@
           stroke="currentColor"
           aria-hidden="true"
         >
-          <path
-            stroke-linecap="round"
-            stroke-linejoin="round"
-            stroke-width="1"
-            d="M9 5l7 7-7 7"
-          />
+          <path stroke-linecap="round" stroke-linejoin="round" stroke-width="1" d="M9 5l7 7-7 7" />
         </svg>
       </button>
     </li>

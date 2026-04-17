@@ -30,11 +30,5 @@
     </button>
   </div>
 
-  <DataTableFilters
-    {columnFilters}
-    {activeFilters}
-    {onfilter}
-    {direction}
-    {showCounts}
-  />
+  <DataTableFilters {columnFilters} {activeFilters} {onfilter} {direction} {showCounts} />
 </Modal>

@@ -211,12 +211,12 @@ export const allData = generatedData;
  * @type {import('../src/lib/index.js').ColumnDef[]}
  */
 export const columnDefs = [
-  { key: 'id',          label: 'ID',           width: 1,   sortable: true,  filterType: 'none' },
-  { key: 'name',        label: 'Name',          width: 3,   sortable: true,  filterType: 'none' },
-  { key: 'department',  label: 'Department',    width: 2,   sortable: true,  filterType: 'value' },
-  { key: 'status',      label: 'Status',        width: 1.5, sortable: true,  filterType: 'value' },
-  { key: 'level',       label: 'Level',         width: 1.5, sortable: true,  filterType: 'value' },
-  { key: 'hireDate',    label: 'Hire Date',     width: 2,   sortable: true,  filterType: 'daterange' },
-  { key: 'createdAt',   label: 'Created At',    width: 2,   sortable: true,  filterType: 'datetimerange' },
-  { key: 'description', label: 'Description',   width: 4,   sortable: false, filterType: 'none' },
+  { key: 'id', label: 'ID', width: 1, sortable: true, filterType: 'none' },
+  { key: 'name', label: 'Name', width: 3, sortable: true, filterType: 'none' },
+  { key: 'department', label: 'Department', width: 2, sortable: true, filterType: 'value' },
+  { key: 'status', label: 'Status', width: 1.5, sortable: true, filterType: 'value' },
+  { key: 'level', label: 'Level', width: 1.5, sortable: true, filterType: 'value' },
+  { key: 'hireDate', label: 'Hire Date', width: 2, sortable: true, filterType: 'daterange' },
+  { key: 'createdAt', label: 'Created At', width: 2, sortable: true, filterType: 'datetimerange' },
+  { key: 'description', label: 'Description', width: 4, sortable: false, filterType: 'none' },
 ];

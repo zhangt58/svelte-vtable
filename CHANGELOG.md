@@ -11,11 +11,11 @@ All notable changes to this project will be documented in this file.
 The `DataTable` component now requires a single `columns: ColumnDef[]` prop. The
 `visibleKeys`, `colWidths`, and `rowSnippet` props have been **removed**.
 
-| Removed prop | Replacement |
-|---|---|
-| `visibleKeys` | `columns[].key` |
-| `colWidths` | `columns[].width` |
-| `rowSnippet` | `columns[].cellSnippet` (per-column) |
+| Removed prop  | Replacement                          |
+| ------------- | ------------------------------------ |
+| `visibleKeys` | `columns[].key`                      |
+| `colWidths`   | `columns[].width`                    |
+| `rowSnippet`  | `columns[].cellSnippet` (per-column) |
 
 **Before:**
 
@@ -32,8 +32,8 @@ The `DataTable` component now requires a single `columns: ColumnDef[]` prop. The
 
 ```js
 const columns = [
-  { key: 'id',         label: 'ID',         width: 1 },
-  { key: 'name',       label: 'Name',       width: 3 },
+  { key: 'id', label: 'ID', width: 1 },
+  { key: 'name', label: 'Name', width: 3 },
   { key: 'department', label: 'Department', width: 2 },
 ];
 ```
@@ -56,7 +56,7 @@ field (`{ key, label, type }`). It now only accepts `ColumnDef` objects using th
 ```js
 const filterColumns = [
   { key: 'department', label: 'Department' },
-  { key: 'hireDate',   label: 'Hire Date', type: 'daterange' },
+  { key: 'hireDate', label: 'Hire Date', type: 'daterange' },
 ];
 const columnFilters = buildColumnFilters(data, filterColumns);
 ```
@@ -66,7 +66,7 @@ const columnFilters = buildColumnFilters(data, filterColumns);
 ```js
 const columns = [
   { key: 'department', label: 'Department', filterType: 'value' },
-  { key: 'hireDate',   label: 'Hire Date',  filterType: 'daterange' },
+  { key: 'hireDate', label: 'Hire Date', filterType: 'daterange' },
 ];
 const columnFilters = buildColumnFilters(data, columns);
 ```
@@ -90,16 +90,16 @@ const columnFilters = buildColumnFilters(data, columns);
 
 All callback props have been renamed to follow the `on<EventName>` camelCase convention. The old prop names are **removed** — update your code using the migration guide below.
 
-| Component | Old name | New name | New payload |
-|---|---|---|---|
-| `DataTable` | `selectCallback` | `onselect` | `{ item, index }` |
-| `DataTable` | `sortCallback` | `onsort` | `{ key, dir }` |
-| `DataTableControls` | `pagechange` | `onpage` | `{ page }` |
-| `DataTableControls` | `searchchange` | `onsearch` | `{ search }` |
-| `DataTableControls` | `filterstoggle` | `onfilterstoggle` | `{ visible }` |
-| `DataTableControls` | `perpagechange` | `onperpage` | `{ perPage }` |
-| `DataTableFilters` | `filterChange` | `onfilter` | `{ key, values, allFilters }` |
-| `DataTableFilters` | `sortChange` | `oncolumnsort` | `{ key, mode, dir }` |
+| Component           | Old name         | New name          | New payload                   |
+| ------------------- | ---------------- | ----------------- | ----------------------------- |
+| `DataTable`         | `selectCallback` | `onselect`        | `{ item, index }`             |
+| `DataTable`         | `sortCallback`   | `onsort`          | `{ key, dir }`                |
+| `DataTableControls` | `pagechange`     | `onpage`          | `{ page }`                    |
+| `DataTableControls` | `searchchange`   | `onsearch`        | `{ search }`                  |
+| `DataTableControls` | `filterstoggle`  | `onfilterstoggle` | `{ visible }`                 |
+| `DataTableControls` | `perpagechange`  | `onperpage`       | `{ perPage }`                 |
+| `DataTableFilters`  | `filterChange`   | `onfilter`        | `{ key, values, allFilters }` |
+| `DataTableFilters`  | `sortChange`     | `oncolumnsort`    | `{ key, mode, dir }`          |
 
 Note the payload key renames for the filter callback: `columnKey` → `key`, `selectedValues` → `values`.
 

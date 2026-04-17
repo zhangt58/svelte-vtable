@@ -209,10 +209,7 @@
 
       {#snippet vl_slot({ index, item })}
         <!-- Default row rendering using each column's cellSnippet or raw value -->
-        <tr
-          onclick={() => selectItem(item, index)}
-          class={selected === item ? 'selected' : ''}
-        >
+        <tr onclick={() => selectItem(item, index)} class={selected === item ? 'selected' : ''}>
           {#each columns as col}
             <td>
               {#if col.cellSnippet}

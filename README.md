@@ -106,21 +106,21 @@ A virtualized table component for efficient rendering of large datasets. The com
 
 #### Props
 
-| Prop             | Type              | Default                  | Description                                                  |
-| ---------------- | ----------------- | ------------------------ | ------------------------------------------------------------ |
-| `items`          | `Array`           | `[]`                     | Array of data items to display                               |
-| `columns`        | `ColumnDef[]`     | `undefined`              | **Unified column definitions** (recommended). When provided, `visibleKeys`, `colWidths`, and `rowSnippet` may be omitted. See [ColumnDef](#columndef) below. |
-| `visibleKeys`    | `Array`           | `[]`                     | *(Legacy)* Array of keys to display as column headers. Ignored when `columns` is provided. |
-| `sortKey`        | `string \| null`  | `null`                   | Current sort key (column header); supports `bind:sortKey`    |
-| `sortDir`        | `'asc' \| 'desc'` | `'asc'`                  | Sort direction; supports `bind:sortDir`                      |
-| `className`      | `string`          | `''`                     | Additional CSS classes                                       |
-| `style`          | `string`          | `''`                     | Inline styles                                                |
-| `emptyMessage`   | `string`          | `'No items to display.'` | Message when no items                                        |
-| `colWidths`      | `object \| Array` | `{}`                     | *(Legacy)* Column width configuration (stretch weights or pixel values). Ignored when `columns` is provided. |
-| `selected`       | `any`             | `null`                   | Currently selected item                                      |
-| `onselect`       | `function`        | `undefined`              | Callback when a row is selected: `({item, index}) => void`   |
-| `onsort`         | `function`        | `undefined`              | Callback when sort changes: `({key, dir}) => void`. When provided, local sorting is skipped (server-side sort pattern). Omit entirely (do not pass `() => {}`) to enable local sorting. |
-| `rowSnippet`     | `Snippet`         | `undefined`              | Svelte 5 snippet for rendering rows. Optional when `columns` is provided (a default row is rendered using each column's `cellSnippet` or raw value). |
+| Prop           | Type              | Default                  | Description                                                                                                                                                                             |
+| -------------- | ----------------- | ------------------------ | --------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------- |
+| `items`        | `Array`           | `[]`                     | Array of data items to display                                                                                                                                                          |
+| `columns`      | `ColumnDef[]`     | `undefined`              | **Unified column definitions** (recommended). When provided, `visibleKeys`, `colWidths`, and `rowSnippet` may be omitted. See [ColumnDef](#columndef) below.                            |
+| `visibleKeys`  | `Array`           | `[]`                     | _(Legacy)_ Array of keys to display as column headers. Ignored when `columns` is provided.                                                                                              |
+| `sortKey`      | `string \| null`  | `null`                   | Current sort key (column header); supports `bind:sortKey`                                                                                                                               |
+| `sortDir`      | `'asc' \| 'desc'` | `'asc'`                  | Sort direction; supports `bind:sortDir`                                                                                                                                                 |
+| `className`    | `string`          | `''`                     | Additional CSS classes                                                                                                                                                                  |
+| `style`        | `string`          | `''`                     | Inline styles                                                                                                                                                                           |
+| `emptyMessage` | `string`          | `'No items to display.'` | Message when no items                                                                                                                                                                   |
+| `colWidths`    | `object \| Array` | `{}`                     | _(Legacy)_ Column width configuration (stretch weights or pixel values). Ignored when `columns` is provided.                                                                            |
+| `selected`     | `any`             | `null`                   | Currently selected item                                                                                                                                                                 |
+| `onselect`     | `function`        | `undefined`              | Callback when a row is selected: `({item, index}) => void`                                                                                                                              |
+| `onsort`       | `function`        | `undefined`              | Callback when sort changes: `({key, dir}) => void`. When provided, local sorting is skipped (server-side sort pattern). Omit entirely (do not pass `() => {}`) to enable local sorting. |
+| `rowSnippet`   | `Snippet`         | `undefined`              | Svelte 5 snippet for rendering rows. Optional when `columns` is provided (a default row is rendered using each column's `cellSnippet` or raw value).                                    |
 
 #### Row Snippet Parameters
 
@@ -139,15 +139,15 @@ The `rowSnippet` receives an object with:
 // @type {import('@zhangt58/svelte-vtable').ColumnDef}
 ```
 
-| Field           | Type                                                          | Default     | Description                                                  |
-| --------------- | ------------------------------------------------------------- | ----------- | ------------------------------------------------------------ |
-| `key`           | `string`                                                      | required    | Data key. Must match a property on the row item.             |
-| `label`         | `string`                                                      | `key`       | Column header label. Defaults to `key`.                      |
-| `width`         | `number \| string`                                            | `1`         | Stretch weight (number) or CSS value (e.g. `'120px'`).       |
-| `sortable`      | `boolean`                                                     | `true`      | Whether clicking the header sorts the table.                 |
-| `filterType`    | `'value' \| 'daterange' \| 'datetimerange' \| 'none'`        | `'value'`   | Filter UI for this column. `'none'` excludes it from `buildColumnFilters`. |
-| `headerSnippet` | `Snippet<[{key, label, sortKey, sortDir}]>`                   | `undefined` | Custom Svelte 5 snippet rendered inside `<th>`.              |
-| `cellSnippet`   | `Snippet<[{item, value, index}]>`                             | `undefined` | Custom Svelte 5 snippet rendered inside each `<td>`. Used for default row rendering when `rowSnippet` is not provided. |
+| Field           | Type                                                  | Default     | Description                                                                                                            |
+| --------------- | ----------------------------------------------------- | ----------- | ---------------------------------------------------------------------------------------------------------------------- |
+| `key`           | `string`                                              | required    | Data key. Must match a property on the row item.                                                                       |
+| `label`         | `string`                                              | `key`       | Column header label. Defaults to `key`.                                                                                |
+| `width`         | `number \| string`                                    | `1`         | Stretch weight (number) or CSS value (e.g. `'120px'`).                                                                 |
+| `sortable`      | `boolean`                                             | `true`      | Whether clicking the header sorts the table.                                                                           |
+| `filterType`    | `'value' \| 'daterange' \| 'datetimerange' \| 'none'` | `'value'`   | Filter UI for this column. `'none'` excludes it from `buildColumnFilters`.                                             |
+| `headerSnippet` | `Snippet<[{key, label, sortKey, sortDir}]>`           | `undefined` | Custom Svelte 5 snippet rendered inside `<th>`.                                                                        |
+| `cellSnippet`   | `Snippet<[{item, value, index}]>`                     | `undefined` | Custom Svelte 5 snippet rendered inside each `<td>`. Used for default row rendering when `rowSnippet` is not provided. |
 
 #### Minimal example using `columns`
 
@@ -242,16 +242,16 @@ Controls component for search and pagination.
 
 #### Props
 
-| Prop              | Type       | Default     | Description                                                        |
-| ----------------- | ---------- | ----------- | ------------------------------------------------------------------ |
-| `search`          | `string`   | `''`        | Current search query                                               |
-| `currentPage`     | `number`   | `1`         | Current page number                                                |
-| `perPage`         | `number`   | `25`        | Items per page                                                     |
-| `totalItems`      | `number`   | `0`         | Total number of items                                              |
-| `onpage`          | `function` | `undefined` | Callback for page changes: `({page}) => void`                      |
-| `onsearch`        | `function` | `undefined` | Callback for search changes: `({search}) => void`                  |
-| `onfilterstoggle` | `function` | `undefined` | Callback when filters panel toggled: `({visible}) => void`         |
-| `onperpage`       | `function` | `undefined` | Callback when per-page changes: `({perPage}) => void`              |
+| Prop              | Type       | Default     | Description                                                                                              |
+| ----------------- | ---------- | ----------- | -------------------------------------------------------------------------------------------------------- |
+| `search`          | `string`   | `''`        | Current search query                                                                                     |
+| `currentPage`     | `number`   | `1`         | Current page number                                                                                      |
+| `perPage`         | `number`   | `25`        | Items per page                                                                                           |
+| `totalItems`      | `number`   | `0`         | Total number of items                                                                                    |
+| `onpage`          | `function` | `undefined` | Callback for page changes: `({page}) => void`                                                            |
+| `onsearch`        | `function` | `undefined` | Callback for search changes: `({search}) => void`                                                        |
+| `onfilterstoggle` | `function` | `undefined` | Callback when filters panel toggled: `({visible}) => void`                                               |
+| `onperpage`       | `function` | `undefined` | Callback when per-page changes: `({perPage}) => void`                                                    |
 | `onfilter`        | `function` | `undefined` | Callback when filters change (passed through to DataTableFilters): `({key, values, allFilters}) => void` |
 
 ### DataTableFilters
@@ -260,15 +260,15 @@ Multi-select filter component with flexible layout options. Implements OR logic 
 
 #### Props
 
-| Prop             | Type                         | Default        | Description                                              |
-| ---------------- | ---------------------------- | -------------- | -------------------------------------------------------- |
-| `columnFilters`  | `Array`                      | `[]`           | Array of filter configurations (see below)               |
-| `direction`      | `'horizontal' \| 'vertical'` | `'horizontal'` | Layout direction for filter grid                         |
-| `activeFilters`  | `Object`                     | `{}`           | Current active filters `{ columnKey: [selectedValues] }` |
-| `onfilter`       | `function`                   | `undefined`    | Callback when filters change: `({key, values, allFilters}) => void` |
-| `oncolumnsort`   | `function`                   | `undefined`    | Callback when column sort changes: `({key, mode, dir}) => void` |
-| `className`      | `string`                     | `''`           | Additional CSS classes                                   |
-| `showCounts`     | `boolean`                    | `true`         | Whether to show value counts                             |
+| Prop            | Type                         | Default        | Description                                                         |
+| --------------- | ---------------------------- | -------------- | ------------------------------------------------------------------- |
+| `columnFilters` | `Array`                      | `[]`           | Array of filter configurations (see below)                          |
+| `direction`     | `'horizontal' \| 'vertical'` | `'horizontal'` | Layout direction for filter grid                                    |
+| `activeFilters` | `Object`                     | `{}`           | Current active filters `{ columnKey: [selectedValues] }`            |
+| `onfilter`      | `function`                   | `undefined`    | Callback when filters change: `({key, values, allFilters}) => void` |
+| `oncolumnsort`  | `function`                   | `undefined`    | Callback when column sort changes: `({key, mode, dir}) => void`     |
+| `className`     | `string`                     | `''`           | Additional CSS classes                                              |
+| `showCounts`    | `boolean`                    | `true`         | Whether to show value counts                                        |
 
 #### columnFilters Structure
 
