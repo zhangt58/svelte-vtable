@@ -28,12 +28,12 @@
         type="button"
         aria-label="Previous"
         disabled={currentPage <= 1}
-        class="px-2 py-1 text-sm border border-gray-300 bg-transparent min-w-[2rem] inline-flex items-center justify-center transition-colors hover:bg-gray-100 disabled:opacity-60 disabled:cursor-default disabled:pointer-events-none"
+        class="text-sm rounded-l-lg border border-gray-300 bg-transparent w-8 h-8 inline-flex items-center justify-center transition-colors hover:bg-gray-100 disabled:opacity-60 disabled:cursor-default disabled:pointer-events-none"
         onclick={() => goTo(currentPage - 1)}
       >
         <span class="sr-only">Previous</span>
         <svg
-          class="shrink-0 h-6 w-6"
+          class="shrink-0 h-4 w-4"
           xmlns="http://www.w3.org/2000/svg"
           fill="none"
           viewBox="0 0 24 24"
@@ -57,8 +57,9 @@
           aria-current={p.active ? 'page' : undefined}
           title={p.name === '…' ? `Jump to page ${p.jump}` : undefined}
           onclick={() => goTo(p.jump ?? +p.name)}
-          class={`px-2 py-1 text-sm border min-w-[2rem] inline-flex items-center justify-center transition-colors${p.active ? ' bg-green-100 text-green-600 border-transparent' : ' border-gray-300 bg-transparent hover:bg-gray-100'}`}
-        >{p.name}</button>
+          class={`w-8 h-8 text-sm border inline-flex items-center justify-center transition-colors${p.active ? ' bg-green-100 text-green-600 border-transparent' : ' border-gray-300 bg-transparent hover:bg-gray-100'}`}
+          >{p.name}</button
+        >
       </li>
     {/each}
 
@@ -67,12 +68,12 @@
         type="button"
         aria-label="Next"
         disabled={currentPage >= lastPage}
-        class="px-2 py-1 text-sm border border-gray-300 bg-transparent min-w-[2rem] inline-flex items-center justify-center transition-colors hover:bg-gray-100 disabled:opacity-60 disabled:cursor-default disabled:pointer-events-none"
+        class="text-sm rounded-r-lg border border-gray-300 bg-transparent w-8 h-8 inline-flex items-center justify-center transition-colors hover:bg-gray-100 disabled:opacity-60 disabled:cursor-default disabled:pointer-events-none"
         onclick={() => goTo(currentPage + 1)}
       >
         <span class="sr-only">Next</span>
         <svg
-          class="shrink-0 h-6 w-6"
+          class="shrink-0 h-4 w-4"
           xmlns="http://www.w3.org/2000/svg"
           fill="none"
           viewBox="0 0 24 24"
