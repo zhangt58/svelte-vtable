@@ -1,9 +1,8 @@
 <script>
-  import { Pagination, Search, Badge, Select } from 'flowbite-svelte';
+  import { Search, Badge, Select } from 'flowbite-svelte';
   import { FilterOutline } from 'flowbite-svelte-icons';
   import FiltersModal from './FiltersModal.svelte';
-  // Inline SVGs are used instead of importing icons to avoid the dependency on flowbite-svelte-icons
-  import { onMount, onDestroy } from 'svelte';
+  import PaginationBar from './PaginationBar.svelte';
 
   // Props for search, pagination (perPage made bindable using Svelte 5 rune $bindable)
   let {
@@ -127,8 +126,6 @@
   // visiblePages: number of middle numeric buttons to show (not counting first/last)
   const visiblePages = 5;
 
-  // stable id to query the pagination DOM if needed (fallback)
-  const paginationId = `pagination-${Math.random().toString(36).slice(2, 9)}`;
   const perPageSelectId = `dpc-perpage-${Math.random().toString(36).slice(2, 7)}`;
 
   // pages array for Pagination component (condensed with ellipses)
@@ -188,191 +185,6 @@
 
     return pagesArr;
   });
-
-  // previous / next callbacks for Pagination
-  function previous() {
-    goTo(currentPage - 1);
-  }
-  function next() {
-    goTo(currentPage + 1);
-  }
-
-  // DOM reference to the pagination container for decorating ellipsis buttons
-  let paginationContainerEl = null;
-
-  function decorateEllipsis() {
-    if (!paginationContainerEl) return;
-    const pageList = pages;
-    // find the <ul> inside the pagination container
-    let ul = null;
-    if (paginationContainerEl && typeof paginationContainerEl.querySelector === 'function') {
-      ul = paginationContainerEl.querySelector('ul');
-    } else {
-      // fallback: query by data attribute on the wrapper
-      ul = document.querySelector(`[data-pagination-id="${paginationId}"] ul`);
-    }
-    if (!ul) return;
-    // Ensure the <ul> has Tailwind utility classes for layout
-    ul.classList.remove('flex', 'gap-0.5', 'p-0', 'm-0', 'list-none', 'items-center');
-    ul.classList.add('flex', 'gap-0.5', 'p-0', 'm-0', 'list-none', 'items-center');
-    const lis = Array.from(ul.children || []);
-    // Build a list of page-button <li>s (skip prev/next controls) by checking their textContent
-    const pageLis = [];
-    for (const li of lis) {
-      const btn = li.querySelector('button, a');
-      if (!btn) continue;
-      const text = (btn.textContent || '').trim();
-      // consider numeric pages and ellipsis as page buttons
-      if (/^\d+$/.test(text) || text === '…') pageLis.push({ li, btn, text });
-    }
-
-    // Now map pageLis to pageList entries in order
-    pageLis.forEach((p, idx) => {
-      const btn = p.btn;
-      const pageObj = pageList[idx];
-      if (!pageObj) return;
-      // clear previous decorations
-      btn.classList.remove('ellipsis-page');
-      btn.removeAttribute('data-jump');
-      btn.removeAttribute('data-ellipsis');
-      btn.removeAttribute('title');
-
-      // Apply Tailwind utility classes instead of inline styles
-      // Remove any previously-applied utility classes we manage
-      btn.classList.remove(
-        'px-2',
-        'py-1',
-        'text-sm',
-        'border',
-        'border-gray-300',
-        'bg-transparent',
-        'min-w-[2rem]',
-        'inline-flex',
-        'items-center',
-        'justify-center',
-        'transition-colors',
-        'hover:bg-gray-100',
-        'bg-green-100',
-        'text-green-600',
-        'border-transparent',
-        'opacity-60',
-        'cursor-default',
-        'pointer-events-none',
-        'tw-ellipsis',
-      );
-
-      // Base Tailwind classes for pagination buttons
-      btn.classList.add(
-        'px-2',
-        'py-1',
-        'text-sm',
-        'border',
-        'border-gray-300',
-        'bg-transparent',
-        'min-w-[2rem]',
-        'inline-flex',
-        'items-center',
-        'justify-center',
-        'transition-colors',
-        'hover:bg-gray-100',
-      );
-
-      // active page styling
-      if (pageObj.active) {
-        btn.classList.add('bg-green-100', 'text-green-600', 'border-transparent');
-        btn.setAttribute('aria-current', 'page');
-      } else {
-        btn.removeAttribute('aria-current');
-        btn.classList.remove('bg-green-100', 'text-green-600', 'border-transparent');
-      }
-
-      // disabled styling
-      if (btn.disabled || btn.getAttribute('aria-disabled') === 'true') {
-        btn.classList.add('opacity-60', 'cursor-default', 'pointer-events-none');
-      } else {
-        btn.classList.remove('opacity-60', 'cursor-default', 'pointer-events-none');
-      }
-
-      if (pageObj.name === '…' && typeof pageObj['jump'] === 'number') {
-        btn.setAttribute('data-jump', String(pageObj['jump']));
-        btn.setAttribute('data-ellipsis', 'true');
-        // restore native tooltip for compatibility (browser tooltip)
-        btn.setAttribute('title', `Jump to page ${pageObj['jump']}`);
-        // visually indicate ellipsis (smaller text) via Tailwind
-        btn.classList.add('text-sm', 'opacity-90');
-      }
-    });
-  }
-
-  // run decoration whenever pages or currentPage change
-  $effect(() => {
-    pages;
-    currentPage;
-    // schedule decoration after the browser has painted the updated DOM
-    requestAnimationFrame(() => requestAnimationFrame(() => decorateEllipsis()));
-  });
-
-  // Re-apply decorations whenever the pagination DOM mutates (childList changes)
-  let _observer = null;
-  onMount(() => {
-    if (!paginationContainerEl) return;
-    const run = () => requestAnimationFrame(() => requestAnimationFrame(() => decorateEllipsis()));
-    _observer = new MutationObserver(run);
-    const root =
-      paginationContainerEl instanceof Element
-        ? paginationContainerEl
-        : document.querySelector(`[data-pagination-id="${paginationId}"]`);
-    if (root) _observer.observe(root, { childList: true, subtree: true, attributes: true });
-    // initial run
-    run();
-  });
-
-  onDestroy(() => {
-    _observer?.disconnect();
-    _observer = null;
-  });
-
-  // handle clicks inside Pagination to detect page button clicks
-  function handlePaginationClick(e) {
-    const el = e.target instanceof Element ? e.target.closest('button, a') : null;
-    if (!el) return;
-    // find the parent li index so we can map to pages
-    const li = el.closest('li');
-    if (!li) return;
-    const ul = li.parentElement;
-    if (!ul) return;
-    const lis = Array.from(ul.children);
-    // Build a list of page-button <li>s (skip prev/next controls) by checking their textContent
-    const pageLis = [];
-    for (const liItem of lis) {
-      const btn = liItem.querySelector('button, a');
-      if (!btn) continue;
-      const text = (btn.textContent || '').trim();
-      // consider numeric pages and ellipsis as page buttons
-      if (/^\d+$/.test(text) || text === '…') pageLis.push({ li: liItem, btn, text });
-    }
-
-    // Map clicked li to decide what to do. If clicked is not a page button (i.e. prev/next),
-    // do nothing here because the Pagination component already calls the `previous`/`next` callbacks.
-    const clickedIsPage = pageLis.some((p) => p.li === li);
-    if (!clickedIsPage) {
-      return; // rely on Pagination's built-in previous/next handling to avoid double-invocation
-    }
-
-    const pageList = pages;
-
-    // Map clicked li to page index
-    const pageIdx = pageLis.findIndex((p) => p.li === li);
-    if (pageIdx < 0 || pageIdx >= pageList.length) return;
-    const pageObj = pageList[pageIdx];
-    if (!pageObj) return;
-    if (pageObj.name === '…' && typeof pageObj['jump'] === 'number') {
-      goTo(pageObj['jump']);
-      return;
-    }
-    const n = Number(pageObj.name);
-    if (!Number.isNaN(n)) goTo(n);
-  }
 
   // No external tooltip component in use; we rely on native title attribute for ellipses
 </script>
@@ -438,61 +250,8 @@
       </div>
     </div>
 
-    <!-- Pagination navigation: use Pagination with chevrons and page buttons -->
-    <div
-      bind:this={paginationContainerEl}
-      data-pagination-id={paginationId}
-      class="flex items-center gap-0.5"
-      aria-label="Pagination"
-    >
-      <Pagination
-        pages={pages}
-        {previous}
-        {next}
-        ariaLabel="Pagination"
-        onclick={handlePaginationClick}
-      >
-        {#snippet prevContent()}
-          <span class="sr-only">Previous</span>
-          <!-- Left chevron SVG (replaces ChevronLeftOutline) -->
-          <svg
-            class="shrink-0 h-6 w-6"
-            xmlns="http://www.w3.org/2000/svg"
-            fill="none"
-            viewBox="0 0 24 24"
-            stroke="currentColor"
-            aria-hidden="true"
-          >
-            <path
-              stroke-linecap="round"
-              stroke-linejoin="round"
-              stroke-width="1"
-              d="M15 19l-7-7 7-7"
-            />
-          </svg>
-        {/snippet}
-
-        {#snippet nextContent()}
-          <span class="sr-only">Next</span>
-          <!-- Right chevron SVG (replaces ChevronRightOutline) -->
-          <svg
-            class="shrink-0 h-6 w-6"
-            xmlns="http://www.w3.org/2000/svg"
-            fill="none"
-            viewBox="0 0 24 24"
-            stroke="currentColor"
-            aria-hidden="true"
-          >
-            <path
-              stroke-linecap="round"
-              stroke-linejoin="round"
-              stroke-width="1"
-              d="M9 5l7 7-7 7"
-            />
-          </svg>
-        {/snippet}
-      </Pagination>
-    </div>
+    <!-- Pagination navigation -->
+    <PaginationBar {pages} {currentPage} onpage={goTo} />
   </div>
 </div>
 

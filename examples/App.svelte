@@ -235,9 +235,9 @@
             : value === 'Inactive'
               ? 'bg-red-100 text-red-800 dark:bg-red-900/40 dark:text-red-300'
               : 'bg-amber-100 text-amber-800 dark:bg-amber-900/40 dark:text-amber-300'}
-        <span
-          class="inline-flex items-center px-2 py-0.5 rounded-full text-xs font-medium {cls}"
-        >{value}</span>
+        <span class="inline-flex items-center px-2 py-0.5 rounded-full text-xs font-medium {cls}"
+          >{value}</span
+        >
       {/snippet}
 
       <!-- Cell snippet: level — colour-coded pill -->
@@ -250,9 +250,9 @@
               : value === 'Mid'
                 ? 'bg-blue-100 text-blue-800 dark:bg-blue-900/40 dark:text-blue-300'
                 : 'bg-sky-100 text-sky-800 dark:bg-sky-900/40 dark:text-sky-300'}
-        <span
-          class="inline-flex items-center px-2 py-0.5 rounded-full text-xs font-medium {cls}"
-        >{value}</span>
+        <span class="inline-flex items-center px-2 py-0.5 rounded-full text-xs font-medium {cls}"
+          >{value}</span
+        >
       {/snippet}
 
       <DataTable

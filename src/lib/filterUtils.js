@@ -36,55 +36,55 @@ export function buildColumnFilters(data, columns) {
   return columns
     .filter((col) => col.filterType !== 'none')
     .map((col) => {
-    if (isDateRangeType(col.filterType)) {
-      // Scan data to find the min/max timestamps for this column so the UI can
-      // offer a dual-range slider and Earliest/Latest shortcut buttons.
-      let minMs = Infinity;
-      let maxMs = -Infinity;
-      for (const item of data) {
-        const v = item[col.key];
-        if (v === null || v === undefined || v === '') continue;
-        const str = String(v);
-        const d = /^\d{4}-\d{2}-\d{2}$/.test(str) ? new Date(str + 'T00:00:00') : new Date(str);
-        if (!isNaN(d.getTime())) {
-          if (d.getTime() < minMs) minMs = d.getTime();
-          if (d.getTime() > maxMs) maxMs = d.getTime();
+      if (isDateRangeType(col.filterType)) {
+        // Scan data to find the min/max timestamps for this column so the UI can
+        // offer a dual-range slider and Earliest/Latest shortcut buttons.
+        let minMs = Infinity;
+        let maxMs = -Infinity;
+        for (const item of data) {
+          const v = item[col.key];
+          if (v === null || v === undefined || v === '') continue;
+          const str = String(v);
+          const d = /^\d{4}-\d{2}-\d{2}$/.test(str) ? new Date(str + 'T00:00:00') : new Date(str);
+          if (!isNaN(d.getTime())) {
+            if (d.getTime() < minMs) minMs = d.getTime();
+            if (d.getTime() > maxMs) maxMs = d.getTime();
+          }
         }
+
+        const hasRange = isFinite(minMs) && isFinite(maxMs);
+
+        // Format as the string expected by <input type="date"> or <input type="datetime-local">
+        const pad = (n) => String(n).padStart(2, '0');
+        const fmtDate = (ms) => {
+          const d = new Date(ms);
+          return `${d.getFullYear()}-${pad(d.getMonth() + 1)}-${pad(d.getDate())}`;
+        };
+        const fmtDatetime = (ms) => {
+          const d = new Date(ms);
+          return `${d.getFullYear()}-${pad(d.getMonth() + 1)}-${pad(d.getDate())}T${pad(d.getHours())}:${pad(d.getMinutes())}`;
+        };
+        const fmt = col.filterType === 'datetimerange' ? fmtDatetime : fmtDate;
+
+        return {
+          key: col.key,
+          label: col.label || col.key,
+          type: col.filterType,
+          uniqueValues: [],
+          counts: {},
+          minValue: hasRange ? fmt(minMs) : null,
+          maxValue: hasRange ? fmt(maxMs) : null,
+        };
       }
-
-      const hasRange = isFinite(minMs) && isFinite(maxMs);
-
-      // Format as the string expected by <input type="date"> or <input type="datetime-local">
-      const pad = (n) => String(n).padStart(2, '0');
-      const fmtDate = (ms) => {
-        const d = new Date(ms);
-        return `${d.getFullYear()}-${pad(d.getMonth() + 1)}-${pad(d.getDate())}`;
-      };
-      const fmtDatetime = (ms) => {
-        const d = new Date(ms);
-        return `${d.getFullYear()}-${pad(d.getMonth() + 1)}-${pad(d.getDate())}T${pad(d.getHours())}:${pad(d.getMinutes())}`;
-      };
-      const fmt = col.filterType === 'datetimerange' ? fmtDatetime : fmtDate;
-
+      const { uniqueValues, counts } = getUniqueValuesWithCounts(data, col.key);
       return {
         key: col.key,
         label: col.label || col.key,
-        type: col.filterType,
-        uniqueValues: [],
-        counts: {},
-        minValue: hasRange ? fmt(minMs) : null,
-        maxValue: hasRange ? fmt(maxMs) : null,
+        type: col.filterType || 'value',
+        uniqueValues,
+        counts,
       };
-    }
-    const { uniqueValues, counts } = getUniqueValuesWithCounts(data, col.key);
-    return {
-      key: col.key,
-      label: col.label || col.key,
-      type: col.filterType || 'value',
-      uniqueValues,
-      counts,
-    };
-  });
+    });
 }
 
 /**
