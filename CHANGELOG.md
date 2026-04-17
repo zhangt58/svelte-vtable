@@ -4,6 +4,17 @@ All notable changes to this project will be documented in this file.
 
 ## [Unreleased]
 
+### Performance
+
+- **Memoized `normalizeColWidths` in `DataTable`** — the result is now stored in a `$derived`
+  (`colWidthMap`) that only recomputes when `columns` changes. Previously the function was invoked
+  twice per column on every render cycle (once for `<colgroup>`, once for `<th>`).
+
+- **Memoized `getSortedValues` in `DataTableFilters`** — all per-column sorted-value lists are
+  now computed once via a single `$derived.by()` map (`sortedValuesMap`) keyed by `column.key`.
+  Previously `getSortedValues(column)` was called inline inside `{#each columnFilters}` on every
+  render.
+
 ### Breaking Changes
 
 #### CSS Custom Properties replace hard-coded green accent
