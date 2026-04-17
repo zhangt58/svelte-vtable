@@ -104,6 +104,9 @@
   }
 
   // Normalize colWidths: treat numeric values as stretch weights and pass through CSS strings.
+  // Memoized: only recomputes when effectiveVisibleKeys or effectiveColWidths changes.
+  const colWidthMap = $derived(normalizeColWidths());
+
   function normalizeColWidths() {
     const map = {};
     const keys = effectiveVisibleKeys;
@@ -150,8 +153,7 @@
 
   // Compute column width by key (fallback to even distribution)
   function calcColWidth(key) {
-    const norm = normalizeColWidths();
-    if (norm[key] !== undefined) return String(norm[key]);
+    if (colWidthMap[key] !== undefined) return String(colWidthMap[key]);
     const n = Math.max(1, effectiveVisibleKeys.length);
     return Math.floor(100 / n) + '%';
   }

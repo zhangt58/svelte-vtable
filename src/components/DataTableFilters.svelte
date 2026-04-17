@@ -518,6 +518,16 @@
   const allDropdownsClosed = $derived.by(() => {
     return columnFilters.every((col) => !openDropdowns[col.key]);
   });
+
+  // Memoized map of sorted values per column key.
+  // Only recomputes when searchQueries, sortModes, sortDirs, or columnFilters change.
+  const sortedValuesMap = $derived.by(() => {
+    const map = {};
+    for (const col of columnFilters) {
+      map[col.key] = getSortedValues(col);
+    }
+    return map;
+  });
 </script>
 
 <div
@@ -581,7 +591,7 @@
       {@const _sel = selections[column.key]}
       {@const isActive = Array.isArray(_sel) ? _sel.length > 0 : !!(_sel?.from || _sel?.to)}
       {@const isOpen = openDropdowns[column.key]}
-      {@const sortedValues = getSortedValues(column)}
+      {@const sortedValues = sortedValuesMap[column.key]}
       {@const currentSortMode = sortModes[column.key] || 'name'}
       {@const currentSortDir = sortDirs[column.key] || 'asc'}
 
