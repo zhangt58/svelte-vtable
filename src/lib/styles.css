@@ -1,3 +1,17 @@
+/* ── Theming contract — override these on :root or any wrapper element ── */
+:root {
+  --vtable-color-accent: #16a34a; /* green-600 */
+  --vtable-color-accent-light: #dcfce7; /* green-100 */
+  --vtable-color-accent-border: #22c55e; /* green-500 */
+  --vtable-color-accent-text: #15803d; /* green-700 */
+
+  --vtable-color-danger: #dc2626; /* red-600 */
+  --vtable-color-info: #3b82f6; /* blue-500 */
+
+  --vtable-radius: 0.375rem; /* rounded-md */
+  --vtable-row-height: 2.25rem; /* default row height hint for virtual scroll */
+}
+
 .virtual-data-table {
   display: block;
   min-width: 0;
@@ -220,11 +234,11 @@
   color: #fff;
 }
 
-/* Force the active/current page to use the green tokens (override flowbite's primary/orange).
+/* Force the active/current page to use the accent tokens (override flowbite's primary/orange).
    Intentionally specific to reliably win over third-party rules. */
 :global([data-pagination-id] ul li [aria-current='page']) {
-  background-color: #dcfce7 !important; /* bg-green-100 */
-  color: #16a34a !important; /* text-green-600 */
+  background-color: var(--vtable-color-accent-light) !important;
+  color: var(--vtable-color-accent) !important;
   border-color: transparent !important;
 }
 

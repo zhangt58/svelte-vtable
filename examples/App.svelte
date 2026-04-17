@@ -4,6 +4,7 @@
   import { buildColumnFilters, applyFilters, countActiveFilters } from '../src/lib/filterUtils.js';
   import { DarkMode } from 'flowbite-svelte';
   import { allData, columnDefs } from './sampleData.js';
+  import ThemedExample from './ThemedExample.svelte';
 
   // Build column filters from the unified columnDefs array.
   // Columns with filterType:'none' are automatically excluded.
@@ -276,4 +277,10 @@
       No records match the selected filters. Try adjusting or clearing filters.
     </div>
   {/if}
+</div>
+
+<div
+  class="mt-6 p-4 bg-gray-50 border border-gray-200 rounded-lg dark:bg-gray-800 dark:border-gray-700"
+>
+  <ThemedExample />
 </div>

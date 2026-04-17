@@ -198,7 +198,7 @@
         <div class="flex items-center gap-1 relative">
           <button
             type="button"
-            class={'inline-flex items-center gap-2 px-3 py-1 text-sm rounded-md border transition-colors focus:outline-none focus-visible:ring-2 focus-visible:ring-offset-2 focus-visible:ring-green-500 dark:focus-visible:ring-green-400 ' +
+            class={'inline-flex items-center gap-2 px-3 py-1 text-sm rounded-md border transition-colors focus:outline-none focus-visible:ring-2 focus-visible:ring-offset-2 ' +
               (filtersVisible
                 ? 'bg-slate-100 dark:bg-slate-700 border-slate-300 dark:border-slate-600 text-slate-900 dark:text-slate-100'
                 : 'bg-transparent border-transparent text-slate-700 dark:text-slate-300 hover:bg-slate-100 dark:hover:bg-slate-700')}
@@ -217,8 +217,8 @@
           {#if activeFilterCount > 0}
             <!-- positioned badge -->
             <span
-              class="absolute top-0 right-0 -translate-y-1/2 translate-x-1/2 inline-flex items-center justify-center h-5 min-w-[1.25rem] px-1.5 rounded-full bg-green-600 text-white text-xs font-medium"
-              >{activeFilterCount}</span
+              class="absolute top-0 right-0 -translate-y-1/2 translate-x-1/2 inline-flex items-center justify-center h-5 min-w-[1.25rem] px-1.5 rounded-full text-white text-xs font-medium"
+              style="background-color: var(--vtable-color-accent);">{activeFilterCount}</span
             >
           {/if}
         </div>

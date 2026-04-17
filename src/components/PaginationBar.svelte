@@ -53,8 +53,10 @@
           aria-current={p.active ? 'page' : undefined}
           title={p.name === '…' ? `Jump to page ${p.jump}` : undefined}
           onclick={() => goTo(p.jump ?? +p.name)}
-          class={`w-8 h-8 text-sm border inline-flex items-center justify-center transition-colors${p.active ? ' bg-green-100 text-green-600 border-transparent' : ' border-gray-300 bg-transparent hover:bg-gray-100'}`}
-          >{p.name}</button
+          class={`w-8 h-8 text-sm border inline-flex items-center justify-center transition-colors${p.active ? ' border-transparent' : ' border-gray-300 bg-transparent hover:bg-gray-100'}`}
+          style={p.active
+            ? 'background-color: var(--vtable-color-accent-light); color: var(--vtable-color-accent);'
+            : ''}>{p.name}</button
         >
       </li>
     {/each}

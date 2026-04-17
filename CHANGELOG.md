@@ -6,6 +6,30 @@ All notable changes to this project will be documented in this file.
 
 ### Breaking Changes
 
+#### CSS Custom Properties replace hard-coded green accent
+
+All accent-coloured elements (active pagination button, active filter badge, filter button active
+state, dual-range slider) now read their colours from CSS custom properties instead of hard-coded
+Tailwind green utilities. The visual defaults are **unchanged** (the variables default to the same
+green values), but if your project previously relied on overriding the specific Tailwind classes
+(`bg-green-100`, `text-green-600`, `border-green-500`, etc.) to customise colours, those overrides
+will no longer work. Use the new CSS custom properties instead:
+
+```css
+:root {
+  --vtable-color-accent: #16a34a; /* active element colour */
+  --vtable-color-accent-light: #dcfce7; /* active element background */
+  --vtable-color-accent-border: #22c55e; /* active element border */
+  --vtable-color-accent-text: #15803d; /* active element text */
+  --vtable-color-danger: #dc2626;
+  --vtable-color-info: #3b82f6; /* dual-range slider */
+  --vtable-radius: 0.375rem;
+  --vtable-row-height: 2.25rem;
+}
+```
+
+See the **Theming** section in `README.md` for full details and a scoped-override example.
+
 #### Unified `columns` prop replaces legacy `visibleKeys`, `colWidths`, and `rowSnippet`
 
 The `DataTable` component now requires a single `columns: ColumnDef[]` prop. The
@@ -73,6 +97,13 @@ const columnFilters = buildColumnFilters(data, columns);
 
 ### Added
 
+- **CSS custom properties theming** — `--vtable-color-accent`, `--vtable-color-accent-light`,
+  `--vtable-color-accent-border`, `--vtable-color-accent-text`, `--vtable-color-danger`,
+  `--vtable-color-info`, `--vtable-radius`, and `--vtable-row-height` are now defined in
+  `styles.css`. Set any of them on `:root` or a wrapper element to re-theme the library without
+  modifying Tailwind configuration.
+- **`examples/ThemedExample.svelte`** — live theming demo with green, purple, orange, and rose
+  presets showing how to switch the accent colour at runtime.
 - **`ColumnDef` interface** — a single unified column definition object that replaces the
   separate `visibleKeys`, `colWidths`, and filter-column arrays. Export it from
   `@zhangt58/svelte-vtable` as a JSDoc `@typedef`.
