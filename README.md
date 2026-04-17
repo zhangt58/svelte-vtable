@@ -397,15 +397,62 @@ Optional recommendation: add `prepare` to `package.json` so that `npm install` i
 
 This is optional — the current `prepublishOnly` is sufficient for publishing.
 
-## CSS Custom Properties
+## Theming
 
-Override these CSS variables to customize appearance:
+svelte-vtable exposes a set of CSS custom properties (variables) as its theming contract. All accent-coloured elements (active pagination button, active filter badge, filter button active state, dual-range slider) read from these variables, so you can re-theme the library without forking source or reconfiguring Tailwind.
+
+### Default values
 
 ```css
 :root {
-  --tbl-head-bg: #f8f9fa; /* Header background */
+  --vtable-color-accent: #16a34a; /* green-600 — active elements */
+  --vtable-color-accent-light: #dcfce7; /* green-100 — active element background */
+  --vtable-color-accent-border: #22c55e; /* green-500 — active element border */
+  --vtable-color-accent-text: #15803d; /* green-700 — active element text */
+
+  --vtable-color-danger: #dc2626; /* red-600   — destructive actions */
+  --vtable-color-info: #3b82f6; /* blue-500  — dual-range slider */
+
+  --vtable-radius: 0.375rem; /* rounded-md */
+  --vtable-row-height: 2.25rem; /* virtual-scroll row height hint */
 }
 ```
+
+### Overriding the theme
+
+Set any property on `:root` for a global override, or on a wrapper element for a scoped override:
+
+```css
+/* app.css — global purple theme */
+:root {
+  --vtable-color-accent: #7c3aed;
+  --vtable-color-accent-light: #ede9fe;
+  --vtable-color-accent-border: #8b5cf6;
+  --vtable-color-accent-text: #6d28d9;
+}
+```
+
+```svelte
+<!-- Scoped to a single section of a page -->
+<div
+  style="--vtable-color-accent: #7c3aed; --vtable-color-accent-light: #ede9fe; --vtable-color-accent-border: #8b5cf6; --vtable-color-accent-text: #6d28d9;"
+>
+  <DataTableControls ... />
+  <DataTable ... />
+</div>
+```
+
+### What changes with `--vtable-color-accent`
+
+| Element                              | Before (default green)        | After override                    |
+| ------------------------------------ | ----------------------------- | --------------------------------- |
+| Active pagination button             | green-100 bg + green-600 text | `accent-light` bg + `accent` text |
+| Active filter count badge (controls) | green-600 background          | `accent` background               |
+| Active filter button border          | green-500                     | `accent-border`                   |
+| Active filter badge (count / range)  | green-600 background          | `accent` background               |
+| "Show All" button                    | green-600 border + text       | `accent` border + text            |
+
+The live example at `examples/ThemedExample.svelte` lets you switch between green, purple, orange, and rose themes at runtime.
 
 ## TypeScript
 
