@@ -4,6 +4,58 @@ All notable changes to this project will be documented in this file.
 
 ## [Unreleased]
 
+### Refactor
+
+- **Decomposed `DataTableFilters` into focused sub-components** (PRD-11). The 1,200-line
+  monolith is replaced by four independently importable units under
+  `src/components/filters/`:
+
+  | File                       | Responsibility                                            |
+  | -------------------------- | --------------------------------------------------------- |
+  | `useFilterState.svelte.js` | `$state` composable — selections, debounce, clear helpers |
+  | `FilterColumn.svelte`      | Toggle button with label, badge, chevron                  |
+  | `FilterValueList.svelte`   | Checkbox list with search, sort, virtualization           |
+  | `FilterDateRange.svelte`   | From/To inputs, dual-range slider, relative presets       |
+
+  `DataTableFilters.svelte` is now a thin orchestrator of ≤ 150 lines.
+
+  The new sub-components are exported from the package entry point so consumers can
+  compose custom filter UIs:
+
+  ```js
+  import {
+    FilterColumn,
+    FilterValueList,
+    FilterDateRange,
+    useFilterState,
+  } from '@zhangt58/svelte-vtable';
+  ```
+
+### Breaking Changes
+
+- **`useFilterState` composable API** — internal filter state management that was
+  previously private to `DataTableFilters.svelte` is now a public composable. The
+  function signature uses _getter functions_ for reactive props:
+
+  ```js
+  // new – pass getter functions so Svelte's reactivity tracks them inside $effect
+  useFilterState({
+    columnFilters: () => columnFilters,
+    activeFilters: () => activeFilters,
+    emitDebounce: () => emitDebounce,
+    onfilter: () => onfilter,
+  });
+  ```
+
+- **Sort state is now per-`FilterValueList` instance** — `sortModes`, `sortDirs`, and
+  `searchQueries` were previously tracked at `DataTableFilters` level with a shared
+  `sortedValuesMap`. They are now internal state inside each `FilterValueList` component.
+  Any code that relied on accessing or persisting those maps externally must be updated.
+
+- **`loadedOptions` map removed from `DataTableFilters`** — the "Load options" gate for
+  large option sets is now managed internally by each `FilterValueList` instance.
+  External state-restoring code that referenced `loadedOptions` must be removed.
+
 ### Performance
 
 - **Memoized `normalizeColWidths` in `DataTable`** — the result is now stored in a `$derived`

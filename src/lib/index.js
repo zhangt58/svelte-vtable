@@ -2,6 +2,12 @@ export { default as DataTableControls } from '../components/DataTableControls.sv
 export { default as DataTableFilters } from '../components/DataTableFilters.svelte';
 export { default as DataTable } from '../components/DataTable.svelte';
 
+// Filter sub-components (individually importable)
+export { default as FilterColumn } from '../components/filters/FilterColumn.svelte';
+export { default as FilterValueList } from '../components/filters/FilterValueList.svelte';
+export { default as FilterDateRange } from '../components/filters/FilterDateRange.svelte';
+export { useFilterState } from '../components/filters/useFilterState.svelte.js';
+
 // Export filter utility functions
 export {
   getUniqueValuesWithCounts,
