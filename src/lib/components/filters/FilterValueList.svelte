@@ -1,7 +1,4 @@
 <script>
-  import { Badge } from 'flowbite-svelte';
-  import { ArrowDownOutline } from 'flowbite-svelte-icons';
-
   /**
    * Renders the checkbox value-list for a single filter column, including:
    *   - per-column search bar
@@ -170,14 +167,20 @@
           <span>A</span>
           <span>Z</span>
         </span>
-        <ArrowDownOutline
+        <svg
           class={'w-3 h-3 transition-transform ' +
             (sortMode === 'name'
               ? 'text-blue-900 dark:text-blue-100'
               : 'text-gray-400 dark:text-gray-500')}
           style={sortMode === 'name' && sortDir === 'asc' ? 'transform: rotate(180deg);' : ''}
+          xmlns="http://www.w3.org/2000/svg"
+          fill="none"
+          viewBox="0 0 24 24"
+          stroke="currentColor"
           aria-hidden="true"
-        />
+        >
+          <path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M19 9l-7 7-7-7" />
+        </svg>
       </button>
       <!-- Sort by number -->
       <button
@@ -196,14 +199,20 @@
           <span>0</span>
           <span>9</span>
         </span>
-        <ArrowDownOutline
+        <svg
           class={'w-3 h-3 transition-transform ' +
             (sortMode === 'number'
               ? 'text-blue-900 dark:text-blue-100'
               : 'text-gray-400 dark:text-gray-500')}
           style={sortMode === 'number' && sortDir === 'asc' ? 'transform: rotate(180deg);' : ''}
+          xmlns="http://www.w3.org/2000/svg"
+          fill="none"
+          viewBox="0 0 24 24"
+          stroke="currentColor"
           aria-hidden="true"
-        />
+        >
+          <path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M19 9l-7 7-7-7" />
+        </svg>
       </button>
       <!-- Sort by count (only when counts are available) -->
       {#if showCounts && column.counts}
@@ -216,14 +225,20 @@
           type="button"
         >
           <span class="text-sm font-semibold">#</span>
-          <ArrowDownOutline
+          <svg
             class={'w-3 h-3 transition-transform ' +
               (sortMode === 'count'
                 ? 'text-blue-900 dark:text-blue-100'
                 : 'text-gray-400 dark:text-gray-500')}
             style={sortMode === 'count' && sortDir === 'asc' ? 'transform: rotate(180deg);' : ''}
+            xmlns="http://www.w3.org/2000/svg"
+            fill="none"
+            viewBox="0 0 24 24"
+            stroke="currentColor"
             aria-hidden="true"
-          />
+          >
+            <path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M19 9l-7 7-7-7" />
+          </svg>
         </button>
       {/if}
     </div>
@@ -342,7 +357,10 @@
       </button>
     </div>
     <div class="pr-1">
-      <Badge color="blue" rounded title="Total options">{sortedValues.length}</Badge>
+      <span
+        class="inline-flex items-center px-2 py-0.5 rounded-full text-xs font-medium bg-blue-100 text-blue-800 dark:bg-blue-900/40 dark:text-blue-300"
+        title="Total options">{sortedValues.length}</span
+      >
     </div>
   </div>
 </div>

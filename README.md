@@ -21,11 +21,13 @@ npm install @zhangt58/svelte-vtable
 
 ## Peer Dependencies
 
-This library requires the following peer dependencies to be installed in your project:
+This library requires the following peer dependencies:
 
 ```bash
-npm install svelte@^5.0.0 tailwindcss@^4.0.0 flowbite-svelte@^1.0.0 flowbite-svelte-icons@^3.0.0 svelte-virtuallists@^1.0.0
+npm install svelte@^5.0.0 tailwindcss@^4.0.0 svelte-virtuallists@^1.0.0
 ```
+
+`flowbite-svelte` and `flowbite-svelte-icons` are **optional** — only needed if you use the Flowbite adapter (see [Flowbite Adapter](#flowbite-adapter)).
 
 ## Quick Start
 
@@ -98,11 +100,46 @@ npm install svelte@^5.0.0 tailwindcss@^4.0.0 flowbite-svelte@^1.0.0 flowbite-sve
 </DataTable>
 ```
 
+## Flowbite Adapter
+
+By default, `DataTableControls` uses **zero external UI-framework dependencies** — it renders using plain `<input>`, `<select>`, `<button>`, and `<nav>` elements with Tailwind utility classes.
+
+If your project already uses **Flowbite**, you can opt in to the Flowbite-flavoured controls by importing from the `/flowbite` entrypoint:
+
+```bash
+# Install optional Flowbite peer dependencies
+npm install flowbite-svelte@^1.0.0 flowbite-svelte-icons@^3.0.0
+```
+
+```svelte
+<script>
+  // Import Flowbite-flavoured DataTableControls (Search, Badge, Select, Modal)
+  import { DataTable, DataTableControls, DataTableFilters } from '@zhangt58/svelte-vtable/flowbite';
+</script>
+
+<DataTableControls
+  search={searchQuery}
+  {currentPage}
+  bind:perPage
+  totalItems={items.length}
+  onpage={({ page }) => (currentPage = page)}
+  onsearch={({ search }) => (searchQuery = search)}
+  {columnFilters}
+  {activeFilters}
+  onfilter={handleFilterChange}
+/>
+```
+
+The Flowbite entrypoint re-exports everything from the default entrypoint, so you can use a single import for all components and utilities.
+
+See [`examples/flowbite/App.svelte`](./examples/flowbite/App.svelte) for a complete working example.
+
 ## Components
 
 ### DataTable (previously named VirtualDataTable)
 
 A virtualized table component for efficient rendering of large datasets. The component was renamed to `DataTable`; `VirtualDataTable` is still exported for backward compatibility.
+
 
 #### Props
 

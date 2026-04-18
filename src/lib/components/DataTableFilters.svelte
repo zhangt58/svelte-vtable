@@ -1,5 +1,4 @@
 <script>
-  import { Badge } from 'flowbite-svelte';
   import { useFilterState } from './filters/useFilterState.svelte.js';
   import FilterColumn from './filters/FilterColumn.svelte';
   import FilterValueList from './filters/FilterValueList.svelte';
@@ -107,7 +106,10 @@
     </div>
     <div class="flex items-center gap-2 flex-wrap">
       {#if hasActive}
-        <Badge color="blue" rounded>{activeCount} active</Badge>
+        <span
+          class="inline-flex items-center px-2.5 py-0.5 rounded-full text-xs font-medium bg-blue-100 text-blue-800 dark:bg-blue-900/40 dark:text-blue-300"
+          >{activeCount} active</span
+        >
         <button
           class="px-3 py-1 text-sm text-red-600 bg-transparent border border-red-600 rounded-md hover:bg-red-600 hover:text-white transition-all cursor-pointer"
           onclick={fs.clearAllFilters}
