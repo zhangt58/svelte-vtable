@@ -6,8 +6,10 @@
     "resolveJsonModule": true,
     "allowJs": true,
     "checkJs": true,
+    "declaration": true,
+    "emitDeclarationOnly": true,
     "isolatedModules": true,
-    "noEmit": true,
+    "noEmit": false,
     "skipLibCheck": true,
     "strict": false,
     "types": ["svelte"]

@@ -3,22 +3,25 @@
   "version": "0.2.0",
   "description": "A Svelte 5 library for virtualized data tables with sorting, selection, and pagination controls.",
   "type": "module",
-  "svelte": "./src/lib/index.js",
-  "main": "./src/lib/index.js",
-  "module": "./src/lib/index.js",
+  "sideEffects": ["*.css"],
+  "svelte": "./dist/index.js",
+  "main": "./dist/index.js",
+  "module": "./dist/index.js",
+  "types": "./dist/index.d.ts",
   "exports": {
     ".": {
-      "svelte": "./src/lib/index.js",
-      "import": "./src/lib/index.js",
-      "default": "./src/lib/index.js"
+      "svelte": "./dist/index.js",
+      "types": "./dist/index.d.ts",
+      "import": "./dist/index.js"
     },
-    "./styles.css": "./src/lib/dist/styles.css"
+    "./styles.css": "./dist/styles.css"
   },
   "scripts": {
-    "check": "svelte-check --tsconfig ./jsconfig.json",
+    "check": "svelte-check --tsconfig ./tsconfig.json",
     "build:styles": "node ./scripts/build-styles.cjs",
-    "prepare": "npm run build:styles",
-    "prepublishOnly": "npm run build:styles && npm run check && npm run test",
+    "build": "svelte-package -i src/lib",
+    "prepare": "npm run build:styles && npm run build",
+    "prepublishOnly": "npm run build && npm run check && npm run test",
     "format": "prettier --write .",
     "format:check": "prettier --check .",
     "test": "vitest run",
@@ -52,6 +55,7 @@
     "tailwindcss": "^4.1.17"
   },
   "devDependencies": {
+    "@sveltejs/package": "^2.5.7",
     "@sveltejs/vite-plugin-svelte": "^6.2.1",
     "flowbite-svelte": "^1.28.1",
     "flowbite-svelte-icons": "^3.0.0",
@@ -64,7 +68,7 @@
     "vitest": "^2.1.9"
   },
   "files": [
-    "src",
+    "dist",
     "README.md",
     "LICENSE"
   ]

@@ -3,7 +3,7 @@ const path = require('path');
 
 const repoRoot = path.resolve(__dirname, '..');
 const srcPath = path.join(repoRoot, 'src', 'lib', 'styles.css');
-const outDir = path.join(repoRoot, 'src', 'lib', 'dist');
+const outDir = path.join(repoRoot, 'dist');
 const outPath = path.join(outDir, 'styles.css');
 
 if (!fs.existsSync(srcPath)) {

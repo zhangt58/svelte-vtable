@@ -1,10 +1,10 @@
 # Dependencies
 node_modules/
 
-# Build artifacts
+# Build artifacts (source only; dist/ is published)
+src/
+scripts/
 .svelte-kit/
-dist/
-src/lib/dist/
 
 # IDE and editor files
 .idea/
@@ -18,6 +18,7 @@ src/lib/dist/
 Thumbs.db
 
 # Test files
+tests/
 *.test.js
 *.spec.js
 __tests__/
@@ -27,7 +28,17 @@ coverage/
 .env
 .env.local
 .env.*.local
+examples/
 
 # Git
 .git/
 .gitignore
+.github/
+
+# Config files (not needed in package)
+svelte.config.js
+tsconfig.json
+jsconfig.json
+vite.config.js
+.prettierrc
+CHANGELOG.md

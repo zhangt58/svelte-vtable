@@ -266,5 +266,5 @@
 />
 
 <style>
-  @import '../lib/dist/styles.css';
+  @import '../styles.css';
 </style>
