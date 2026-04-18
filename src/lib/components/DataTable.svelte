@@ -6,7 +6,7 @@
   let {
     items = [],
     // Unified column definitions array (required).
-    // @type {import('../lib/index.js').ColumnDef[]}
+    // @type {import('../index.js').ColumnDef[]}
     columns = [],
     // sortKey/sortDir are bindable so parents can observe or control sort state.
     sortKey = $bindable(null),
@@ -230,5 +230,5 @@
 </section>
 
 <style>
-  @import '../lib/dist/styles.css';
+  @import '../styles.css';
 </style>

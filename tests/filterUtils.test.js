@@ -9,7 +9,7 @@ import {
   clearAllFilters,
   filtersToSearchParams,
   searchParamsToFilters,
-} from './filterUtils.js';
+} from '../src/lib/filterUtils.js';
 
 // ---------------------------------------------------------------------------
 // getUniqueValuesWithCounts

@@ -1,5 +1,7 @@
 # Ignore compiled styles and build artifacts
 src/lib/dist/
+dist/
+.svelte-kit/
 
 # Node
 node_modules/

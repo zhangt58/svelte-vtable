@@ -1,7 +1,6 @@
 <script>
-  import DataTableFilters from '../src/components/DataTableFilters.svelte';
-  import { DataTable, DataTableControls } from '@zhangt58/svelte-vtable';
-  import { buildColumnFilters, applyFilters, countActiveFilters } from '../src/lib/filterUtils.js';
+  import { DataTable, DataTableControls, DataTableFilters } from '@zhangt58/svelte-vtable';
+  import { buildColumnFilters, applyFilters, countActiveFilters } from '@zhangt58/svelte-vtable';
   import { DarkMode } from 'flowbite-svelte';
   import { allData, columnDefs } from './sampleData.js';
   import ThemedExample from './ThemedExample.svelte';
