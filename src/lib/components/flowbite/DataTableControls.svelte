@@ -39,10 +39,11 @@
   // count of active filters (sum of selected values per column)
   const activeFilterCount = $derived.by(() => {
     try {
-      return Object.values(activeFilters || {}).reduce(
-        (sum, v) => sum + (Array.isArray(v) ? v.length : 0),
-        0,
-      );
+      return Object.values(activeFilters || {}).reduce((sum, v) => {
+        if (Array.isArray(v)) return sum + v.length;
+        if (v && typeof v === 'object' && (v.from || v.to)) return sum + 1;
+        return sum;
+      }, 0);
     } catch (e) {
       return 0;
     }
