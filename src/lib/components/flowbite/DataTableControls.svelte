@@ -1,6 +1,8 @@
 <script>
+  import { Search, Badge, Select } from 'flowbite-svelte';
+  import { FilterOutline } from 'flowbite-svelte-icons';
   import FiltersModal from './FiltersModal.svelte';
-  import PaginationBar from './PaginationBar.svelte';
+  import PaginationBar from '../PaginationBar.svelte';
 
   // Props for search, pagination (perPage made bindable using Svelte 5 rune $bindable)
   let {
@@ -34,14 +36,13 @@
     { value: 100, name: '100 rows' },
   ];
 
-  // count of active filters (sum of selected values per column, including daterange/datetimerange)
+  // count of active filters (sum of selected values per column)
   const activeFilterCount = $derived.by(() => {
     try {
-      return Object.values(activeFilters || {}).reduce((sum, v) => {
-        if (Array.isArray(v)) return sum + v.length;
-        if (v && typeof v === 'object' && (v.from || v.to)) return sum + 1;
-        return sum;
-      }, 0);
+      return Object.values(activeFilters || {}).reduce(
+        (sum, v) => sum + (Array.isArray(v) ? v.length : 0),
+        0,
+      );
     } catch (e) {
       return 0;
     }
@@ -208,22 +209,8 @@
               filtersVisible = !filtersVisible;
             }}
           >
-            <!-- Funnel icon (inline SVG) -->
-            <svg
-              class="h-4 w-4 shrink-0"
-              xmlns="http://www.w3.org/2000/svg"
-              fill="none"
-              viewBox="0 0 24 24"
-              stroke="currentColor"
-              aria-hidden="true"
-            >
-              <path
-                stroke-linecap="round"
-                stroke-linejoin="round"
-                stroke-width="2"
-                d="M3 4a1 1 0 011-1h16a1 1 0 011 1v2a1 1 0 01-.293.707L13 13.414V19a1 1 0 01-.553.894l-4 2A1 1 0 017 21v-7.586L3.293 6.707A1 1 0 013 6V4z"
-              />
-            </svg>
+            <!-- Funnel icon (Flowbite icon component) -->
+            <FilterOutline class="h-4 w-4 shrink-0" />
             <span class="text-sm">Filters</span>
           </button>
 
@@ -236,68 +223,30 @@
           {/if}
         </div>
 
-        <div class="vtable-search-wrapper relative flex items-center">
-          <svg
-            class="absolute left-3 h-4 w-4 text-gray-400 pointer-events-none"
-            xmlns="http://www.w3.org/2000/svg"
-            fill="none"
-            viewBox="0 0 24 24"
-            stroke="currentColor"
-            aria-hidden="true"
-          >
-            <path
-              stroke-linecap="round"
-              stroke-linejoin="round"
-              stroke-width="2"
-              d="M21 21l-4.35-4.35M17 11A6 6 0 115 11a6 6 0 0112 0z"
-            />
-          </svg>
-          <input
-            type="search"
-            class="vtable-search-input pl-9 pr-8 py-1 text-sm rounded-md border border-gray-300 bg-white dark:bg-gray-700 dark:border-gray-600 dark:text-gray-100 w-full"
-            placeholder="Search..."
-            bind:value={search}
-          />
-          {#if search}
-            <button
-              type="button"
-              class="absolute right-2 text-gray-400 hover:text-gray-600 dark:hover:text-gray-200 focus:outline-none"
-              aria-label="Clear search"
-              onclick={() => {
-                search = '';
-                if (onsearch !== undefined) {
-                  onsearch({ search: '' });
-                }
-              }}
-            >
-              <svg class="h-4 w-4" xmlns="http://www.w3.org/2000/svg" fill="none" viewBox="0 0 24 24" stroke="currentColor" aria-hidden="true">
-                <path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M6 18L18 6M6 6l12 12" />
-              </svg>
-            </button>
-          {/if}
-        </div>
+        <Search
+          size="sm"
+          bind:value={search}
+          placeholder="Search..."
+          clearable
+          clearableOnClick={() => {
+            search = '';
+            if (onsearch !== undefined) {
+              onsearch({ search: '' });
+            }
+          }}
+        />
       </div>
     </div>
 
     <!-- Range count badge + per-page selector -->
     <div class="flex-2 flex items-center gap-2">
-      <span
-        class="inline-flex items-center px-2.5 py-0.5 rounded-full text-xs font-medium bg-gray-100 text-gray-800 dark:bg-gray-700 dark:text-gray-200 whitespace-nowrap"
-      >
+      <Badge rounded color="gray">
         Showing {startItem} to {endItem} of {totalItems}
-      </span>
+      </Badge>
 
       <!-- Per-page selector -->
       <div class="flex items-center gap-2">
-        <select
-          id={perPageSelectId}
-          class="vtable-perpage-select py-1 pl-3 pr-7 text-sm rounded-md border border-gray-300 bg-white dark:bg-gray-700 dark:border-gray-600 dark:text-gray-100"
-          bind:value={perPage}
-        >
-          {#each perPageOptions as opt}
-            <option value={opt.value}>{opt.name}</option>
-          {/each}
-        </select>
+        <Select id={perPageSelectId} size="sm" items={perPageOptions} bind:value={perPage} />
       </div>
     </div>
 
@@ -317,5 +266,5 @@
 />
 
 <style>
-  @import '../styles.css';
+  @import '../../styles.css';
 </style>

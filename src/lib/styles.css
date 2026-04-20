@@ -170,6 +170,15 @@
 }
 
 /* Shared control styles (inputs, pagination, column filters) used by page components */
+
+/* Accent-color focus ring for search input and per-page select — respects --vtable-color-accent */
+:global(.vtable-search-input:focus),
+:global(.vtable-perpage-select:focus) {
+  border-color: var(--vtable-color-accent-border);
+  box-shadow: 0 0 0 2px color-mix(in srgb, var(--vtable-color-accent) 20%, transparent);
+  outline: none;
+}
+
 :global(.datatable-input) {
   padding: 0.375rem 0.75rem;
   font-size: 0.95rem;

@@ -1,5 +1,4 @@
 <script>
-  import { Badge } from 'flowbite-svelte';
   import { useFilterState } from './filters/useFilterState.svelte.js';
   import FilterColumn from './filters/FilterColumn.svelte';
   import FilterValueList from './filters/FilterValueList.svelte';
@@ -99,15 +98,31 @@
         title="Show all filter dropdowns">Show All</button
       >
       <button
-        class="px-3 py-1 text-sm text-gray-600 bg-transparent border border-gray-600 rounded-md hover:bg-gray-600 hover:text-white transition-all cursor-pointer disabled:opacity-50 disabled:cursor-not-allowed disabled:hover:bg-transparent disabled:hover:text-gray-600"
+        class="px-3 py-1 text-sm bg-transparent border rounded-md transition-all cursor-pointer disabled:opacity-50 disabled:cursor-not-allowed"
+        style="color: #64748b; border-color: #64748b;"
         disabled={allClosed}
         onclick={closeAll}
+        onmouseenter={(e) => {
+          if (!e.currentTarget.disabled) {
+            e.currentTarget.style.backgroundColor = '#64748b';
+            e.currentTarget.style.color = '#fff';
+            e.currentTarget.style.borderColor = '#64748b';
+          }
+        }}
+        onmouseleave={(e) => {
+          e.currentTarget.style.backgroundColor = '';
+          e.currentTarget.style.color = '#64748b';
+          e.currentTarget.style.borderColor = '#64748b';
+        }}
         title="Close all filter dropdowns">Close All</button
       >
     </div>
     <div class="flex items-center gap-2 flex-wrap">
       {#if hasActive}
-        <Badge color="blue" rounded>{activeCount} active</Badge>
+        <span
+          class="inline-flex items-center px-2.5 py-0.5 rounded-full text-xs font-medium bg-blue-100 text-blue-800 dark:bg-blue-900/40 dark:text-blue-300"
+          >{activeCount} active</span
+        >
         <button
           class="px-3 py-1 text-sm text-red-600 bg-transparent border border-red-600 rounded-md hover:bg-red-600 hover:text-white transition-all cursor-pointer"
           onclick={fs.clearAllFilters}
