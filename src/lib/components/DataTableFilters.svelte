@@ -98,9 +98,22 @@
         title="Show all filter dropdowns">Show All</button
       >
       <button
-        class="px-3 py-1 text-sm text-gray-600 bg-transparent border border-gray-600 rounded-md hover:bg-gray-600 hover:text-white transition-all cursor-pointer disabled:opacity-50 disabled:cursor-not-allowed disabled:hover:bg-transparent disabled:hover:text-gray-600"
+        class="px-3 py-1 text-sm bg-transparent border rounded-md transition-all cursor-pointer disabled:opacity-50 disabled:cursor-not-allowed"
+        style="color: #64748b; border-color: #64748b;"
         disabled={allClosed}
         onclick={closeAll}
+        onmouseenter={(e) => {
+          if (!e.currentTarget.disabled) {
+            e.currentTarget.style.backgroundColor = '#64748b';
+            e.currentTarget.style.color = '#fff';
+            e.currentTarget.style.borderColor = '#64748b';
+          }
+        }}
+        onmouseleave={(e) => {
+          e.currentTarget.style.backgroundColor = '';
+          e.currentTarget.style.color = '#64748b';
+          e.currentTarget.style.borderColor = '#64748b';
+        }}
         title="Close all filter dropdowns">Close All</button
       >
     </div>

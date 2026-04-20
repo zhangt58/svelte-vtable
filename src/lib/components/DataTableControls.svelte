@@ -34,13 +34,14 @@
     { value: 100, name: '100 rows' },
   ];
 
-  // count of active filters (sum of selected values per column)
+  // count of active filters (sum of selected values per column, including daterange/datetimerange)
   const activeFilterCount = $derived.by(() => {
     try {
-      return Object.values(activeFilters || {}).reduce(
-        (sum, v) => sum + (Array.isArray(v) ? v.length : 0),
-        0,
-      );
+      return Object.values(activeFilters || {}).reduce((sum, v) => {
+        if (Array.isArray(v)) return sum + v.length;
+        if (v && typeof v === 'object' && (v.from || v.to)) return sum + 1;
+        return sum;
+      }, 0);
     } catch (e) {
       return 0;
     }
@@ -237,7 +238,7 @@
 
         <div class="vtable-search-wrapper relative flex items-center">
           <svg
-            class="absolute left-2.5 h-4 w-4 text-gray-400 pointer-events-none"
+            class="absolute left-3 h-4 w-4 text-gray-400 pointer-events-none"
             xmlns="http://www.w3.org/2000/svg"
             fill="none"
             viewBox="0 0 24 24"
@@ -253,7 +254,7 @@
           </svg>
           <input
             type="search"
-            class="vtable-search-input pl-8 pr-8 py-1 text-sm rounded-md border border-gray-300 bg-white dark:bg-gray-700 dark:border-gray-600 dark:text-gray-100 focus:outline-none focus:ring-2 focus:ring-offset-1 focus:ring-blue-500 w-full"
+            class="vtable-search-input pl-9 pr-8 py-1 text-sm rounded-md border border-gray-300 bg-white dark:bg-gray-700 dark:border-gray-600 dark:text-gray-100 w-full"
             placeholder="Search..."
             bind:value={search}
           />
@@ -290,7 +291,7 @@
       <div class="flex items-center gap-2">
         <select
           id={perPageSelectId}
-          class="py-1 px-2 text-sm rounded-md border border-gray-300 bg-white dark:bg-gray-700 dark:border-gray-600 dark:text-gray-100 focus:outline-none focus:ring-2 focus:ring-blue-500"
+          class="vtable-perpage-select py-1 pl-3 pr-7 text-sm rounded-md border border-gray-300 bg-white dark:bg-gray-700 dark:border-gray-600 dark:text-gray-100"
           bind:value={perPage}
         >
           {#each perPageOptions as opt}
