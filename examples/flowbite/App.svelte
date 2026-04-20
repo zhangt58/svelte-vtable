@@ -41,10 +41,16 @@
 
   const filteredData = $derived(() => {
     let items = applyFilters(allData, activeFilters) || [];
-    const q = String(searchQuery || '').trim().toLowerCase();
+    const q = String(searchQuery || '')
+      .trim()
+      .toLowerCase();
     if (q) {
       items = items.filter((it) =>
-        columnDefs.some((c) => String(it[c.key] ?? '').toLowerCase().includes(q)),
+        columnDefs.some((c) =>
+          String(it[c.key] ?? '')
+            .toLowerCase()
+            .includes(q),
+        ),
       );
     }
     return items;
@@ -66,9 +72,7 @@
 
 <div class="p-6">
   <div class="flex justify-between items-center mb-4">
-    <h1 class="text-2xl font-bold text-gray-900 dark:text-gray-100">
-      Flowbite Adapter Example
-    </h1>
+    <h1 class="text-2xl font-bold text-gray-900 dark:text-gray-100">Flowbite Adapter Example</h1>
     <!-- Flowbite DarkMode toggle -->
     <DarkMode />
   </div>

@@ -35,7 +35,9 @@
     <div
       class="vtable-modal-panel bg-white dark:bg-gray-800 rounded-lg shadow-xl w-full max-w-2xl pointer-events-auto overflow-hidden"
     >
-      <div class="flex items-center justify-between p-4 border-b border-gray-200 dark:border-gray-700">
+      <div
+        class="flex items-center justify-between p-4 border-b border-gray-200 dark:border-gray-700"
+      >
         <h3 id="vtable-modal-title" class="text-lg font-semibold text-gray-900 dark:text-white">
           {title}
         </h3>
@@ -52,7 +54,12 @@
             stroke="currentColor"
             aria-hidden="true"
           >
-            <path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M6 18L18 6M6 6l12 12" />
+            <path
+              stroke-linecap="round"
+              stroke-linejoin="round"
+              stroke-width="2"
+              d="M6 18L18 6M6 6l12 12"
+            />
           </svg>
         </button>
       </div>

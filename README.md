@@ -140,7 +140,6 @@ See [`examples/flowbite/App.svelte`](./examples/flowbite/App.svelte) for a compl
 
 A virtualized table component for efficient rendering of large datasets. The component was renamed to `DataTable`; `VirtualDataTable` is still exported for backward compatibility.
 
-
 #### Props
 
 | Prop           | Type              | Default                  | Description                                                                                                                                                                             |
