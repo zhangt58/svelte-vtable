@@ -14,6 +14,62 @@
     showCounts = true,
     className = '',
   } = $props();
+
+  /** @type {HTMLElement | null} */
+  let previouslyFocused = $state(null);
+
+  $effect(() => {
+    if (open) {
+      previouslyFocused = /** @type {HTMLElement | null} */ (document.activeElement);
+    } else if (previouslyFocused) {
+      if (document.body.contains(previouslyFocused)) {
+        previouslyFocused.focus();
+      }
+      previouslyFocused = null;
+    }
+  });
+
+  const FOCUSABLE =
+    'a[href], button:not([disabled]), input:not([disabled]), select:not([disabled]), textarea:not([disabled]), [tabindex]:not([tabindex="-1"])';
+
+  /**
+   * Svelte action: trap keyboard focus within `node`.
+   * @param {HTMLElement} node
+   */
+  function focusTrap(node) {
+    const getFocusable = () => /** @type {HTMLElement[]} */ (Array.from(node.querySelectorAll(FOCUSABLE)));
+
+    // Move focus into the modal on mount
+    const focusable = getFocusable();
+    if (focusable.length > 0) focusable[0].focus();
+
+    /** @param {KeyboardEvent} e */
+    function handleKeydown(e) {
+      if (e.key !== 'Tab') return;
+      const items = getFocusable();
+      if (items.length === 0) return;
+      const first = items[0];
+      const last = items[items.length - 1];
+      if (e.shiftKey) {
+        if (document.activeElement === first || !node.contains(document.activeElement)) {
+          e.preventDefault();
+          last.focus();
+        }
+      } else {
+        if (document.activeElement === last || !node.contains(document.activeElement)) {
+          e.preventDefault();
+          first.focus();
+        }
+      }
+    }
+
+    document.addEventListener('keydown', handleKeydown);
+    return {
+      destroy() {
+        document.removeEventListener('keydown', handleKeydown);
+      },
+    };
+  }
 </script>
 
 {#if open}
@@ -34,6 +90,7 @@
   >
     <div
       class="vtable-modal-panel bg-white dark:bg-gray-800 rounded-lg shadow-xl w-full max-w-2xl pointer-events-auto overflow-hidden"
+      use:focusTrap
     >
       <div class="flex items-center justify-between p-4 border-b border-gray-200 dark:border-gray-700">
         <h3 id="vtable-modal-title" class="text-lg font-semibold text-gray-900 dark:text-white">

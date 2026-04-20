@@ -385,10 +385,12 @@
           {@const isSelected = selections?.includes(value)}
           {@const displayValue = value === null || value === undefined ? '(empty)' : String(value)}
           <label
+            for="filter-{column.key}-{idx}"
             class="flex items-center gap-1 px-2 py-1 cursor-pointer rounded-sm hover:bg-gray-100 dark:hover:bg-gray-600 transition-colors"
             style="height:{virtualItemHeight}px; box-sizing:border-box;"
           >
             <input
+              id="filter-{column.key}-{idx}"
               type="checkbox"
               checked={isSelected}
               onchange={() => ontoggle && ontoggle(value)}
@@ -412,9 +414,11 @@
       {@const isSelected = selections?.includes(value)}
       {@const displayValue = value === null || value === undefined ? '(empty)' : String(value)}
       <label
+        for="filter-{column.key}-{idx}"
         class="flex items-center gap-1 px-2 py-1 cursor-pointer rounded-sm hover:bg-gray-100 dark:hover:bg-gray-600 transition-colors"
       >
         <input
+          id="filter-{column.key}-{idx}"
           type="checkbox"
           checked={isSelected}
           onchange={() => ontoggle && ontoggle(value)}
