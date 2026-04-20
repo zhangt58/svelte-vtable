@@ -33,7 +33,7 @@
     aria-labelledby="vtable-modal-title"
   >
     <div
-      class="vtable-modal-panel bg-white dark:bg-gray-800 rounded-lg shadow-xl w-full max-w-2xl pointer-events-auto overflow-hidden"
+      class="vtable-modal-panel bg-white dark:bg-gray-800 rounded-lg shadow-xl w-full max-w-3xl pointer-events-auto overflow-hidden"
     >
       <div
         class="flex items-center justify-between p-4 border-b border-gray-200 dark:border-gray-700"
