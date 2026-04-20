@@ -17,6 +17,7 @@
   min-width: 0;
   height: 100%;
   overflow: auto;
+  isolation: isolate;
 }
 
 :global(.datatable-table) {
@@ -36,7 +37,7 @@
 :global(.datatable-table) thead.sticky-header {
   position: sticky;
   top: 0;
-  z-index: 20;
+  z-index: 2;
 }
 
 /* Header visual styles - only bottom border */
