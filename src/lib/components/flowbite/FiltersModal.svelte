@@ -1,6 +1,5 @@
 <script>
   import { Modal } from 'flowbite-svelte';
-  import { CloseOutline } from 'flowbite-svelte-icons';
   import DataTableFilters from '../DataTableFilters.svelte';
 
   // Props — make `open` bindable so parent can use `bind:open`
@@ -26,7 +25,9 @@
       class="text-gray-400 bg-transparent hover:bg-gray-200 hover:text-gray-900 rounded-lg text-sm p-1.5 ml-auto inline-flex items-center dark:hover:bg-gray-600 dark:hover:text-white"
       onclick={() => (open = false)}
     >
-      <CloseOutline class="shrink-0 h-6 w-6" />
+      <svg class="shrink-0 h-6 w-6" xmlns="http://www.w3.org/2000/svg" fill="none" viewBox="0 0 24 24" stroke="currentColor" aria-hidden="true">
+        <path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M6 18L18 6M6 6l12 12" />
+      </svg>
     </button>
   </div>
 

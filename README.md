@@ -27,7 +27,7 @@ This library requires the following peer dependencies:
 npm install svelte@^5.0.0 tailwindcss@^4.0.0 svelte-virtuallists@^1.0.0
 ```
 
-`flowbite-svelte` and `flowbite-svelte-icons` are **optional** — only needed if you use the Flowbite adapter (see [Flowbite Adapter](#flowbite-adapter)).
+`flowbite-svelte` is **optional** — only needed if you use the Flowbite adapter (see [Flowbite Adapter](#flowbite-adapter)).
 
 ## Quick Start
 
@@ -108,7 +108,7 @@ If your project already uses **Flowbite**, you can opt in to the Flowbite-flavou
 
 ```bash
 # Install optional Flowbite peer dependencies
-npm install flowbite-svelte@^1.0.0 flowbite-svelte-icons@^3.0.0
+npm install flowbite-svelte@^1.0.0
 ```
 
 ```svelte
@@ -139,7 +139,6 @@ See [`examples/flowbite/App.svelte`](./examples/flowbite/App.svelte) for a compl
 ### DataTable (previously named VirtualDataTable)
 
 A virtualized table component for efficient rendering of large datasets. The component was renamed to `DataTable`; `VirtualDataTable` is still exported for backward compatibility.
-
 
 #### Props
 

@@ -1,6 +1,5 @@
 <script>
   import { Search, Badge, Select } from 'flowbite-svelte';
-  import { FilterOutline } from 'flowbite-svelte-icons';
   import FiltersModal from './FiltersModal.svelte';
   import PaginationBar from '../PaginationBar.svelte';
 
@@ -39,10 +38,11 @@
   // count of active filters (sum of selected values per column)
   const activeFilterCount = $derived.by(() => {
     try {
-      return Object.values(activeFilters || {}).reduce(
-        (sum, v) => sum + (Array.isArray(v) ? v.length : 0),
-        0,
-      );
+      return Object.values(activeFilters || {}).reduce((sum, v) => {
+        if (Array.isArray(v)) return sum + v.length;
+        if (v && typeof v === 'object' && (v.from || v.to)) return sum + 1;
+        return sum;
+      }, 0);
     } catch (e) {
       return 0;
     }
@@ -209,8 +209,10 @@
               filtersVisible = !filtersVisible;
             }}
           >
-            <!-- Funnel icon (Flowbite icon component) -->
-            <FilterOutline class="h-4 w-4 shrink-0" />
+            <!-- Funnel/filter icon (inline SVG) -->
+            <svg class="h-4 w-4 shrink-0" xmlns="http://www.w3.org/2000/svg" fill="none" viewBox="0 0 24 24" stroke="currentColor" aria-hidden="true">
+              <path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M3 4a1 1 0 011-1h16a1 1 0 011 1v2a1 1 0 01-.293.707L13 13.414V19a1 1 0 01-.553.894l-4 2A1 1 0 017 21v-7.586L3.293 6.707A1 1 0 013 6V4z" />
+            </svg>
             <span class="text-sm">Filters</span>
           </button>
 
