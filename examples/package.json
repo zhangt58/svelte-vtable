@@ -4,6 +4,7 @@
   "description": "Example project demonstrating svelte-vtable usage",
   "type": "module",
   "scripts": {
+    "predev": "cd .. && npm run build",
     "dev": "vite",
     "build": "vite build",
     "preview": "vite preview",
