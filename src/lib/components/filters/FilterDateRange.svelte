@@ -216,7 +216,7 @@
         value={fromPct}
         style="z-index:{fromPct >= toPct - 2 ? 4 : 3}"
         oninput={(e) => handleFromSlider(parseFloat(e.currentTarget.value))}
-        aria-label="Range start"
+        aria-label="{column.label || column.key} from date"
       />
       <input
         type="range"
@@ -227,7 +227,7 @@
         value={toPct}
         style="z-index:{fromPct >= toPct - 2 ? 3 : 4}"
         oninput={(e) => handleToSlider(parseFloat(e.currentTarget.value))}
-        aria-label="Range end"
+        aria-label="{column.label || column.key} to date"
       />
     </div>
   {/if}

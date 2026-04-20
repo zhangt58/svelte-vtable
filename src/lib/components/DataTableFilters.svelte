@@ -158,6 +158,9 @@
             ]
               .filter(Boolean)
               .join(' ')}
+            role={isDateRange(column) ? 'group' : 'listbox'}
+            aria-labelledby="filter-{column.key}"
+            aria-multiselectable={isDateRange(column) ? undefined : 'true'}
             tabindex="-1"
             data-column={column.key}
           >
