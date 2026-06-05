@@ -411,6 +411,7 @@
             />
             <span
               class="flex-1 text-sm text-gray-700 dark:text-gray-300 select-none min-w-0 overflow-hidden text-ellipsis"
+              title={displayValue}
               >{displayValue}</span
             >
             {#if showCounts && column.counts && column.counts[value] !== undefined}
@@ -437,6 +438,7 @@
         />
         <span
           class="flex-1 text-sm text-gray-700 dark:text-gray-300 select-none min-w-0 overflow-hidden text-ellipsis"
+          title={displayValue}
           >{displayValue}</span
         >
         {#if showCounts && column.counts && column.counts[value] !== undefined}
