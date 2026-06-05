@@ -13,9 +13,18 @@ export function getUniqueValuesWithCounts(data, key) {
 
   data.forEach((item) => {
     const value = item[key];
-    // Handle null/undefined
-    const normalizedValue = value ?? '(empty)';
-    countMap[normalizedValue] = (countMap[normalizedValue] || 0) + 1;
+
+    if (Array.isArray(value)) {
+      // If the value is an array, count each element separately
+      for (const v of value) {
+        const normalizedV = String(v ?? '');
+        countMap[normalizedV] = (countMap[normalizedV] || 0) + 1;
+      }
+    } else {
+      // Handle null/undefined
+      const normalizedValue = value ?? '(empty)';
+      countMap[normalizedValue] = (countMap[normalizedValue] || 0) + 1;
+    }
   });
 
   return {
@@ -150,8 +159,18 @@ export function applyFilters(data, activeFilters) {
         // Value-based filter (OR logic within column)
         if (filterValue.length === 0) continue;
         const itemValue = item[columnKey];
-        const normalizedItemValue = itemValue ?? '(empty)';
-        if (!filterValue.includes(normalizedItemValue)) return false;
+
+        if (Array.isArray(itemValue)) {
+          // array value - check if any element matches the filter values
+          const hasMatch = itemValue.some((v) =>
+            filterValue.includes(String(v ?? ''))
+          );
+          if (!hasMatch) return false;
+        } else {
+          // scalar value - treat null/undefined as '(empty)'
+          const normalizedItemValue = itemValue ?? '(empty)';
+          if (!filterValue.includes(normalizedItemValue)) return false;
+        }
       } else if (typeof filterValue === 'object') {
         // Date / datetime range filter
         const { from, to } = filterValue;
