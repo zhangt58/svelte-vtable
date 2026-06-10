@@ -407,7 +407,7 @@
               type="checkbox"
               checked={isSelected}
               onchange={() => ontoggle && ontoggle(value)}
-              class="w-4 h-4 shrink-0 cursor-pointer rounded border border-gray-300 dark:border-gray-500 bg-white dark:bg-gray-700 checked:bg-blue-500! checked:border-blue-500! dark:checked:bg-sky-400! dark:checked:border-sky-400! focus:ring-1 focus:ring-blue-500 dark:focus:ring-sky-400"
+              class="w-4 h-4 shrink-0 cursor-pointer rounded border border-gray-300 dark:border-gray-500 bg-white dark:bg-gray-700 checked:bg-blue-500 checked:border-blue-500 dark:checked:bg-sky-400 dark:checked:border-sky-400 focus:ring-1 focus:ring-blue-500 dark:focus:ring-sky-400"
             />
             <span
               class="flex-1 text-sm text-gray-700 dark:text-gray-300 select-none min-w-0 overflow-hidden text-ellipsis"
@@ -434,7 +434,7 @@
           type="checkbox"
           checked={isSelected}
           onchange={() => ontoggle && ontoggle(value)}
-          class="w-4 h-4 shrink-0 cursor-pointer rounded border border-gray-300 dark:border-gray-500 bg-white dark:bg-gray-700 checked:bg-blue-500! checked:border-blue-500! dark:checked:bg-sky-400! dark:checked:border-sky-400! focus:ring-1 focus:ring-blue-500 dark:focus:ring-sky-400"
+          class="w-4 h-4 shrink-0 cursor-pointer rounded border border-gray-300 dark:border-gray-500 bg-white dark:bg-gray-700 checked:bg-blue-500 checked:border-blue-500 dark:checked:bg-sky-400 dark:checked:border-sky-400 focus:ring-1 focus:ring-blue-500 dark:focus:ring-sky-400"
         />
         <span
           class="flex-1 text-sm text-gray-700 dark:text-gray-300 select-none min-w-0 overflow-hidden text-ellipsis"
