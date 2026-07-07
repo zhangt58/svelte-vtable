@@ -7,7 +7,7 @@
 -->
 <script>
   import { DataTable, DataTableControls } from '@zhangt58/svelte-vtable';
-  import { buildColumnFilters, applyFilters } from '../src/lib/filterUtils.js';
+  import { applyFilters } from '../src/lib/filterUtils.js';
   import { allData, columnDefs } from './sampleData.js';
 
   // ── shared state ──────────────────────────────────────────────────────────
@@ -16,8 +16,8 @@
   let currentPage = $state(1);
   let perPage = $state(10);
 
-  const filteredData = $derived(() => {
-    let items = applyFilters(allData, activeFilters) || [];
+  const searchedData = $derived(() => {
+    let items = allData || [];
     const q = String(searchQuery || '')
       .trim()
       .toLowerCase();
@@ -33,13 +33,13 @@
     return items;
   });
 
+  const filteredData = $derived(() => applyFilters(searchedData(), activeFilters) || []);
+
   const pagedData = $derived(() => {
     const items = filteredData() || [];
     const start = (Math.max(1, currentPage) - 1) * perPage;
     return items.slice(start, start + perPage);
   });
-
-  let columnFilters = $state(buildColumnFilters(allData, columnDefs));
 
   // ── active theme ──────────────────────────────────────────────────────────
   /** @type {'green' | 'purple' | 'orange' | 'rose'} */
@@ -121,7 +121,8 @@
       {currentPage}
       bind:perPage
       totalItems={filteredData().length}
-      {columnFilters}
+      columns={columnDefs}
+      filterItems={searchedData()}
       {activeFilters}
       onfilter={({ allFilters }) => {
         activeFilters = { ...allFilters };

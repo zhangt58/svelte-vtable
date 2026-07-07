@@ -5,8 +5,8 @@
   import {
     DEFAULT_RELATIVE_RANGE_PRESETS,
     applyFilters,
-    buildColumnFilters,
     hasActiveFilterValue,
+    resolveColumnFilters,
   } from '../filterUtils.js';
 
   // Runic props: accept props via $props() so the component matches the
@@ -31,8 +31,10 @@
     // Render per-column filter controls in table headers.
     inlineFilters = false,
     // Filter configs can be provided from all source rows. When omitted and
-    // inlineFilters is true, configs are derived from this component's items.
+    // inlineFilters is true, configs are derived from filterItems or this component's items.
     columnFilters = null,
+    // Base data source used to build inline filter option lists when columnFilters is omitted.
+    filterItems = null,
     activeFilters = {},
     // onfilter({ key, values, allFilters }) makes filtering parent-managed.
     // When omitted, inline filters are applied locally to this table's items.
@@ -65,9 +67,13 @@
   const colDefMap = $derived(Object.fromEntries(columns.map((c) => [c.key, c])));
 
   const effectiveColumnFilters = $derived.by(() => {
-    if (Array.isArray(columnFilters)) return columnFilters;
-    if (!inlineFilters) return [];
-    return buildColumnFilters(items, columns);
+    return resolveColumnFilters({
+      columnFilters,
+      columns,
+      filterItems: Array.isArray(filterItems) ? filterItems : items,
+      activeFilters,
+      enabled: inlineFilters,
+    });
   });
 
   const filterDefMap = $derived(
@@ -233,12 +239,12 @@
 <svelte:window onclick={closeFilter} onkeydown={handleKeydown} />
 
 <section class="virtual-data-table {className}" {style}>
-  {#if sortedItems && sortedItems.length > 0}
+  {#if columns.length > 0}
     <!-- When `virtualize` is false we instruct VirtualList to render as a normal list/table
          by setting `isDisabled`. This ensures pagination based on item counts shows the
          exact number of rows expected (useful when rows have variable height). -->
     <VirtualList
-      items={sortedItems}
+      items={Array.isArray(sortedItems) ? sortedItems : []}
       isTable
       isDisabled={!virtualize}
       class="datatable-table max-w-full max-h-full overflow-auto"
@@ -334,6 +340,9 @@
         </tr>
       {/snippet}
     </VirtualList>
+    {#if !sortedItems || sortedItems.length === 0}
+      <div class="p-4 text-center text-slate-500">{emptyMessage}</div>
+    {/if}
   {:else}
     <div class="p-4 text-center text-slate-500">{emptyMessage}</div>
   {/if}

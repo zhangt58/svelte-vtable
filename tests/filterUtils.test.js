@@ -2,6 +2,8 @@ import { describe, it, expect } from 'vitest';
 import {
   DEFAULT_RELATIVE_RANGE_PRESETS,
   getFilterType,
+  filtersWithoutKey,
+  resolveColumnFilters,
   getUniqueValuesWithCounts,
   buildColumnFilters,
   matchesDateRange,
@@ -35,6 +37,97 @@ describe('shared filter helpers', () => {
     expect(isDateRangeColumn({ filterType: 'daterange' })).toBe(true);
     expect(isDateRangeColumn({ type: 'datetimerange' })).toBe(true);
     expect(isDateRangeColumn({ type: 'value' })).toBe(false);
+  });
+
+  it('returns explicit column filter configs before deriving from a row source', () => {
+    const explicit = [{ key: 'dept', label: 'Dept', type: 'value', uniqueValues: ['Sales'] }];
+    const result = resolveColumnFilters({
+      columnFilters: explicit,
+      columns: [{ key: 'dept', filterType: 'value' }],
+      filterItems: [{ dept: 'Engineering' }],
+    });
+    expect(result).toBe(explicit);
+  });
+
+  it('derives column filters from the chosen filterItems source', () => {
+    const result = resolveColumnFilters({
+      columnFilters: null,
+      columns: [{ key: 'dept', label: 'Department', filterType: 'value' }],
+      filterItems: [{ dept: 'Engineering' }, { dept: 'Sales' }, { dept: 'Engineering' }],
+    });
+    expect(result).toHaveLength(1);
+    expect(result[0].uniqueValues).toContain('Engineering');
+    expect(result[0].uniqueValues).toContain('Sales');
+    expect(result[0].counts.Engineering).toBe(2);
+  });
+
+  it('omits inactive values and the requested key from active filters', () => {
+    expect(
+      filtersWithoutKey(
+        {
+          dept: ['Engineering'],
+          status: [],
+          hireDate: { from: '2030-01-01' },
+        },
+        'hireDate',
+      ),
+    ).toEqual({ dept: ['Engineering'] });
+  });
+
+  it('derives faceted filters from peer-filtered rows while preserving the active column range', () => {
+    const result = resolveColumnFilters({
+      columnFilters: null,
+      columns: [
+        { key: 'dept', label: 'Department', filterType: 'value' },
+        { key: 'hireDate', label: 'Hire Date', filterType: 'daterange' },
+      ],
+      filterItems: [
+        { dept: 'Engineering', hireDate: '2024-01-01' },
+        { dept: 'Engineering', hireDate: '2024-02-01' },
+        { dept: 'Sales', hireDate: '2024-03-01' },
+      ],
+      activeFilters: {
+        dept: ['Engineering'],
+        hireDate: { from: '2030-01-01', to: '2030-01-02' },
+      },
+    });
+
+    const deptFilter = result.find((filter) => filter.key === 'dept');
+    const dateFilter = result.find((filter) => filter.key === 'hireDate');
+
+    expect(deptFilter.uniqueValues).toEqual([]);
+    expect(dateFilter.minValue).toBe('2024-01-01');
+    expect(dateFilter.maxValue).toBe('2024-02-01');
+    expect(dateFilter.dateValues).toEqual([
+      new Date('2024-01-01T00:00:00').getTime(),
+      new Date('2024-02-01T00:00:00').getTime(),
+    ]);
+  });
+
+  it('can opt out of faceted option derivation', () => {
+    const [dateFilter] = resolveColumnFilters({
+      columnFilters: null,
+      columns: [{ key: 'hireDate', label: 'Hire Date', filterType: 'daterange' }],
+      filterItems: [
+        { dept: 'Engineering', hireDate: '2024-01-01' },
+        { dept: 'Sales', hireDate: '2024-03-01' },
+      ],
+      activeFilters: { dept: ['Engineering'] },
+      faceted: false,
+    });
+
+    expect(dateFilter.minValue).toBe('2024-01-01');
+    expect(dateFilter.maxValue).toBe('2024-03-01');
+  });
+
+  it('can disable derived column filters', () => {
+    const result = resolveColumnFilters({
+      columnFilters: null,
+      columns: [{ key: 'dept', filterType: 'value' }],
+      filterItems: [{ dept: 'Engineering' }],
+      enabled: false,
+    });
+    expect(result).toEqual([]);
   });
 
   it('checks and counts individual active filter values', () => {
@@ -117,6 +210,10 @@ describe('buildColumnFilters', () => {
     expect(col.type).toBe('daterange');
     expect(col.minValue).toBe('2024-01-01');
     expect(col.maxValue).toBe('2024-06-15');
+    expect(col.dateValues).toEqual([
+      new Date('2024-01-01T00:00:00').getTime(),
+      new Date('2024-06-15T00:00:00').getTime(),
+    ]);
   });
 
   it('builds a datetimerange column with minValue and maxValue', () => {
@@ -125,6 +222,10 @@ describe('buildColumnFilters', () => {
     expect(col.type).toBe('datetimerange');
     expect(col.minValue).toBe('2024-01-01T08:00');
     expect(col.maxValue).toBe('2024-06-15T12:30');
+    expect(col.dateValues).toEqual([
+      new Date('2024-01-01T08:00:00').getTime(),
+      new Date('2024-06-15T12:30:00').getTime(),
+    ]);
   });
 
   it('sets minValue/maxValue to null when all date values are missing', () => {
@@ -132,6 +233,7 @@ describe('buildColumnFilters', () => {
     const [col] = buildColumnFilters([{ ts: null }, { ts: '' }], columns);
     expect(col.minValue).toBeNull();
     expect(col.maxValue).toBeNull();
+    expect(col.dateValues).toEqual([]);
   });
 
   it('uses col.key as label when col.label is absent', () => {
