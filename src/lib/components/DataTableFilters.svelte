@@ -3,6 +3,7 @@
   import FilterColumn from './filters/FilterColumn.svelte';
   import FilterValueList from './filters/FilterValueList.svelte';
   import FilterDateRange from './filters/FilterDateRange.svelte';
+  import { DEFAULT_RELATIVE_RANGE_PRESETS } from '../filterUtils.js';
 
   let {
     columnFilters = [],
@@ -18,15 +19,7 @@
     emitDebounce = 100,
     populateThreshold = 200,
     dropdownInline = true,
-    relativeRangePresets = [
-      { label: '1h', value: 1, unit: 'hour' },
-      { label: '6h', value: 6, unit: 'hour' },
-      { label: '12h', value: 12, unit: 'hour' },
-      { label: '1d', value: 1, unit: 'day' },
-      { label: '7d', value: 7, unit: 'day' },
-      { label: '30d', value: 30, unit: 'day' },
-      { label: '1y', value: 1, unit: 'year' },
-    ],
+    relativeRangePresets = DEFAULT_RELATIVE_RANGE_PRESETS,
   } = $props();
 
   const fs = useFilterState({

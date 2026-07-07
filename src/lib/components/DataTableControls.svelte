@@ -1,6 +1,7 @@
 <script>
   import FiltersModal from './FiltersModal.svelte';
   import PaginationBar from './PaginationBar.svelte';
+  import { countActiveFilters } from '../filterUtils.js';
 
   // Props for search, pagination (perPage made bindable using Svelte 5 rune $bindable)
   let {
@@ -34,18 +35,7 @@
     { value: 100, name: '100 rows' },
   ];
 
-  // count of active filters (sum of selected values per column, including daterange/datetimerange)
-  const activeFilterCount = $derived.by(() => {
-    try {
-      return Object.values(activeFilters || {}).reduce((sum, v) => {
-        if (Array.isArray(v)) return sum + v.length;
-        if (v && typeof v === 'object' && (v.from || v.to)) return sum + 1;
-        return sum;
-      }, 0);
-    } catch (e) {
-      return 0;
-    }
-  });
+  const activeFilterCount = $derived(countActiveFilters(activeFilters));
 
   // totalPages derived from totalItems and perPage
   const totalPages = $derived(Math.max(1, Math.ceil(totalItems / perPage)));

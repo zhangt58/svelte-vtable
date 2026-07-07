@@ -14,3 +14,8 @@ node_modules/
 .DS_Store
 Thumbs.db
 
+# vim temp files
+*.sw[p,o]
+
+dev
+note.txt

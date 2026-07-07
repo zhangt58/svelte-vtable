@@ -2,6 +2,50 @@
  * Utility functions for working with DataTableFilters
  */
 
+export const DEFAULT_RELATIVE_RANGE_PRESETS = [
+  { label: '1h', value: 1, unit: 'hour' },
+  { label: '6h', value: 6, unit: 'hour' },
+  { label: '12h', value: 12, unit: 'hour' },
+  { label: '1d', value: 1, unit: 'day' },
+  { label: '7d', value: 7, unit: 'day' },
+  { label: '30d', value: 30, unit: 'day' },
+  { label: '1y', value: 1, unit: 'year' },
+];
+
+/**
+ * Resolve a filter config's type from either ColumnDef.filterType or filter config type.
+ * @param {object|string|undefined|null} column
+ * @returns {string|undefined}
+ */
+export function getFilterType(column) {
+  if (typeof column === 'string') return column;
+  return column?.type ?? column?.filterType;
+}
+
+/**
+ * Check whether a column filter is date/datetime range based.
+ * @param {object|string|undefined|null} column
+ * @returns {boolean}
+ */
+export function isDateRangeColumn(column) {
+  const type = getFilterType(column);
+  return type === 'daterange' || type === 'datetimerange';
+}
+
+/**
+ * Check whether a single filter value is active.
+ * @param {unknown} value
+ * @returns {boolean}
+ */
+export function hasActiveFilterValue(value) {
+  if (Array.isArray(value)) return value.length > 0;
+  if (value && typeof value === 'object') {
+    const range = /** @type {{from?: unknown, to?: unknown}} */ (value);
+    return !!(range.from || range.to);
+  }
+  return false;
+}
+
 /**
  * Extract unique values and their counts from an array of objects for a given key
  * @param {Array} data - Array of data objects
@@ -41,11 +85,10 @@ export function getUniqueValuesWithCounts(data, key) {
  * @returns {Array} Column filters configuration for DataTableFilters
  */
 export function buildColumnFilters(data, columns) {
-  const isDateRangeType = (ft) => ft === 'daterange' || ft === 'datetimerange';
   return columns
     .filter((col) => col.filterType !== 'none')
     .map((col) => {
-      if (isDateRangeType(col.filterType)) {
+      if (isDateRangeColumn(col.filterType)) {
         // Scan data to find the min/max timestamps for this column so the UI can
         // offer a dual-range slider and Earliest/Latest shortcut buttons.
         let minMs = Infinity;
@@ -162,9 +205,7 @@ export function applyFilters(data, activeFilters) {
 
         if (Array.isArray(itemValue)) {
           // array value - check if any element matches the filter values
-          const hasMatch = itemValue.some((v) =>
-            filterValue.includes(String(v ?? ''))
-          );
+          const hasMatch = itemValue.some((v) => filterValue.includes(String(v ?? '')));
           if (!hasMatch) return false;
         } else {
           // scalar value - treat null/undefined as '(empty)'
@@ -188,11 +229,17 @@ export function applyFilters(data, activeFilters) {
  * @returns {boolean} True if any filters are active
  */
 export function hasActiveFilters(activeFilters) {
-  return Object.values(activeFilters).some((val) => {
-    if (Array.isArray(val)) return val.length > 0;
-    if (val && typeof val === 'object') return !!(val.from || val.to);
-    return false;
-  });
+  return Object.values(activeFilters || {}).some(hasActiveFilterValue);
+}
+
+/**
+ * Count one filter value. Value-list filters count each selected value; ranges count as 1.
+ * @param {unknown} value
+ * @returns {number}
+ */
+export function countActiveFilterValue(value) {
+  if (Array.isArray(value)) return value.length;
+  return hasActiveFilterValue(value) ? 1 : 0;
 }
 
 /**
@@ -202,10 +249,8 @@ export function hasActiveFilters(activeFilters) {
  * @returns {number} Total count of active filter values/ranges
  */
 export function countActiveFilters(activeFilters) {
-  return Object.values(activeFilters).reduce((sum, val) => {
-    if (Array.isArray(val)) return sum + (val?.length || 0);
-    if (val && typeof val === 'object' && (val.from || val.to)) return sum + 1;
-    return sum;
+  return Object.values(activeFilters || {}).reduce((sum, val) => {
+    return sum + countActiveFilterValue(val);
   }, 0);
 }
 
@@ -217,8 +262,7 @@ export function countActiveFilters(activeFilters) {
 export function clearAllFilters(columnFilters) {
   const cleared = {};
   columnFilters.forEach((col) => {
-    const isDateRange = col.type === 'daterange' || col.type === 'datetimerange';
-    cleared[col.key] = isDateRange ? {} : [];
+    cleared[col.key] = isDateRangeColumn(col) ? {} : [];
   });
   return cleared;
 }
@@ -256,9 +300,7 @@ export function searchParamsToFilters(searchParams, columnFilters) {
 
   const validKeys = new Set(columnFilters.map((c) => c.key));
   const dateRangeKeys = new Set(
-    columnFilters
-      .filter((c) => c.type === 'daterange' || c.type === 'datetimerange')
-      .map((c) => c.key),
+    columnFilters.filter((c) => isDateRangeColumn(c)).map((c) => c.key),
   );
   const filters = {};
 
