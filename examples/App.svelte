@@ -22,6 +22,8 @@
   let currentPage = $state(1);
   let perPage = $state(25);
 
+  let inlineFilters = $state(true);
+
   // Handle filter changes
   function handleFilterChange({ key, values, allFilters }) {
     activeFilters = { ...allFilters };
@@ -266,6 +268,11 @@
                 ? { ...c, cellSnippet: levelCell }
                 : c,
         )}
+        inlineFilters
+        {columnFilters}
+        {activeFilters}
+        onfilter={handleFilterChange}
+        showCounts={true}
         class="border border-gray-200 dark:border-gray-600 rounded overflow-auto scrollbar-thin"
         virtualize={false}
         style="height:400px; overflow:auto;"

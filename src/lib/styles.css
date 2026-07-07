@@ -139,6 +139,34 @@
   gap: 0.25rem;
 }
 
+:global(.datatable-table thead th) {
+  position: relative;
+}
+
+:global(.datatable-table thead th .vtable-header-content) {
+  display: flex;
+  align-items: center;
+  justify-content: space-between;
+  gap: 0.25rem;
+  min-width: 0;
+  width: 100%;
+}
+
+:global(.datatable-table thead th .vtable-header-sort-button) {
+  appearance: none;
+  border: 0;
+  background: transparent;
+  color: inherit;
+  font: inherit;
+  letter-spacing: inherit;
+  text-transform: inherit;
+  padding: 0;
+  display: inline-flex;
+  align-items: center;
+  gap: 0.25rem;
+  text-align: left;
+}
+
 /* Allow certain long cells to wrap fully if explicitly requested */
 :global(.datatable-table td.wrap) {
   white-space: normal;

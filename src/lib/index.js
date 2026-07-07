@@ -6,6 +6,7 @@ export { default as DataTable } from './components/DataTable.svelte';
 export { default as FilterColumn } from './components/filters/FilterColumn.svelte';
 export { default as FilterValueList } from './components/filters/FilterValueList.svelte';
 export { default as FilterDateRange } from './components/filters/FilterDateRange.svelte';
+export { default as ColumnHeaderFilter } from './components/filters/ColumnHeaderFilter.svelte';
 export { useFilterState } from './components/filters/useFilterState.svelte.js';
 
 // Export filter utility functions
@@ -34,9 +35,9 @@ export {
  *   CSS width value such as `'120px'`. Defaults to `1` (equal stretch).
  * @property {boolean} [sortable] - Whether clicking the column header sorts the
  *   table. Defaults to `true`.
- * @property {'value'|'daterange'|'datetimerange'|'none'} [filterType]
+ * @property {'value'|'list'|'daterange'|'datetimerange'|'none'} [filterType]
  *   Filter UI to render for this column:
- *   - `'value'`         — checkbox list of unique values (default)
+ *   - `'value'`/`'list'` — checkbox list of unique values (default)
  *   - `'daterange'`     — date-only range picker
  *   - `'datetimerange'` — datetime range picker
  *   - `'none'`          — no filter UI for this column

@@ -142,21 +142,25 @@ A virtualized table component for efficient rendering of large datasets. The com
 
 #### Props
 
-| Prop           | Type              | Default                  | Description                                                                                                                                                                             |
-| -------------- | ----------------- | ------------------------ | --------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------- |
-| `items`        | `Array`           | `[]`                     | Array of data items to display                                                                                                                                                          |
-| `columns`      | `ColumnDef[]`     | `undefined`              | **Unified column definitions** (recommended). When provided, `visibleKeys`, `colWidths`, and `rowSnippet` may be omitted. See [ColumnDef](#columndef) below.                            |
-| `visibleKeys`  | `Array`           | `[]`                     | _(Legacy)_ Array of keys to display as column headers. Ignored when `columns` is provided.                                                                                              |
-| `sortKey`      | `string \| null`  | `null`                   | Current sort key (column header); supports `bind:sortKey`                                                                                                                               |
-| `sortDir`      | `'asc' \| 'desc'` | `'asc'`                  | Sort direction; supports `bind:sortDir`                                                                                                                                                 |
-| `className`    | `string`          | `''`                     | Additional CSS classes                                                                                                                                                                  |
-| `style`        | `string`          | `''`                     | Inline styles                                                                                                                                                                           |
-| `emptyMessage` | `string`          | `'No items to display.'` | Message when no items                                                                                                                                                                   |
-| `colWidths`    | `object \| Array` | `{}`                     | _(Legacy)_ Column width configuration (stretch weights or pixel values). Ignored when `columns` is provided.                                                                            |
-| `selected`     | `any`             | `null`                   | Currently selected item                                                                                                                                                                 |
-| `onselect`     | `function`        | `undefined`              | Callback when a row is selected: `({item, index}) => void`                                                                                                                              |
-| `onsort`       | `function`        | `undefined`              | Callback when sort changes: `({key, dir}) => void`. When provided, local sorting is skipped (server-side sort pattern). Omit entirely (do not pass `() => {}`) to enable local sorting. |
-| `rowSnippet`   | `Snippet`         | `undefined`              | Svelte 5 snippet for rendering rows. Optional when `columns` is provided (a default row is rendered using each column's `cellSnippet` or raw value).                                    |
+| Prop            | Type              | Default                  | Description                                                                                                                                                                             |
+| --------------- | ----------------- | ------------------------ | --------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------- |
+| `items`         | `Array`           | `[]`                     | Array of data items to display                                                                                                                                                          |
+| `columns`       | `ColumnDef[]`     | `undefined`              | **Unified column definitions** (recommended). When provided, `visibleKeys`, `colWidths`, and `rowSnippet` may be omitted. See [ColumnDef](#columndef) below.                            |
+| `visibleKeys`   | `Array`           | `[]`                     | _(Legacy)_ Array of keys to display as column headers. Ignored when `columns` is provided.                                                                                              |
+| `sortKey`       | `string \| null`  | `null`                   | Current sort key (column header); supports `bind:sortKey`                                                                                                                               |
+| `sortDir`       | `'asc' \| 'desc'` | `'asc'`                  | Sort direction; supports `bind:sortDir`                                                                                                                                                 |
+| `className`     | `string`          | `''`                     | Additional CSS classes                                                                                                                                                                  |
+| `style`         | `string`          | `''`                     | Inline styles                                                                                                                                                                           |
+| `emptyMessage`  | `string`          | `'No items to display.'` | Message when no items                                                                                                                                                                   |
+| `colWidths`     | `object \| Array` | `{}`                     | _(Legacy)_ Column width configuration (stretch weights or pixel values). Ignored when `columns` is provided.                                                                            |
+| `selected`      | `any`             | `null`                   | Currently selected item                                                                                                                                                                 |
+| `onselect`      | `function`        | `undefined`              | Callback when a row is selected: `({item, index}) => void`                                                                                                                              |
+| `onsort`        | `function`        | `undefined`              | Callback when sort changes: `({key, dir}) => void`. When provided, local sorting is skipped (server-side sort pattern). Omit entirely (do not pass `() => {}`) to enable local sorting. |
+| `inlineFilters` | `boolean`         | `false`                  | Renders column filter buttons in table headers. Without `onfilter`, filters are applied locally to `items`.                                                                             |
+| `columnFilters` | `Array \| null`   | `null`                   | Optional filter configurations, usually from `buildColumnFilters(allRows, columns)`. When omitted, inline filters derive options from `items`.                                          |
+| `activeFilters` | `Object`          | `{}`                     | Controlled filter state for inline header filters.                                                                                                                                      |
+| `onfilter`      | `function`        | `undefined`              | Callback when inline filters change: `({key, values, allFilters}) => void`. When provided, parent code is responsible for applying filters.                                             |
+| `rowSnippet`    | `Snippet`         | `undefined`              | Svelte 5 snippet for rendering rows. Optional when `columns` is provided (a default row is rendered using each column's `cellSnippet` or raw value).                                    |
 
 #### Row Snippet Parameters
 
@@ -175,85 +179,74 @@ The `rowSnippet` receives an object with:
 // @type {import('@zhangt58/svelte-vtable').ColumnDef}
 ```
 
-| Field           | Type                                                  | Default     | Description                                                                                                            |
-| --------------- | ----------------------------------------------------- | ----------- | ---------------------------------------------------------------------------------------------------------------------- |
-| `key`           | `string`                                              | required    | Data key. Must match a property on the row item.                                                                       |
-| `label`         | `string`                                              | `key`       | Column header label. Defaults to `key`.                                                                                |
-| `width`         | `number \| string`                                    | `1`         | Stretch weight (number) or CSS value (e.g. `'120px'`).                                                                 |
-| `sortable`      | `boolean`                                             | `true`      | Whether clicking the header sorts the table.                                                                           |
-| `filterType`    | `'value' \| 'daterange' \| 'datetimerange' \| 'none'` | `'value'`   | Filter UI for this column. `'none'` excludes it from `buildColumnFilters`.                                             |
-| `headerSnippet` | `Snippet<[{key, label, sortKey, sortDir}]>`           | `undefined` | Custom Svelte 5 snippet rendered inside `<th>`.                                                                        |
-| `cellSnippet`   | `Snippet<[{item, value, index}]>`                     | `undefined` | Custom Svelte 5 snippet rendered inside each `<td>`. Used for default row rendering when `rowSnippet` is not provided. |
+| Field           | Type                                                            | Default     | Description                                                                                                             |
+| --------------- | --------------------------------------------------------------- | ----------- | ----------------------------------------------------------------------------------------------------------------------- |
+| `key`           | `string`                                                        | required    | Data key. Must match a property on the row item.                                                                        |
+| `label`         | `string`                                                        | `key`       | Column header label. Defaults to `key`.                                                                                 |
+| `width`         | `number \| string`                                              | `1`         | Stretch weight (number) or CSS value (e.g. `'120px'`).                                                                  |
+| `sortable`      | `boolean`                                                       | `true`      | Whether clicking the header sorts the table.                                                                            |
+| `filterType`    | `'value' \| 'list' \| 'daterange' \| 'datetimerange' \| 'none'` | `'value'`   | Filter UI for this column. `'list'` is an alias for value-list filters; `'none'` excludes it from `buildColumnFilters`. |
+| `headerSnippet` | `Snippet<[{key, label, sortKey, sortDir}]>`                     | `undefined` | Custom Svelte 5 snippet rendered inside `<th>`.                                                                         |
+| `cellSnippet`   | `Snippet<[{item, value, index}]>`                               | `undefined` | Custom Svelte 5 snippet rendered inside each `<td>`. Used for default row rendering when `rowSnippet` is not provided.  |
 
 #### Minimal example using `columns`
 
 ```svelte
 <script>
-  import { DataTable, buildColumnFilters, applyFilters } from '@zhangt58/svelte-vtable';
+  import { DataTable } from '@zhangt58/svelte-vtable';
 
-  const items = [...]; // your data
+  const items = [
+    { id: 1, name: 'Alice', department: 'Engineering', hireDate: '2024-01-15' },
+    { id: 2, name: 'Bob', department: 'Sales', hireDate: '2024-03-10' },
+  ];
 
   /** @type {import('@zhangt58/svelte-vtable').ColumnDef[]} */
   const columns = [
-    { key: 'id',         label: 'ID',         width: 1, filterType: 'none' },
-    { key: 'name',       label: 'Name',        width: 3, filterType: 'none' },
-    { key: 'department', label: 'Department',  width: 2, filterType: 'value' },
-    { key: 'hireDate',   label: 'Hire Date',   width: 2, filterType: 'daterange' },
+    { key: 'id', label: 'ID', width: 1, filterType: 'none' },
+    { key: 'name', label: 'Name', width: 3, filterType: 'none' },
+    { key: 'department', label: 'Department', width: 2, filterType: 'value' },
+    { key: 'hireDate', label: 'Hire Date', width: 2, filterType: 'daterange' },
   ];
-
-  // Build filters directly from columns — filterType:'none' columns are skipped automatically
-  let columnFilters = buildColumnFilters(items, columns);
-  let activeFilters = $state({});
-  const filteredItems = $derived(applyFilters(items, activeFilters));
 </script>
 
-<!-- No visibleKeys, colWidths, or rowSnippet required -->
-<DataTable items={filteredItems()} {columns} style="height: 400px" />
+<!-- No visibleKeys, colWidths, rowSnippet, or separate filters required -->
+<DataTable {items} {columns} inlineFilters style="height: 400px" />
 ```
 
-### Filter example (filterCallback)
+#### Controlled inline filters
 
-Below is a minimal example showing how to wire the `filterCallback` prop on `VirtualDataTable` to apply per-column inline filters emitted by the header inputs. The idea: keep a small `filters` map in your component, compute a derived `filteredItems` list, and update `filters` when the table emits a column filter change.
+For pagination, server requests, or shared filter controls, keep filters in the parent and pass the same state to `DataTable`:
 
 ```svelte
 <script>
-  import { DataTable } from '@zhangt58/svelte-vtable';
+  import { DataTable, buildColumnFilters, applyFilters } from '@zhangt58/svelte-vtable';
 
-  // raw dataset you want to display/filter
-  const rawItems = [
-    { id: 1, name: 'Alice', email: 'alice@example.com' },
-    { id: 2, name: 'Bob', email: 'bob@example.com' },
-    { id: 3, name: 'Carol', email: 'carol@example.com' },
+  const rows = [
+    { department: 'Engineering', hireDate: '2024-01-15' },
+    { department: 'Sales', hireDate: '2024-03-10' },
+  ];
+  const columns = [
+    { key: 'department', label: 'Department', filterType: 'value' },
+    { key: 'hireDate', label: 'Hire Date', filterType: 'daterange' },
   ];
 
-  // per-column filter values
-  let filters = {};
+  const columnFilters = buildColumnFilters(rows, columns);
+  let activeFilters = $state({});
+  const filteredRows = $derived(applyFilters(rows, activeFilters));
 
-  // derived, reactive filtered list
-  $: filteredItems = rawItems.filter((item) =>
-    Object.entries(filters).every(
-      ([k, v]) =>
-        !v ||
-        String(item[k] ?? '')
-          .toLowerCase()
-          .includes(v.toLowerCase()),
-    ),
-  );
-
-  // called when a ColumnHeader emits a filter event: { key, value }
-  function handleFilter({ key, value }) {
-    filters = { ...filters, [key]: value };
+  function handleFilter({ allFilters }) {
+    activeFilters = { ...allFilters };
   }
 </script>
 
-<DataTable items={filteredItems} visibleKeys={['name', 'email']} filterCallback={handleFilter}>
-  {#snippet rowSnippet({ item, index, select, selected })}
-    <tr onclick={select}>
-      <td>{item.name}</td>
-      <td>{item.email}</td>
-    </tr>
-  {/snippet}
-</DataTable>
+<DataTable
+  items={filteredRows}
+  {columns}
+  inlineFilters
+  {columnFilters}
+  {activeFilters}
+  onfilter={handleFilter}
+/>
 ```
 
 #### Column Widths

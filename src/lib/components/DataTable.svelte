@@ -1,5 +1,8 @@
 <script>
   import { VirtualList } from 'svelte-virtuallists';
+  import ColumnHeaderFilter from './filters/ColumnHeaderFilter.svelte';
+  import { useFilterState } from './filters/useFilterState.svelte.js';
+  import { applyFilters, buildColumnFilters } from '../filterUtils.js';
 
   // Runic props: accept props via $props() so the component matches the
   // project's runes-style components. Include the `select` callback prop.
@@ -20,6 +23,31 @@
     // onsort({ key, dir }) is called whenever sort changes.
     // When provided, no local sorting is applied (server-side sort pattern).
     onsort = undefined,
+    // Render per-column filter controls in table headers.
+    inlineFilters = false,
+    // Filter configs can be provided from all source rows. When omitted and
+    // inlineFilters is true, configs are derived from this component's items.
+    columnFilters = null,
+    activeFilters = {},
+    // onfilter({ key, values, allFilters }) makes filtering parent-managed.
+    // When omitted, inline filters are applied locally to this table's items.
+    onfilter = undefined,
+    oncolumnsort = undefined,
+    showCounts = true,
+    virtualThreshold = 500,
+    virtualItemHeight = 36,
+    virtualOverscan = 5,
+    populateThreshold = 200,
+    emitDebounce = 100,
+    relativeRangePresets = [
+      { label: '1h', value: 1, unit: 'hour' },
+      { label: '6h', value: 6, unit: 'hour' },
+      { label: '12h', value: 12, unit: 'hour' },
+      { label: '1d', value: 1, unit: 'day' },
+      { label: '7d', value: 7, unit: 'day' },
+      { label: '30d', value: 30, unit: 'day' },
+      { label: '1y', value: 1, unit: 'year' },
+    ],
     // Allow consumers to disable virtualization (useful when paginating by fixed item counts).
     // If `virtualize` is false we ask the wrapped VirtualList to render as a normal list/table
     // by setting its `isDisabled` prop. Default: true (virtualization enabled).
@@ -39,15 +67,39 @@
   // Fast lookup map: key → ColumnDef.
   const colDefMap = $derived(Object.fromEntries(columns.map((c) => [c.key, c])));
 
+  const effectiveColumnFilters = $derived.by(() => {
+    if (Array.isArray(columnFilters)) return columnFilters;
+    if (!inlineFilters) return [];
+    return buildColumnFilters(items, columns);
+  });
+
+  const filterDefMap = $derived(
+    Object.fromEntries(effectiveColumnFilters.map((filter) => [filter.key, filter])),
+  );
+
+  const filterState = useFilterState({
+    columnFilters: () => effectiveColumnFilters,
+    activeFilters: () => activeFilters || {},
+    emitDebounce: () => emitDebounce,
+    onfilter: () => onfilter,
+  });
+
+  let openFilterKey = $state(null);
+
+  const filteredItems = $derived.by(() => {
+    if (!inlineFilters || onfilter !== undefined) return items;
+    return applyFilters(items, filterState.selections);
+  });
+
   // Internal sorted array derived from items + current sort state.
   // When onsort is provided the parent manages sorting (server-side), so we
   // pass items through unchanged. Otherwise we sort locally.
   const sortedItems = $derived.by(() => {
-    if (onsort !== undefined || !sortKey) return items;
+    if (onsort !== undefined || !sortKey) return filteredItems;
 
     const key = sortKey;
     const dir = sortDir;
-    return [...items].sort((a, b) => {
+    return [...filteredItems].sort((a, b) => {
       const aVal = a[key];
       const bVal = b[key];
 
@@ -99,6 +151,33 @@
     } catch (err) {
       try {
         console.error('onsort threw:', err);
+      } catch (e) {}
+    }
+  }
+
+  function selectionIsActive(selection) {
+    if (Array.isArray(selection)) return selection.length > 0;
+    return !!(selection && typeof selection === 'object' && (selection.from || selection.to));
+  }
+
+  function toggleFilter(key) {
+    openFilterKey = openFilterKey === key ? null : key;
+  }
+
+  function closeFilter() {
+    openFilterKey = null;
+  }
+
+  function handleKeydown(event) {
+    if (event.key === 'Escape') closeFilter();
+  }
+
+  function handleColumnFilterSort(columnKey, { mode, dir }) {
+    try {
+      if (oncolumnsort) /** @type {any} */ (oncolumnsort)({ key: columnKey, mode, dir });
+    } catch (err) {
+      try {
+        console.debug('oncolumnsort threw', err);
       } catch (e) {}
     }
   }
@@ -159,8 +238,10 @@
   }
 </script>
 
+<svelte:window onclick={closeFilter} onkeydown={handleKeydown} />
+
 <section class="virtual-data-table {className}" {style}>
-  {#if items && items.length > 0}
+  {#if sortedItems && sortedItems.length > 0}
     <!-- When `virtualize` is false we instruct VirtualList to render as a normal list/table
          by setting `isDisabled`. This ensures pagination based on item counts shows the
          exact number of rows expected (useful when rows have variable height). -->
@@ -179,30 +260,67 @@
         </colgroup>
         <thead class="sticky-header">
           <tr>
-            {#each effectiveVisibleKeys as key}
+            {#each effectiveVisibleKeys as key, columnIndex}
               {@const colDef = colDefMap[key]}
+              {@const filterDef = filterDefMap[key]}
               {@const label = colDef?.label ?? key}
               {@const isSortable = colDef?.sortable !== false}
+              {@const selection = filterDef ? filterState.selections[filterDef.key] : undefined}
+              {@const isFilterActive = selectionIsActive(selection)}
               <th
                 style="width: {calcColWidth(key)}"
-                class={isSortable ? 'cursor-pointer select-none' : 'select-none'}
-                onclick={isSortable ? () => handleSort(key) : undefined}
+                class="select-none"
                 aria-sort={sortKey === key
                   ? sortDir === 'asc'
                     ? 'ascending'
                     : 'descending'
                   : 'none'}
               >
-                {#if colDef?.headerSnippet}
-                  {@render colDef.headerSnippet({ key, label, sortKey, sortDir })}
-                {:else}
-                  <div class="inline-flex items-center gap-1">
-                    <span>{label}</span>
-                    {#if sortKey === key}
-                      <span aria-hidden="true">{sortDir === 'asc' ? '▲' : '▼'}</span>
-                    {/if}
-                  </div>
-                {/if}
+                <div class="vtable-header-content">
+                  {#if colDef?.headerSnippet}
+                    <div class="min-w-0 flex-1">
+                      {@render colDef.headerSnippet({ key, label, sortKey, sortDir })}
+                    </div>
+                  {:else if isSortable}
+                    <button
+                      type="button"
+                      class="vtable-header-sort-button min-w-0 flex-1 cursor-pointer"
+                      onclick={() => handleSort(key)}
+                    >
+                      <span class="min-w-0 truncate">{label}</span>
+                      {#if sortKey === key}
+                        <span aria-hidden="true">{sortDir === 'asc' ? '▲' : '▼'}</span>
+                      {/if}
+                    </button>
+                  {:else}
+                    <span class="min-w-0 flex-1 truncate">{label}</span>
+                  {/if}
+
+                  {#if inlineFilters && filterDef}
+                    <ColumnHeaderFilter
+                      column={filterDef}
+                      {selection}
+                      isOpen={openFilterKey === filterDef.key}
+                      isActive={isFilterActive}
+                      align={columnIndex > effectiveVisibleKeys.length / 2 ? 'right' : 'left'}
+                      {showCounts}
+                      {virtualThreshold}
+                      {virtualItemHeight}
+                      {virtualOverscan}
+                      {populateThreshold}
+                      {relativeRangePresets}
+                      ontoggle={() => toggleFilter(filterDef.key)}
+                      onclear={() => filterState.clearColumn(filterDef.key)}
+                      onvaluetoggle={(value) => filterState.toggleSelection(filterDef.key, value)}
+                      oncheckall={(values) => filterState.checkAll(filterDef.key, values)}
+                      oninvert={(values) => filterState.invertSelection(filterDef.key, values)}
+                      onchecknone={() => filterState.checkNone(filterDef.key)}
+                      ondaterangechange={(updated) =>
+                        filterState.updateDateRange(filterDef.key, updated)}
+                      onsortchange={(payload) => handleColumnFilterSort(filterDef.key, payload)}
+                    />
+                  {/if}
+                </div>
               </th>
             {/each}
           </tr>
