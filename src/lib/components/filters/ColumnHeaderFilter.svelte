@@ -1,6 +1,7 @@
 <script>
   import FilterValueList from './FilterValueList.svelte';
   import FilterDateRange from './FilterDateRange.svelte';
+  import { DEFAULT_RELATIVE_RANGE_PRESETS } from '../../filterUtils.js';
 
   let {
     column,
@@ -13,15 +14,7 @@
     virtualItemHeight = 36,
     virtualOverscan = 5,
     populateThreshold = 200,
-    relativeRangePresets = [
-      { label: '1h', value: 1, unit: 'hour' },
-      { label: '6h', value: 6, unit: 'hour' },
-      { label: '12h', value: 12, unit: 'hour' },
-      { label: '1d', value: 1, unit: 'day' },
-      { label: '7d', value: 7, unit: 'day' },
-      { label: '30d', value: 30, unit: 'day' },
-      { label: '1y', value: 1, unit: 'year' },
-    ],
+    relativeRangePresets = DEFAULT_RELATIVE_RANGE_PRESETS,
     ontoggle = undefined,
     onclear = undefined,
     onvaluetoggle = undefined,

@@ -1,15 +1,51 @@
 import { describe, it, expect } from 'vitest';
 import {
+  DEFAULT_RELATIVE_RANGE_PRESETS,
+  getFilterType,
   getUniqueValuesWithCounts,
   buildColumnFilters,
   matchesDateRange,
   applyFilters,
+  isDateRangeColumn,
+  hasActiveFilterValue,
+  countActiveFilterValue,
   hasActiveFilters,
   countActiveFilters,
   clearAllFilters,
   filtersToSearchParams,
   searchParamsToFilters,
 } from '../src/lib/filterUtils.js';
+
+// ---------------------------------------------------------------------------
+// shared filter metadata helpers
+// ---------------------------------------------------------------------------
+describe('shared filter helpers', () => {
+  it('provides default relative range presets', () => {
+    expect(DEFAULT_RELATIVE_RANGE_PRESETS.map((p) => p.label)).toContain('1h');
+    expect(DEFAULT_RELATIVE_RANGE_PRESETS.map((p) => p.label)).toContain('30d');
+  });
+
+  it('resolves filter type from ColumnDef and filter configs', () => {
+    expect(getFilterType({ filterType: 'value' })).toBe('value');
+    expect(getFilterType({ type: 'daterange' })).toBe('daterange');
+    expect(getFilterType('datetimerange')).toBe('datetimerange');
+  });
+
+  it('identifies date range columns from filterType or type', () => {
+    expect(isDateRangeColumn({ filterType: 'daterange' })).toBe(true);
+    expect(isDateRangeColumn({ type: 'datetimerange' })).toBe(true);
+    expect(isDateRangeColumn({ type: 'value' })).toBe(false);
+  });
+
+  it('checks and counts individual active filter values', () => {
+    expect(hasActiveFilterValue([])).toBe(false);
+    expect(hasActiveFilterValue(['Engineering'])).toBe(true);
+    expect(hasActiveFilterValue({})).toBe(false);
+    expect(hasActiveFilterValue({ to: '2024-12-31' })).toBe(true);
+    expect(countActiveFilterValue(['A', 'B'])).toBe(2);
+    expect(countActiveFilterValue({ from: '2024-01-01' })).toBe(1);
+  });
+});
 
 // ---------------------------------------------------------------------------
 // getUniqueValuesWithCounts

@@ -2,7 +2,12 @@
   import { VirtualList } from 'svelte-virtuallists';
   import ColumnHeaderFilter from './filters/ColumnHeaderFilter.svelte';
   import { useFilterState } from './filters/useFilterState.svelte.js';
-  import { applyFilters, buildColumnFilters } from '../filterUtils.js';
+  import {
+    DEFAULT_RELATIVE_RANGE_PRESETS,
+    applyFilters,
+    buildColumnFilters,
+    hasActiveFilterValue,
+  } from '../filterUtils.js';
 
   // Runic props: accept props via $props() so the component matches the
   // project's runes-style components. Include the `select` callback prop.
@@ -39,15 +44,7 @@
     virtualOverscan = 5,
     populateThreshold = 200,
     emitDebounce = 100,
-    relativeRangePresets = [
-      { label: '1h', value: 1, unit: 'hour' },
-      { label: '6h', value: 6, unit: 'hour' },
-      { label: '12h', value: 12, unit: 'hour' },
-      { label: '1d', value: 1, unit: 'day' },
-      { label: '7d', value: 7, unit: 'day' },
-      { label: '30d', value: 30, unit: 'day' },
-      { label: '1y', value: 1, unit: 'year' },
-    ],
+    relativeRangePresets = DEFAULT_RELATIVE_RANGE_PRESETS,
     // Allow consumers to disable virtualization (useful when paginating by fixed item counts).
     // If `virtualize` is false we ask the wrapped VirtualList to render as a normal list/table
     // by setting its `isDisabled` prop. Default: true (virtualization enabled).
@@ -153,11 +150,6 @@
         console.error('onsort threw:', err);
       } catch (e) {}
     }
-  }
-
-  function selectionIsActive(selection) {
-    if (Array.isArray(selection)) return selection.length > 0;
-    return !!(selection && typeof selection === 'object' && (selection.from || selection.to));
   }
 
   function toggleFilter(key) {
@@ -266,7 +258,7 @@
               {@const label = colDef?.label ?? key}
               {@const isSortable = colDef?.sortable !== false}
               {@const selection = filterDef ? filterState.selections[filterDef.key] : undefined}
-              {@const isFilterActive = selectionIsActive(selection)}
+              {@const isFilterActive = hasActiveFilterValue(selection)}
               <th
                 style="width: {calcColWidth(key)}"
                 class="select-none"

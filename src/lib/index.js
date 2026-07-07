@@ -11,10 +11,15 @@ export { useFilterState } from './components/filters/useFilterState.svelte.js';
 
 // Export filter utility functions
 export {
+  DEFAULT_RELATIVE_RANGE_PRESETS,
+  getFilterType,
   getUniqueValuesWithCounts,
   buildColumnFilters,
   applyFilters,
   matchesDateRange,
+  isDateRangeColumn,
+  hasActiveFilterValue,
+  countActiveFilterValue,
   hasActiveFilters,
   countActiveFilters,
   clearAllFilters,

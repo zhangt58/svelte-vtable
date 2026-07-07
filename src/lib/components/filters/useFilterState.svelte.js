@@ -1,8 +1,5 @@
 import { onDestroy } from 'svelte';
-
-function isDateRangeColumn(col) {
-  return col.type === 'daterange' || col.type === 'datetimerange';
-}
+import { isDateRangeColumn } from '../../filterUtils.js';
 
 /**
  * Svelte 5 reactive composable that manages per-column filter selections,
