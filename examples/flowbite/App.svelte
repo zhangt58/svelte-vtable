@@ -39,8 +39,8 @@
     currentPage = 1;
   }
 
-  const filteredData = $derived(() => {
-    let items = applyFilters(allData, activeFilters) || [];
+  const searchedData = $derived(() => {
+    let items = allData || [];
     const q = String(searchQuery || '')
       .trim()
       .toLowerCase();
@@ -55,6 +55,8 @@
     }
     return items;
   });
+
+  const filteredData = $derived(() => applyFilters(searchedData(), activeFilters) || []);
 
   $effect(() => {
     currentPage = 1;
@@ -99,7 +101,8 @@
       onsearch={(p) => (searchQuery = p.search)}
       bind:perPage
       totalItems={filteredData().length}
-      {columnFilters}
+      columns={columnDefs}
+      filterItems={searchedData()}
       {activeFilters}
       onfilter={handleFilterChange}
     />
@@ -108,22 +111,19 @@
       {activeCount()} active filter(s) · {filteredData().length} total records
     </div>
 
-    {#if filteredData().length > 0}
-      <div class="mt-2">
-        <DataTable
-          items={pagedData()}
-          columns={columnDefs}
-          inlineFilters
-          {columnFilters}
-          {activeFilters}
-          onfilter={handleFilterChange}
-          style="height:300px; overflow:auto;"
-          virtualize={false}
-          class="border border-gray-200 dark:border-gray-600 rounded overflow-auto"
-        />
-      </div>
-    {:else}
-      <div class="p-8 text-center text-gray-400 italic">No records match the filters.</div>
-    {/if}
+    <div class="mt-2">
+      <DataTable
+        items={pagedData()}
+        columns={columnDefs}
+        inlineFilters
+        filterItems={searchedData()}
+        {activeFilters}
+        onfilter={handleFilterChange}
+        emptyMessage="No records match the filters."
+        style="height:300px; overflow:auto;"
+        virtualize={false}
+        class="border border-gray-200 dark:border-gray-600 rounded overflow-auto"
+      />
+    </div>
   </div>
 </div>

@@ -22,8 +22,6 @@
   let currentPage = $state(1);
   let perPage = $state(25);
 
-  let inlineFilters = $state(true);
-
   // Handle filter changes
   function handleFilterChange({ key, values, allFilters }) {
     activeFilters = { ...allFilters };
@@ -31,9 +29,9 @@
     currentPage = 1;
   }
 
-  // Apply filters to data using utility function, then apply search
-  const filteredData = $derived(() => {
-    let items = applyFilters(allData, activeFilters) || [];
+  // Apply search first; filter metadata is derived from this base source.
+  const searchedData = $derived(() => {
+    let items = allData || [];
     const q = String(searchQuery || '').trim();
     if (q.length > 0) {
       const low = q.toLowerCase();
@@ -47,6 +45,9 @@
     }
     return items;
   });
+
+  // Apply active column filters to the searched source.
+  const filteredData = $derived(() => applyFilters(searchedData(), activeFilters) || []);
 
   // Reset to first page when the search query changes (only when it actually changes)
   let _prevSearch = '';
@@ -201,7 +202,8 @@
     }}
     bind:perPage
     totalItems={filteredData().length}
-    {columnFilters}
+    columns={columnDefs}
+    filterItems={searchedData()}
     {activeFilters}
     onfilter={handleFilterChange}
     {direction}
@@ -213,76 +215,71 @@
     {activeCount()} active filter(s) · {filteredData().length} total records
   </div>
 
-  {#if filteredData().length > 0}
-    <div class="mt-2">
-      <!--
-        Pass `columns` instead of `visibleKeys`+`colWidths`+`rowSnippet`.
-        The DataTable renders a default row, using each column's `cellSnippet`
-        when provided, or the raw value otherwise.
+  <div class="mt-2">
+    <!--
+      Pass `columns` instead of `visibleKeys`+`colWidths`+`rowSnippet`.
+      The DataTable renders a default row, using each column's `cellSnippet`
+      when provided, or the raw value otherwise.
 
-        Snippets must be defined in a Svelte component — they are merged into
-        the columnDefs array here before being passed as the `columns` prop.
-      -->
+      Snippets must be defined in a Svelte component — they are merged into
+      the columnDefs array here before being passed as the `columns` prop.
+    -->
 
-      <!-- Cell snippet: id — monospace "#N" label -->
-      {#snippet idCell({ value })}
-        <span class="font-mono text-gray-400 dark:text-gray-500 text-xs">#{value}</span>
-      {/snippet}
+    <!-- Cell snippet: id — monospace "#N" label -->
+    {#snippet idCell({ value })}
+      <span class="font-mono text-gray-400 dark:text-gray-500 text-xs">#{value}</span>
+    {/snippet}
 
-      <!-- Cell snippet: status — colour-coded badge -->
-      {#snippet statusCell({ value })}
-        {@const cls =
-          value === 'Active'
-            ? 'bg-green-100 text-green-800 dark:bg-green-900/40 dark:text-green-300'
-            : value === 'Inactive'
-              ? 'bg-red-100 text-red-800 dark:bg-red-900/40 dark:text-red-300'
-              : 'bg-amber-100 text-amber-800 dark:bg-amber-900/40 dark:text-amber-300'}
-        <span class="inline-flex items-center px-2 py-0.5 rounded-full text-xs font-medium {cls}"
-          >{value}</span
-        >
-      {/snippet}
+    <!-- Cell snippet: status — colour-coded badge -->
+    {#snippet statusCell({ value })}
+      {@const cls =
+        value === 'Active'
+          ? 'bg-green-100 text-green-800 dark:bg-green-900/40 dark:text-green-300'
+          : value === 'Inactive'
+            ? 'bg-red-100 text-red-800 dark:bg-red-900/40 dark:text-red-300'
+            : 'bg-amber-100 text-amber-800 dark:bg-amber-900/40 dark:text-amber-300'}
+      <span class="inline-flex items-center px-2 py-0.5 rounded-full text-xs font-medium {cls}"
+        >{value}</span
+      >
+    {/snippet}
 
-      <!-- Cell snippet: level — colour-coded pill -->
-      {#snippet levelCell({ value })}
-        {@const cls =
-          value === 'Lead'
-            ? 'bg-rose-100 text-rose-800 dark:bg-rose-900/40 dark:text-rose-300'
-            : value === 'Senior'
-              ? 'bg-violet-100 text-violet-800 dark:bg-violet-900/40 dark:text-violet-300'
-              : value === 'Mid'
-                ? 'bg-blue-100 text-blue-800 dark:bg-blue-900/40 dark:text-blue-300'
-                : 'bg-sky-100 text-sky-800 dark:bg-sky-900/40 dark:text-sky-300'}
-        <span class="inline-flex items-center px-2 py-0.5 rounded-full text-xs font-medium {cls}"
-          >{value}</span
-        >
-      {/snippet}
+    <!-- Cell snippet: level — colour-coded pill -->
+    {#snippet levelCell({ value })}
+      {@const cls =
+        value === 'Lead'
+          ? 'bg-rose-100 text-rose-800 dark:bg-rose-900/40 dark:text-rose-300'
+          : value === 'Senior'
+            ? 'bg-violet-100 text-violet-800 dark:bg-violet-900/40 dark:text-violet-300'
+            : value === 'Mid'
+              ? 'bg-blue-100 text-blue-800 dark:bg-blue-900/40 dark:text-blue-300'
+              : 'bg-sky-100 text-sky-800 dark:bg-sky-900/40 dark:text-sky-300'}
+      <span class="inline-flex items-center px-2 py-0.5 rounded-full text-xs font-medium {cls}"
+        >{value}</span
+      >
+    {/snippet}
 
-      <DataTable
-        items={pagedData()}
-        columns={columnDefs.map((c) =>
-          c.key === 'id'
-            ? { ...c, cellSnippet: idCell }
-            : c.key === 'status'
-              ? { ...c, cellSnippet: statusCell }
-              : c.key === 'level'
-                ? { ...c, cellSnippet: levelCell }
-                : c,
-        )}
-        inlineFilters
-        {columnFilters}
-        {activeFilters}
-        onfilter={handleFilterChange}
-        showCounts={true}
-        class="border border-gray-200 dark:border-gray-600 rounded overflow-auto scrollbar-thin"
-        virtualize={false}
-        style="height:400px; overflow:auto;"
-      />
-    </div>
-  {:else}
-    <div class="p-8 text-center text-gray-400 dark:text-gray-400 italic">
-      No records match the selected filters. Try adjusting or clearing filters.
-    </div>
-  {/if}
+    <DataTable
+      items={pagedData()}
+      columns={columnDefs.map((c) =>
+        c.key === 'id'
+          ? { ...c, cellSnippet: idCell }
+          : c.key === 'status'
+            ? { ...c, cellSnippet: statusCell }
+            : c.key === 'level'
+              ? { ...c, cellSnippet: levelCell }
+              : c,
+      )}
+      inlineFilters
+      filterItems={searchedData()}
+      {activeFilters}
+      onfilter={handleFilterChange}
+      showCounts={true}
+      emptyMessage="No records match the selected filters. Try adjusting or clearing filters."
+      class="border border-gray-200 dark:border-gray-600 rounded overflow-auto scrollbar-thin"
+      virtualize={false}
+      style="height:400px; overflow:auto;"
+    />
+  </div>
 </div>
 
 <div

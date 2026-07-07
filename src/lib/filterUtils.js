@@ -33,6 +33,65 @@ export function isDateRangeColumn(column) {
 }
 
 /**
+ * Return active filters excluding one column key.
+ * This is used by faceted option builders so a column's own active filter
+ * cannot remove the choices needed to change or clear that filter.
+ * @param {Object|null|undefined} activeFilters
+ * @param {string} excludedKey
+ * @returns {Object}
+ */
+export function filtersWithoutKey(activeFilters, excludedKey) {
+  if (!activeFilters || typeof activeFilters !== 'object') return {};
+  const filters = {};
+  for (const [key, value] of Object.entries(activeFilters)) {
+    if (key !== excludedKey && hasActiveFilterValue(value)) filters[key] = value;
+  }
+  return filters;
+}
+
+/**
+ * Resolve column filter configs from either explicit configs or a row source + columns.
+ * Explicit `columnFilters` always wins; otherwise `filterItems` is treated as the
+ * base source for derived option lists. In faceted mode, each column is built from
+ * rows filtered by the other active filters, but not by that column's own filter.
+ * @param {object} opts
+ * @param {Array|null|undefined} opts.columnFilters - Explicit filter configs.
+ * @param {Array} [opts.columns] - Column definitions used for derived filter configs.
+ * @param {Array|null|undefined} [opts.filterItems] - Base row source used to derive filter options.
+ * @param {Object|null|undefined} [opts.activeFilters] - Current active filter state.
+ * @param {boolean} [opts.enabled] - Whether derived filters should be built.
+ * @param {boolean} [opts.faceted] - Whether to derive each column from rows filtered by peer columns.
+ * @returns {Array}
+ */
+export function resolveColumnFilters({
+  columnFilters,
+  columns = [],
+  filterItems = [],
+  activeFilters = null,
+  enabled = true,
+  faceted = true,
+}) {
+  if (Array.isArray(columnFilters)) return columnFilters;
+  if (!enabled || !Array.isArray(columns) || columns.length === 0) return [];
+  const sourceItems = Array.isArray(filterItems) ? filterItems : [];
+
+  if (!faceted || !hasActiveFilters(activeFilters)) {
+    return buildColumnFilters(sourceItems, columns);
+  }
+
+  return columns
+    .filter((col) => col.filterType !== 'none')
+    .map((col) => {
+      const peerFilters = filtersWithoutKey(activeFilters, col.key);
+      const filteredItems = hasActiveFilters(peerFilters)
+        ? applyFilters(sourceItems, peerFilters)
+        : sourceItems;
+      return buildColumnFilters(filteredItems, [col])[0];
+    })
+    .filter(Boolean);
+}
+
+/**
  * Check whether a single filter value is active.
  * @param {unknown} value
  * @returns {boolean}
@@ -93,14 +152,17 @@ export function buildColumnFilters(data, columns) {
         // offer a dual-range slider and Earliest/Latest shortcut buttons.
         let minMs = Infinity;
         let maxMs = -Infinity;
+        const dateValueSet = new Set();
         for (const item of data) {
           const v = item[col.key];
           if (v === null || v === undefined || v === '') continue;
           const str = String(v);
           const d = /^\d{4}-\d{2}-\d{2}$/.test(str) ? new Date(str + 'T00:00:00') : new Date(str);
           if (!isNaN(d.getTime())) {
-            if (d.getTime() < minMs) minMs = d.getTime();
-            if (d.getTime() > maxMs) maxMs = d.getTime();
+            const ms = d.getTime();
+            dateValueSet.add(ms);
+            if (ms < minMs) minMs = ms;
+            if (ms > maxMs) maxMs = ms;
           }
         }
 
@@ -126,6 +188,7 @@ export function buildColumnFilters(data, columns) {
           counts: {},
           minValue: hasRange ? fmt(minMs) : null,
           maxValue: hasRange ? fmt(maxMs) : null,
+          dateValues: hasRange ? [...dateValueSet].sort((a, b) => a - b) : [],
         };
       }
       const { uniqueValues, counts } = getUniqueValuesWithCounts(data, col.key);

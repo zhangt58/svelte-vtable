@@ -7,7 +7,7 @@
    *   - Clear button
    *
    * Props:
-   *   column               — column config { key, label, type, minValue, maxValue }
+   *   column               — column config { key, label, type, minValue, maxValue, dateValues }
    *   selection            — current range selection { from?: string, to?: string }
    *   relativeRangePresets — array of { label, value, unit } presets
    *   onchange             — callback({ from?, to? }) called with the updated selection
@@ -29,6 +29,13 @@
       : new Date(str).getTime();
   }
 
+  function parseFilterDateEnd(str) {
+    if (!str) return NaN;
+    return /^\d{4}-\d{2}-\d{2}$/.test(str)
+      ? new Date(str + 'T23:59:59.999').getTime()
+      : new Date(str).getTime();
+  }
+
   function formatAsInputValue(ms, type) {
     const d = new Date(ms);
     const pad = (n) => String(n).padStart(2, '0');
@@ -44,6 +51,11 @@
   const totalMs = $derived(maxMs - minMs);
   const fromMs = $derived(parseFilterDate(selection.from));
   const toMs = $derived(parseFilterDate(selection.to));
+  const dateValueMs = $derived(
+    Array.isArray(column.dateValues)
+      ? column.dateValues.map(Number).filter((ms) => Number.isFinite(ms))
+      : [],
+  );
 
   const fromPct = $derived(
     totalMs > 0 && !isNaN(fromMs)
@@ -72,7 +84,7 @@
     if (onchange) onchange({ ...selection, to: formatAsInputValue(newToMs, inputType) });
   }
 
-  function setRelativeRange(value, unit) {
+  function createRelativeRange(value, unit) {
     const now = new Date();
     const from = new Date(now);
     switch (unit) {
@@ -80,10 +92,12 @@
         from.setHours(from.getHours() - value);
         break;
       case 'day':
-        from.setDate(from.getDate() - value);
+        from.setDate(from.getDate() - (inputType === 'date' ? Math.max(value - 1, 0) : value));
         break;
       case 'week':
-        from.setDate(from.getDate() - value * 7);
+        from.setDate(
+          from.getDate() - (inputType === 'date' ? Math.max(value * 7 - 1, 0) : value * 7),
+        );
         break;
       case 'month':
         from.setMonth(from.getMonth() - value);
@@ -92,13 +106,40 @@
         from.setFullYear(from.getFullYear() - value);
         break;
     }
-    if (onchange) {
-      onchange({
-        from: formatAsInputValue(from.getTime(), inputType),
-        to: formatAsInputValue(now.getTime(), inputType),
-      });
-    }
+    return {
+      from: formatAsInputValue(from.getTime(), inputType),
+      to: formatAsInputValue(now.getTime(), inputType),
+    };
   }
+
+  function relativeRangeHasMatches(range) {
+    const rangeFromMs = parseFilterDate(range.from);
+    const rangeToMs = parseFilterDateEnd(range.to);
+    if (isNaN(rangeFromMs) || isNaN(rangeToMs)) return true;
+
+    if (dateValueMs.length > 0) {
+      return dateValueMs.some((ms) => ms >= rangeFromMs && ms <= rangeToMs);
+    }
+
+    if (!isNaN(minMs) && !isNaN(maxMs)) {
+      return maxMs >= rangeFromMs && minMs <= rangeToMs;
+    }
+
+    return column.minValue === undefined && column.maxValue === undefined;
+  }
+
+  function setRelativeRange(value, unit) {
+    const range = createRelativeRange(value, unit);
+    if (!relativeRangeHasMatches(range)) return;
+    if (onchange) onchange(range);
+  }
+
+  const presetStates = $derived(
+    applicablePresets.map((preset) => ({
+      ...preset,
+      disabled: !relativeRangeHasMatches(createRelativeRange(preset.value, preset.unit)),
+    })),
+  );
 </script>
 
 <div class="p-3 flex flex-col gap-2">
@@ -233,13 +274,16 @@
   {/if}
 
   <!-- Relative-range quick buttons -->
-  {#if applicablePresets.length > 0}
+  {#if presetStates.length > 0}
     <div class="flex flex-wrap gap-1 pt-1 border-t border-gray-100 dark:border-gray-600">
-      {#each applicablePresets as preset (preset.label)}
+      {#each presetStates as preset (preset.label)}
         <button
           type="button"
-          class="px-2 py-0.5 text-xs rounded border border-blue-400 text-blue-700 dark:text-blue-300 hover:bg-blue-50 dark:hover:bg-blue-900/20 transition-colors"
-          title="Last {preset.value} {preset.unit}{preset.value !== 1 ? 's' : ''}"
+          class="px-2 py-0.5 text-xs rounded border border-blue-400 text-blue-700 dark:text-blue-300 hover:bg-blue-50 dark:hover:bg-blue-900/20 transition-colors disabled:opacity-50 disabled:cursor-not-allowed disabled:hover:bg-transparent dark:disabled:hover:bg-transparent"
+          title={preset.disabled
+            ? `No matching rows in the last ${preset.value} ${preset.unit}${preset.value !== 1 ? 's' : ''}`
+            : `Last ${preset.value} ${preset.unit}${preset.value !== 1 ? 's' : ''}`}
+          disabled={preset.disabled}
           onclick={() => setRelativeRange(preset.value, preset.unit)}
         >
           Last {preset.label}

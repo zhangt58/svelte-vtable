@@ -157,7 +157,8 @@ A virtualized table component for efficient rendering of large datasets. The com
 | `onselect`      | `function`        | `undefined`              | Callback when a row is selected: `({item, index}) => void`                                                                                                                              |
 | `onsort`        | `function`        | `undefined`              | Callback when sort changes: `({key, dir}) => void`. When provided, local sorting is skipped (server-side sort pattern). Omit entirely (do not pass `() => {}`) to enable local sorting. |
 | `inlineFilters` | `boolean`         | `false`                  | Renders column filter buttons in table headers. Without `onfilter`, filters are applied locally to `items`.                                                                             |
-| `columnFilters` | `Array \| null`   | `null`                   | Optional filter configurations, usually from `buildColumnFilters(allRows, columns)`. When omitted, inline filters derive options from `items`.                                          |
+| `columnFilters` | `Array \| null`   | `null`                   | Optional explicit filter configurations, usually from `buildColumnFilters(rows, columns)`. Overrides derived filter options.                                                            |
+| `filterItems`   | `Array \| null`   | `null`                   | Base data source used to derive inline filter options when `columnFilters` is omitted. Defaults to `items`; pass the unpaged/search-scoped rows when `items` is paged.                  |
 | `activeFilters` | `Object`          | `{}`                     | Controlled filter state for inline header filters.                                                                                                                                      |
 | `onfilter`      | `function`        | `undefined`              | Callback when inline filters change: `({key, values, allFilters}) => void`. When provided, parent code is responsible for applying filters.                                             |
 | `rowSnippet`    | `Snippet`         | `undefined`              | Svelte 5 snippet for rendering rows. Optional when `columns` is provided (a default row is rendered using each column's `cellSnippet` or raw value).                                    |
@@ -219,7 +220,7 @@ For pagination, server requests, or shared filter controls, keep filters in the 
 
 ```svelte
 <script>
-  import { DataTable, buildColumnFilters, applyFilters } from '@zhangt58/svelte-vtable';
+  import { DataTable, applyFilters } from '@zhangt58/svelte-vtable';
 
   const rows = [
     { department: 'Engineering', hireDate: '2024-01-15' },
@@ -230,9 +231,10 @@ For pagination, server requests, or shared filter controls, keep filters in the 
     { key: 'hireDate', label: 'Hire Date', filterType: 'daterange' },
   ];
 
-  const columnFilters = buildColumnFilters(rows, columns);
   let activeFilters = $state({});
-  const filteredRows = $derived(applyFilters(rows, activeFilters));
+  const optionRows = $derived(rows); // Apply search or server scoping here when needed.
+  const filteredRows = $derived(applyFilters(optionRows, activeFilters));
+  const pagedRows = $derived(filteredRows.slice(0, 25));
 
   function handleFilter({ allFilters }) {
     activeFilters = { ...allFilters };
@@ -240,14 +242,18 @@ For pagination, server requests, or shared filter controls, keep filters in the 
 </script>
 
 <DataTable
-  items={filteredRows}
+  items={pagedRows}
   {columns}
   inlineFilters
-  {columnFilters}
+  filterItems={optionRows}
   {activeFilters}
   onfilter={handleFilter}
 />
 ```
+
+When `filterItems` and `activeFilters` are provided, derived filter options are faceted per column: each column is built from `filterItems` after applying the other active filters, but not that column's own filter. This keeps date range bounds and value choices available when the current column filter temporarily matches zero rows.
+
+Date range quick presets such as `Last 7d` are relative to the current wall-clock date/time. Presets that would match no rows in the current option source are disabled.
 
 #### Column Widths
 
@@ -271,17 +277,21 @@ Controls component for search and pagination.
 
 #### Props
 
-| Prop              | Type       | Default     | Description                                                                                              |
-| ----------------- | ---------- | ----------- | -------------------------------------------------------------------------------------------------------- |
-| `search`          | `string`   | `''`        | Current search query                                                                                     |
-| `currentPage`     | `number`   | `1`         | Current page number                                                                                      |
-| `perPage`         | `number`   | `25`        | Items per page                                                                                           |
-| `totalItems`      | `number`   | `0`         | Total number of items                                                                                    |
-| `onpage`          | `function` | `undefined` | Callback for page changes: `({page}) => void`                                                            |
-| `onsearch`        | `function` | `undefined` | Callback for search changes: `({search}) => void`                                                        |
-| `onfilterstoggle` | `function` | `undefined` | Callback when filters panel toggled: `({visible}) => void`                                               |
-| `onperpage`       | `function` | `undefined` | Callback when per-page changes: `({perPage}) => void`                                                    |
-| `onfilter`        | `function` | `undefined` | Callback when filters change (passed through to DataTableFilters): `({key, values, allFilters}) => void` |
+| Prop              | Type            | Default     | Description                                                                                                                        |
+| ----------------- | --------------- | ----------- | ---------------------------------------------------------------------------------------------------------------------------------- |
+| `search`          | `string`        | `''`        | Current search query                                                                                                               |
+| `currentPage`     | `number`        | `1`         | Current page number                                                                                                                |
+| `perPage`         | `number`        | `25`        | Items per page                                                                                                                     |
+| `totalItems`      | `number`        | `0`         | Total number of items                                                                                                              |
+| `onpage`          | `function`      | `undefined` | Callback for page changes: `({page}) => void`                                                                                      |
+| `onsearch`        | `function`      | `undefined` | Callback for search changes: `({search}) => void`                                                                                  |
+| `onfilterstoggle` | `function`      | `undefined` | Callback when filters panel toggled: `({visible}) => void`                                                                         |
+| `onperpage`       | `function`      | `undefined` | Callback when per-page changes: `({perPage}) => void`                                                                              |
+| `columnFilters`   | `Array \| null` | `null`      | Optional explicit modal filter configurations. Overrides derived filter options.                                                   |
+| `columns`         | `ColumnDef[]`   | `[]`        | Column definitions used with `filterItems` to derive modal filter options.                                                         |
+| `filterItems`     | `Array \| null` | `null`      | Base data source used to derive modal filter options. Pass unpaged/search-scoped rows; active peer filters are applied per column. |
+| `activeFilters`   | `Object`        | `{}`        | Current active filters used for the modal state and faceted option derivation.                                                     |
+| `onfilter`        | `function`      | `undefined` | Callback when filters change (passed through to DataTableFilters): `({key, values, allFilters}) => void`                           |
 
 ### DataTableFilters
 

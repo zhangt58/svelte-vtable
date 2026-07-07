@@ -2,7 +2,7 @@
   import { Search, Badge, Select } from 'flowbite-svelte';
   import FiltersModal from './FiltersModal.svelte';
   import PaginationBar from '../PaginationBar.svelte';
-  import { countActiveFilters } from '../../filterUtils.js';
+  import { countActiveFilters, resolveColumnFilters } from '../../filterUtils.js';
 
   // Props for search, pagination (perPage made bindable using Svelte 5 rune $bindable)
   let {
@@ -16,8 +16,11 @@
     filtersVisible = false,
     // callback when toggle changes: onfilterstoggle({ visible })
     onfilterstoggle = undefined,
-    // optional DataTableFilters inputs - when provided, this component will render the filters
-    columnFilters = [],
+    // optional DataTableFilters inputs - explicit configs override derived configs
+    columnFilters = null,
+    // optional column definitions + base row source used to derive modal filter options
+    columns = [],
+    filterItems = null,
     activeFilters = {},
     // onfilter({ key, values, allFilters }) — passed through to DataTableFilters
     /** @type {((..._args: any[]) => void) | undefined} */
@@ -37,6 +40,15 @@
   ];
 
   const activeFilterCount = $derived(countActiveFilters(activeFilters));
+
+  const effectiveColumnFilters = $derived.by(() =>
+    resolveColumnFilters({
+      columnFilters,
+      columns,
+      filterItems,
+      activeFilters,
+    }),
+  );
 
   // totalPages derived from totalItems and perPage
   const totalPages = $derived(Math.max(1, Math.ceil(totalItems / perPage)));
@@ -261,7 +273,7 @@
 
 <FiltersModal
   bind:open={filtersVisible}
-  {columnFilters}
+  columnFilters={effectiveColumnFilters}
   {activeFilters}
   {onfilter}
   {direction}
