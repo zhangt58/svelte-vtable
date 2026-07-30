@@ -29,6 +29,8 @@
     className = '',
     // callback when perPage changes: onperpage({ perPage })
     onperpage = undefined,
+    // set false to hide the Filters button (e.g. when inline column filters are in use)
+    showFilters = true,
   } = $props();
 
   const perPageOptions = [
@@ -196,6 +198,7 @@
     <div class="flex-1">
       <div class="flex items-center gap-2">
         <!-- Styled button to open/close filters modal -->
+        {#if showFilters}
         <div class="flex items-center gap-1 relative">
           <button
             type="button"
@@ -237,6 +240,7 @@
             >
           {/if}
         </div>
+        {/if}
 
         <div class="vtable-search-wrapper relative flex items-center">
           <svg
@@ -320,6 +324,7 @@
   </div>
 </div>
 
+{#if showFilters}
 <FiltersModal
   bind:open={filtersVisible}
   columnFilters={effectiveColumnFilters}
@@ -329,6 +334,7 @@
   {showCounts}
   {className}
 />
+{/if}
 
 <style>
   @import '../styles.css';
