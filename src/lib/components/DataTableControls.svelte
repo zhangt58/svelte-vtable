@@ -193,9 +193,11 @@
 </script>
 
 <div class="w-full">
-  <div class="flex items-center w-full gap-3 px-0 py-0">
+  <!-- Search, range and per-page sit together on the left; pagination is
+       pushed to the right and wraps below on narrow widths. -->
+  <div class="flex flex-wrap items-center w-full gap-x-3 gap-y-1 px-0 py-0">
     <!-- Search field on the left -->
-    <div class="flex-1">
+    <div class="min-w-0">
       <div class="flex items-center gap-2">
         <!-- Styled button to open/close filters modal -->
         {#if showFilters}
@@ -242,7 +244,7 @@
         </div>
         {/if}
 
-        <div class="vtable-search-wrapper relative flex items-center">
+        <div class="vtable-search-wrapper relative flex items-center w-64 max-w-full">
           <svg
             class="absolute left-3 h-4 w-4 text-gray-400 pointer-events-none"
             xmlns="http://www.w3.org/2000/svg"
@@ -298,9 +300,9 @@
     </div>
 
     <!-- Range count badge + per-page selector -->
-    <div class="flex-2 flex items-center gap-2">
+    <div class="flex shrink-0 items-center gap-2">
       <span
-        class="inline-flex items-center px-2.5 py-0.5 rounded-full text-xs font-medium bg-gray-100 text-gray-800 dark:bg-gray-700 dark:text-gray-200 whitespace-nowrap"
+        class="inline-flex items-center px-2.5 py-0.5 rounded-full text-xs font-medium tabular-nums bg-gray-100 text-gray-800 dark:bg-gray-700 dark:text-gray-200 whitespace-nowrap"
       >
         Showing {startItem} to {endItem} of {totalItems}
       </span>
@@ -309,6 +311,7 @@
       <div class="flex items-center gap-2">
         <select
           id={perPageSelectId}
+          aria-label="Rows per page"
           class="vtable-perpage-select py-1 pl-3 pr-7 text-sm rounded-md border border-gray-300 bg-white dark:bg-gray-700 dark:border-gray-600 dark:text-gray-100"
           bind:value={perPage}
         >
@@ -320,7 +323,9 @@
     </div>
 
     <!-- Pagination navigation -->
-    <PaginationBar {pages} {currentPage} onpage={goTo} />
+    <div class="ml-auto shrink-0">
+      <PaginationBar {pages} {currentPage} onpage={goTo} />
+    </div>
   </div>
 </div>
 
