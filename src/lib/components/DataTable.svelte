@@ -51,6 +51,8 @@
     // If `virtualize` is false we ask the wrapped VirtualList to render as a normal list/table
     // by setting its `isDisabled` prop. Default: true (virtualization enabled).
     virtualize = true,
+    // Row density: 'comfortable' (default) or 'compact' (tighter cell padding).
+    density = 'comfortable',
   } = $props();
 
   // --- Derived values from ColumnDef[] ---
@@ -65,6 +67,78 @@
 
   // Fast lookup map: key → ColumnDef.
   const colDefMap = $derived(Object.fromEntries(columns.map((c) => [c.key, c])));
+
+  // --- Sticky columns ---
+  // Header cell widths of sticky columns, measured (bind:offsetWidth), so the
+  // offsets hold whatever the width type (stretch weight or CSS length).
+  let stickyWidths = $state({});
+
+  // key → { side, offset, edge } for columns with `sticky: 'left' | 'right'`.
+  // A left column's offset is the width of the left sticky columns before it;
+  // a right column's, of the right sticky columns after it. `edge` marks the
+  // innermost column of each side, which draws the divider shadow.
+  const stickyMap = $derived.by(() => {
+    const map = {};
+    const left = columns.filter((c) => c.sticky === 'left');
+    const right = columns.filter((c) => c.sticky === 'right').reverse();
+    let acc = 0;
+    left.forEach((c, i) => {
+      map[c.key] = { side: 'left', offset: acc, edge: i === left.length - 1 };
+      acc += stickyWidths[c.key] ?? 0;
+    });
+    acc = 0;
+    right.forEach((c, i) => {
+      map[c.key] = { side: 'right', offset: acc, edge: i === right.length - 1 };
+      acc += stickyWidths[c.key] ?? 0;
+    });
+    return map;
+  });
+
+  function stickyClass(key) {
+    const st = stickyMap[key];
+    if (!st) return '';
+    return `vtable-sticky vtable-sticky-${st.side}${st.edge ? ` vtable-sticky-edge-${st.side}` : ''}`;
+  }
+
+  // A column's minimum width: ColumnDef.minWidth, else a CSS-length width.
+  // Set on the header content, it is a real minimum (a <col> width is only a
+  // hint under automatic table layout), so wide tables scroll sideways
+  // instead of squeezing their columns.
+  function minWidthStyle(key) {
+    const c = colDefMap[key];
+    const w =
+      c?.minWidth ??
+      (typeof c?.width === 'string' && !c.width.trim().endsWith('%') ? c.width : null);
+    return w ? `min-width: ${w};` : '';
+  }
+
+  function stickyStyle(key) {
+    const st = stickyMap[key];
+    return st ? `${st.side}: ${st.offset}px;` : '';
+  }
+
+  // Horizontal scroll position, so the sticky edges cast a shadow only while
+  // columns are scrolled under them.
+  let scroller = $state(null);
+  let scrolledFromStart = $state(false);
+  let scrolledToEnd = $state(true);
+
+  function updateHorizontalScroll() {
+    if (!scroller) return;
+    const { scrollLeft, scrollWidth, clientWidth } = scroller;
+    scrolledFromStart = scrollLeft > 0;
+    scrolledToEnd = scrollLeft + clientWidth >= scrollWidth - 1;
+  }
+
+  $effect(() => {
+    if (!scroller || typeof ResizeObserver === 'undefined') return;
+    const ro = new ResizeObserver(updateHorizontalScroll);
+    ro.observe(scroller);
+    const table = scroller.querySelector('table');
+    if (table) ro.observe(table);
+    updateHorizontalScroll();
+    return () => ro.disconnect();
+  });
 
   const effectiveColumnFilters = $derived.by(() => {
     return resolveColumnFilters({
@@ -238,7 +312,14 @@
 
 <svelte:window onclick={closeFilter} onkeydown={handleKeydown} />
 
-<section class="virtual-data-table {className}" {style}>
+<section
+  class="virtual-data-table {className}"
+  {style}
+  bind:this={scroller}
+  onscroll={updateHorizontalScroll}
+  data-scrolled-start={scrolledFromStart ? '' : undefined}
+  data-scrolled-end={scrolledToEnd ? undefined : ''}
+>
   {#if columns.length > 0}
     <!-- When `virtualize` is false we instruct VirtualList to render as a normal list/table
          by setting `isDisabled`. This ensures pagination based on item counts shows the
@@ -247,7 +328,9 @@
       items={Array.isArray(sortedItems) ? sortedItems : []}
       isTable
       isDisabled={!virtualize}
-      class="datatable-table max-w-full max-h-full overflow-auto"
+      class="datatable-table max-w-full max-h-full overflow-auto{density === 'compact'
+        ? ' compact'
+        : ''}"
     >
       <!-- colgroup enforces the column widths so table-layout: fixed distributes as intended -->
       {#snippet header()}
@@ -266,15 +349,18 @@
               {@const selection = filterDef ? filterState.selections[filterDef.key] : undefined}
               {@const isFilterActive = hasActiveFilterValue(selection)}
               <th
-                style="width: {calcColWidth(key)}"
-                class="select-none"
+                style="width: {calcColWidth(key)}; {stickyStyle(key)}"
+                class="select-none {stickyClass(key)}{filterDef && openFilterKey === filterDef.key
+                  ? ' vtable-filter-open'
+                  : ''}"
+                bind:offsetWidth={stickyWidths[key]}
                 aria-sort={sortKey === key
                   ? sortDir === 'asc'
                     ? 'ascending'
                     : 'descending'
                   : 'none'}
               >
-                <div class="vtable-header-content">
+                <div class="vtable-header-content" style={minWidthStyle(key) || undefined}>
                   {#if colDef?.headerSnippet}
                     <div class="min-w-0 flex-1">
                       {@render colDef.headerSnippet({ key, label, sortKey, sortDir })}
@@ -329,7 +415,7 @@
         <!-- Default row rendering using each column's cellSnippet or raw value -->
         <tr onclick={() => selectItem(item, index)} class={selected === item ? 'selected' : ''}>
           {#each columns as col}
-            <td>
+            <td class={stickyClass(col.key) || undefined} style={stickyStyle(col.key) || undefined}>
               {#if col.cellSnippet}
                 {@render col.cellSnippet({ item, value: item[col.key], index })}
               {:else}

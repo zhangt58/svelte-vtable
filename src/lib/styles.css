@@ -24,7 +24,6 @@
   display: table;
   width: 100%;
   min-width: 0;
-  border-collapse: collapse;
   box-sizing: border-box;
   font-size: 0.875rem; /* 14px - smaller, more compact */
   font-family:
@@ -33,11 +32,56 @@
   border: none;
 }
 
-/* Sticky header support */
-:global(.datatable-table) thead.sticky-header {
+/* Sticky header: each header cell sticks (rather than the <thead>), so a
+   cell can also stick horizontally for sticky columns. */
+:global(.datatable-table thead.sticky-header th) {
   position: sticky;
   top: 0;
   z-index: 2;
+}
+
+/* separate + 0 spacing looks like collapse here (bottom borders only) but
+   keeps each border on its cell, so borders move with sticky cells. Set on
+   the inner <table> itself: Tailwind's preflight collapses every table. */
+:global(.datatable-table table.vtlist-inner) {
+  border-collapse: separate;
+  border-spacing: 0;
+}
+
+/* Sticky columns (ColumnDef.sticky). Body cells take the row's background
+   (striping, hover, selection) so scrolled cells do not show through. The
+   <tbody> is rendered by VirtualList, hence fully global. */
+:global(.datatable-table tbody td.vtable-sticky) {
+  position: sticky;
+  z-index: 1;
+  background-color: inherit;
+}
+
+:global(.datatable-table thead.sticky-header th.vtable-sticky) {
+  z-index: 3;
+}
+
+/* Keep an open header filter above the sticky header cells */
+:global(.datatable-table thead.sticky-header th.vtable-filter-open) {
+  z-index: 4;
+}
+
+/* Divider shadow on the innermost sticky column, only while columns are
+   scrolled under it */
+:global(.virtual-data-table[data-scrolled-start] .vtable-sticky-edge-left) {
+  box-shadow: 6px 0 6px -4px rgba(15, 23, 42, 0.18);
+}
+
+:global(.virtual-data-table[data-scrolled-end] .vtable-sticky-edge-right) {
+  box-shadow: -6px 0 6px -4px rgba(15, 23, 42, 0.18);
+}
+
+:global(.dark .virtual-data-table[data-scrolled-start] .vtable-sticky-edge-left) {
+  box-shadow: 6px 0 6px -4px rgba(0, 0, 0, 0.6);
+}
+
+:global(.dark .virtual-data-table[data-scrolled-end] .vtable-sticky-edge-right) {
+  box-shadow: -6px 0 6px -4px rgba(0, 0, 0, 0.6);
 }
 
 /* Header visual styles - only bottom border */
@@ -129,7 +173,7 @@
 
 /* Compact variant */
 :global(.datatable-table.compact tbody td) {
-  padding: 0.1rem 0.3rem;
+  padding: 0.25rem 0.5rem;
 }
 
 /* Header content alignment helper */
@@ -137,10 +181,6 @@
   display: inline-flex;
   align-items: center;
   gap: 0.25rem;
-}
-
-:global(.datatable-table thead th) {
-  position: relative;
 }
 
 :global(.datatable-table thead th .vtable-header-content) {

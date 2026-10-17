@@ -40,6 +40,12 @@ export {
  * @property {string} [label] - Display label for the column header. Defaults to `key`.
  * @property {number|string} [width] - Column width: a stretch weight (number) or a
  *   CSS width value such as `'120px'`. Defaults to `1` (equal stretch).
+ * @property {string} [minWidth] - Minimum column width as a CSS length (e.g. `'12rem'`).
+ *   A CSS-length `width` is also a minimum. When the minimums exceed the
+ *   container, the table scrolls sideways instead of squeezing its columns.
+ * @property {'left'|'right'} [sticky] - Keep the column in view while the table
+ *   scrolls sideways, pinned to that edge. Several columns may stick per side;
+ *   offsets are measured, so any width type works.
  * @property {boolean} [sortable] - Whether clicking the column header sorts the
  *   table. Defaults to `true`.
  * @property {'value'|'list'|'daterange'|'datetimerange'|'none'} [filterType]

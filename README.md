@@ -142,26 +142,27 @@ A virtualized table component for efficient rendering of large datasets. The com
 
 #### Props
 
-| Prop            | Type              | Default                  | Description                                                                                                                                                                             |
-| --------------- | ----------------- | ------------------------ | --------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------- |
-| `items`         | `Array`           | `[]`                     | Array of data items to display                                                                                                                                                          |
-| `columns`       | `ColumnDef[]`     | `undefined`              | **Unified column definitions** (recommended). When provided, `visibleKeys`, `colWidths`, and `rowSnippet` may be omitted. See [ColumnDef](#columndef) below.                            |
-| `visibleKeys`   | `Array`           | `[]`                     | _(Legacy)_ Array of keys to display as column headers. Ignored when `columns` is provided.                                                                                              |
-| `sortKey`       | `string \| null`  | `null`                   | Current sort key (column header); supports `bind:sortKey`                                                                                                                               |
-| `sortDir`       | `'asc' \| 'desc'` | `'asc'`                  | Sort direction; supports `bind:sortDir`                                                                                                                                                 |
-| `className`     | `string`          | `''`                     | Additional CSS classes                                                                                                                                                                  |
-| `style`         | `string`          | `''`                     | Inline styles                                                                                                                                                                           |
-| `emptyMessage`  | `string`          | `'No items to display.'` | Message when no items                                                                                                                                                                   |
-| `colWidths`     | `object \| Array` | `{}`                     | _(Legacy)_ Column width configuration (stretch weights or pixel values). Ignored when `columns` is provided.                                                                            |
-| `selected`      | `any`             | `null`                   | Currently selected item                                                                                                                                                                 |
-| `onselect`      | `function`        | `undefined`              | Callback when a row is selected: `({item, index}) => void`                                                                                                                              |
-| `onsort`        | `function`        | `undefined`              | Callback when sort changes: `({key, dir}) => void`. When provided, local sorting is skipped (server-side sort pattern). Omit entirely (do not pass `() => {}`) to enable local sorting. |
-| `inlineFilters` | `boolean`         | `false`                  | Renders column filter buttons in table headers. Without `onfilter`, filters are applied locally to `items`.                                                                             |
-| `columnFilters` | `Array \| null`   | `null`                   | Optional explicit filter configurations, usually from `buildColumnFilters(rows, columns)`. Overrides derived filter options.                                                            |
-| `filterItems`   | `Array \| null`   | `null`                   | Base data source used to derive inline filter options when `columnFilters` is omitted. Defaults to `items`; pass the unpaged/search-scoped rows when `items` is paged.                  |
-| `activeFilters` | `Object`          | `{}`                     | Controlled filter state for inline header filters.                                                                                                                                      |
-| `onfilter`      | `function`        | `undefined`              | Callback when inline filters change: `({key, values, allFilters}) => void`. When provided, parent code is responsible for applying filters.                                             |
-| `rowSnippet`    | `Snippet`         | `undefined`              | Svelte 5 snippet for rendering rows. Optional when `columns` is provided (a default row is rendered using each column's `cellSnippet` or raw value).                                    |
+| Prop            | Type                         | Default                  | Description                                                                                                                                                                             |
+| --------------- | ---------------------------- | ------------------------ | --------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------- |
+| `items`         | `Array`                      | `[]`                     | Array of data items to display                                                                                                                                                          |
+| `columns`       | `ColumnDef[]`                | `undefined`              | **Unified column definitions** (recommended). When provided, `visibleKeys`, `colWidths`, and `rowSnippet` may be omitted. See [ColumnDef](#columndef) below.                            |
+| `visibleKeys`   | `Array`                      | `[]`                     | _(Legacy)_ Array of keys to display as column headers. Ignored when `columns` is provided.                                                                                              |
+| `sortKey`       | `string \| null`             | `null`                   | Current sort key (column header); supports `bind:sortKey`                                                                                                                               |
+| `sortDir`       | `'asc' \| 'desc'`            | `'asc'`                  | Sort direction; supports `bind:sortDir`                                                                                                                                                 |
+| `className`     | `string`                     | `''`                     | Additional CSS classes                                                                                                                                                                  |
+| `style`         | `string`                     | `''`                     | Inline styles                                                                                                                                                                           |
+| `emptyMessage`  | `string`                     | `'No items to display.'` | Message when no items                                                                                                                                                                   |
+| `colWidths`     | `object \| Array`            | `{}`                     | _(Legacy)_ Column width configuration (stretch weights or pixel values). Ignored when `columns` is provided.                                                                            |
+| `selected`      | `any`                        | `null`                   | Currently selected item                                                                                                                                                                 |
+| `onselect`      | `function`                   | `undefined`              | Callback when a row is selected: `({item, index}) => void`                                                                                                                              |
+| `onsort`        | `function`                   | `undefined`              | Callback when sort changes: `({key, dir}) => void`. When provided, local sorting is skipped (server-side sort pattern). Omit entirely (do not pass `() => {}`) to enable local sorting. |
+| `inlineFilters` | `boolean`                    | `false`                  | Renders column filter buttons in table headers. Without `onfilter`, filters are applied locally to `items`.                                                                             |
+| `columnFilters` | `Array \| null`              | `null`                   | Optional explicit filter configurations, usually from `buildColumnFilters(rows, columns)`. Overrides derived filter options.                                                            |
+| `filterItems`   | `Array \| null`              | `null`                   | Base data source used to derive inline filter options when `columnFilters` is omitted. Defaults to `items`; pass the unpaged/search-scoped rows when `items` is paged.                  |
+| `activeFilters` | `Object`                     | `{}`                     | Controlled filter state for inline header filters.                                                                                                                                      |
+| `onfilter`      | `function`                   | `undefined`              | Callback when inline filters change: `({key, values, allFilters}) => void`. When provided, parent code is responsible for applying filters.                                             |
+| `rowSnippet`    | `Snippet`                    | `undefined`              | Svelte 5 snippet for rendering rows. Optional when `columns` is provided (a default row is rendered using each column's `cellSnippet` or raw value).                                    |
+| `density`       | `'comfortable' \| 'compact'` | `'comfortable'`          | Row density. `'compact'` tightens the body cell padding so more rows fit.                                                                                                               |
 
 #### Row Snippet Parameters
 
@@ -184,7 +185,9 @@ The `rowSnippet` receives an object with:
 | --------------- | --------------------------------------------------------------- | ----------- | ----------------------------------------------------------------------------------------------------------------------- |
 | `key`           | `string`                                                        | required    | Data key. Must match a property on the row item.                                                                        |
 | `label`         | `string`                                                        | `key`       | Column header label. Defaults to `key`.                                                                                 |
-| `width`         | `number \| string`                                              | `1`         | Stretch weight (number) or CSS value (e.g. `'120px'`).                                                                  |
+| `width`         | `number \| string`                                              | `1`         | Stretch weight (number) or CSS value (e.g. `'120px'`). A CSS length is also the column's minimum width.                 |
+| `minWidth`      | `string`                                                        | `undefined` | Minimum width as a CSS length (e.g. `'12rem'`). When the minimums exceed the container, the table scrolls sideways.     |
+| `sticky`        | `'left' \| 'right'`                                             | `undefined` | Keep the column in view while the table scrolls sideways. See [Sticky columns](#sticky-columns).                        |
 | `sortable`      | `boolean`                                                       | `true`      | Whether clicking the header sorts the table.                                                                            |
 | `filterType`    | `'value' \| 'list' \| 'daterange' \| 'datetimerange' \| 'none'` | `'value'`   | Filter UI for this column. `'list'` is an alias for value-list filters; `'none'` excludes it from `buildColumnFilters`. |
 | `headerSnippet` | `Snippet<[{key, label, sortKey, sortDir}]>`                     | `undefined` | Custom Svelte 5 snippet rendered inside `<th>`.                                                                         |
@@ -261,6 +264,32 @@ Column widths can be specified as:
 
 - **Stretch weights** (numbers): Distributed proportionally, e.g., `{ name: 1, description: 3 }`
 - **Pixel values** (strings): Fixed widths, e.g., `{ id: '80px', name: '200px' }`
+
+A CSS-length width (or `minWidth`) is a real minimum: when the columns' minimums are
+wider than the container, the table scrolls sideways instead of squeezing them.
+
+#### Sticky columns
+
+Set `sticky: 'left'` or `sticky: 'right'` on a column to keep it in view while the
+table scrolls sideways — e.g. an identifier and a name on the left, row actions on
+the right:
+
+```js
+const columns = [
+  { key: 'id', label: 'ID', width: '80px', sticky: 'left' },
+  { key: 'name', label: 'Name', width: '200px', sticky: 'left' },
+  // … wide columns …
+  { key: 'actions', label: 'Actions', width: '140px', sticky: 'right' },
+];
+```
+
+- Several columns may stick per side; their offsets are measured, so any width type works.
+- Put left-sticky columns first and right-sticky columns last: a sticky cell only stays
+  within its row, so a right-sticky column in the middle still scrolls off to the left.
+- The innermost sticky column of each side casts a soft shadow while columns are
+  scrolled under it. The table root carries `data-scrolled-start` / `data-scrolled-end`
+  while it is scrolled away from the start / not at the end, for custom styling.
+- Sticky body cells take their row's background (striping, hover, selection).
 
 #### Row Snippet Parameters
 

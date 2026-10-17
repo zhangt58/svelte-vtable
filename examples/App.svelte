@@ -22,6 +22,31 @@
   let currentPage = $state(1);
   let perPage = $state(25);
 
+  // Layout demo: fixed widths wide enough to scroll sideways, with sticky
+  // ID/Name on the left and Status on the right; and row density.
+  let wideColumns = $state(false);
+  let compactRows = $state(false);
+  const WIDE = {
+    id: '80px',
+    name: '200px',
+    department: '220px',
+    status: '130px',
+    level: '130px',
+    hireDate: '200px',
+    createdAt: '240px',
+    description: '520px',
+  };
+  const STICKY = { id: 'left', name: 'left', status: 'right' };
+  function withLayout(cols) {
+    if (!wideColumns) return cols;
+    // A right-sticky column only sticks at the end of the row: move it last.
+    const laid = cols.map((c) => ({ ...c, width: WIDE[c.key] ?? c.width, sticky: STICKY[c.key] }));
+    return [
+      ...laid.filter((c) => c.sticky !== 'right'),
+      ...laid.filter((c) => c.sticky === 'right'),
+    ];
+  }
+
   // Handle filter changes
   function handleFilterChange({ key, values, allFilters }) {
     activeFilters = { ...allFilters };
@@ -215,6 +240,17 @@
     {activeCount()} active filter(s) · {filteredData().length} total records
   </div>
 
+  <div class="mt-2 mb-1 flex flex-wrap items-center gap-4 text-sm text-gray-700 dark:text-gray-200">
+    <label class="inline-flex items-center gap-1.5">
+      <input type="checkbox" bind:checked={wideColumns} />
+      Wide columns (ID and Name sticky left, Status sticky right)
+    </label>
+    <label class="inline-flex items-center gap-1.5">
+      <input type="checkbox" bind:checked={compactRows} />
+      Compact rows
+    </label>
+  </div>
+
   <div class="mt-2">
     <!--
       Pass `columns` instead of `visibleKeys`+`colWidths`+`rowSnippet`.
@@ -260,15 +296,18 @@
 
     <DataTable
       items={pagedData()}
-      columns={columnDefs.map((c) =>
-        c.key === 'id'
-          ? { ...c, cellSnippet: idCell }
-          : c.key === 'status'
-            ? { ...c, cellSnippet: statusCell }
-            : c.key === 'level'
-              ? { ...c, cellSnippet: levelCell }
-              : c,
+      columns={withLayout(
+        columnDefs.map((c) =>
+          c.key === 'id'
+            ? { ...c, cellSnippet: idCell }
+            : c.key === 'status'
+              ? { ...c, cellSnippet: statusCell }
+              : c.key === 'level'
+                ? { ...c, cellSnippet: levelCell }
+                : c,
+        ),
       )}
+      density={compactRows ? 'compact' : 'comfortable'}
       inlineFilters
       filterItems={searchedData()}
       {activeFilters}

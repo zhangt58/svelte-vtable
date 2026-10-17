@@ -4,6 +4,23 @@ All notable changes to this project will be documented in this file.
 
 ## [Unreleased]
 
+### Added
+
+- **Sticky columns**: `ColumnDef.sticky` (`'left'` / `'right'`) keeps columns in view while
+  the table scrolls sideways, with measured offsets and an edge shadow while columns are
+  scrolled under them (`data-scrolled-start` / `data-scrolled-end` on the table root).
+- **`ColumnDef.minWidth`**, and CSS-length widths act as minimums, so wide tables scroll
+  sideways instead of squeezing their columns.
+- **`density` prop** on `DataTable`: `'comfortable'` (default) or `'compact'`.
+
+### Changed
+
+- The header sticks per cell (`thead th`) instead of the `<thead>`, so header cells can
+  also stick sideways.
+- The table uses `border-collapse: separate` with zero spacing (same look) so borders move
+  with sticky cells.
+- Compact rows use `0.25rem 0.5rem` cell padding (was `0.1rem 0.3rem`).
+
 ### Refactor
 
 - **Decomposed `DataTableFilters` into focused sub-components** (PRD-11). The 1,200-line
