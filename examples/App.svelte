@@ -1,6 +1,12 @@
 <script>
   import { DataTable, DataTableControls, DataTableFilters } from '@zhangt58/svelte-vtable';
-  import { buildColumnFilters, applyFilters, countActiveFilters } from '@zhangt58/svelte-vtable';
+  import {
+    buildColumnFilters,
+    applyFilters,
+    countActiveFilters,
+    exportCSV,
+    sortItems,
+  } from '@zhangt58/svelte-vtable';
   import { DarkMode } from 'flowbite-svelte';
   import { allData, columnDefs } from './sampleData.js';
   import ThemedExample from './ThemedExample.svelte';
@@ -67,6 +73,25 @@
     const start = (cp - 1) * perPage;
     return items.slice(start, start + perPage);
   });
+
+  // Visible columns (a minimal column chooser) and sort state, so the CSV
+  // export matches the current view across all pages.
+  let hiddenKeys = $state([]);
+  let sortKey = $state(null);
+  let sortDir = $state('asc');
+  const visibleColumns = $derived(columnDefs.filter((c) => !hiddenKeys.includes(c.key)));
+
+  function toggleColumn(key, visible) {
+    hiddenKeys = visible ? hiddenKeys.filter((k) => k !== key) : [...hiddenKeys, key];
+  }
+
+  // Export every row of the current view (search + filters + sort), not just
+  // the current page, with the visible columns only.
+  function exportView() {
+    exportCSV(sortItems(filteredData(), sortKey, sortDir), visibleColumns, {
+      filename: 'employees.csv',
+    });
+  }
 
   // Count active filters using utility function
   const activeCount = $derived(() => countActiveFilters(activeFilters));
@@ -212,8 +237,34 @@
     class="mt-1"
   />
 
-  <div class="text-sm text-gray-500 dark:text-gray-400 mt-1 mb-1">
-    {activeCount()} active filter(s) · {filteredData().length} total records
+  <div
+    class="mt-1 mb-1 flex flex-wrap items-center justify-between gap-2 text-sm text-gray-500 dark:text-gray-400"
+  >
+    <span>{activeCount()} active filter(s) · {filteredData().length} total records</span>
+    <button
+      type="button"
+      class="px-3 py-1 rounded-md border border-gray-300 bg-white text-gray-700 hover:bg-gray-100 dark:border-gray-600 dark:bg-gray-700 dark:text-gray-200 dark:hover:bg-gray-600 cursor-pointer disabled:opacity-50 disabled:cursor-default"
+      disabled={filteredData().length === 0}
+      title="Save all {filteredData()
+        .length} rows of the current view (search, filters, sort; visible columns) as CSV"
+      onclick={exportView}>Export CSV</button
+    >
+  </div>
+
+  <div
+    class="mb-1 flex flex-wrap items-center gap-x-3 gap-y-1 text-sm text-gray-600 dark:text-gray-300"
+  >
+    <span class="text-gray-500 dark:text-gray-400">Columns:</span>
+    {#each columnDefs as c}
+      <label class="inline-flex items-center gap-1 cursor-pointer">
+        <input
+          type="checkbox"
+          checked={!hiddenKeys.includes(c.key)}
+          onchange={(e) => toggleColumn(c.key, e.currentTarget.checked)}
+        />
+        {c.label}
+      </label>
+    {/each}
   </div>
 
   <div class="mt-2">
@@ -261,7 +312,9 @@
 
     <DataTable
       items={pagedData()}
-      columns={columnDefs.map((c) =>
+      bind:sortKey
+      bind:sortDir
+      columns={visibleColumns.map((c) =>
         c.key === 'id'
           ? { ...c, cellSnippet: idCell }
           : c.key === 'status'

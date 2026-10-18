@@ -56,6 +56,7 @@
   let columnWidths = $state({});
   // Raw: a proxied row would never equal the row DataTable compares against.
   let selected = $state.raw(null);
+  let table = $state();
   const customWidths = $derived(Object.keys(columnWidths).length);
 
   const baseColumns = [
@@ -66,12 +67,25 @@
     { key: 'ordered', label: 'Ordered', minWidth: '10rem', group: 'Order' },
     { key: 'channel', label: 'Channel', minWidth: '7rem', group: 'Order' },
     { key: 'status', label: 'Status', minWidth: '7rem', group: 'Order' },
-    { key: 'total', label: 'Total', minWidth: '6rem', group: 'Order' },
+    {
+      key: 'total',
+      label: 'Total',
+      minWidth: '6rem',
+      group: 'Order',
+      exportValue: (item) => item.total.toFixed(2),
+    },
     { key: 'coupon', label: 'Coupon', minWidth: '9rem', group: 'Order' },
     { key: 'carrier', label: 'Carrier', minWidth: '7rem', group: 'Delivery' },
     { key: 'speed', label: 'Speed', minWidth: '6rem', group: 'Delivery' },
     { key: 'notes', label: 'Notes', minWidth: '18rem', sortable: false },
-    { key: 'actions', label: '', minWidth: '5rem', sticky: 'right', sortable: false },
+    {
+      key: 'actions',
+      label: '',
+      minWidth: '5rem',
+      sticky: 'right',
+      sortable: false,
+      exportable: false,
+    },
   ];
 
   /** Feature card: title, control(s), what to try. */
@@ -229,7 +243,15 @@
   <div
     class="mb-2 flex flex-wrap items-center justify-between gap-2 text-xs text-gray-500 dark:text-gray-400"
   >
-    <span>{rows.length} orders</span>
+    <span class="inline-flex items-center gap-3">
+      {rows.length} orders
+      <button
+        type="button"
+        class="px-2 py-0.5 rounded border border-gray-300 bg-white text-gray-700 hover:bg-gray-100 dark:border-gray-600 dark:bg-gray-800 dark:text-gray-200 dark:hover:bg-gray-700 cursor-pointer"
+        title="Save the table's rows in their current sort order as CSV (table.exportCSV())"
+        onclick={() => table?.exportCSV({ filename: 'orders.csv' })}>Export CSV</button
+      >
+    </span>
     <span>
       {#if resizable && customWidths > 0}
         Custom widths for {customWidths} columns · saved in localStorage (<code
@@ -242,6 +264,7 @@
   </div>
 
   <DataTable
+    bind:this={table}
     items={rows}
     columns={baseColumns.map((c) => ({
       ...c,
