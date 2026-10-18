@@ -9,6 +9,9 @@
   --vtable-color-info: #3b82f6; /* blue-500 */
 
   --vtable-radius: 0.375rem; /* rounded-md */
+
+  --vtable-resize-line: #cbd5e1; /* slate-300: resize separator at rest */
+  --vtable-resize-line-hover: #64748b; /* slate-500: while its header is hovered */
   --vtable-row-height: 2.25rem; /* default row height hint for virtual scroll */
 }
 
@@ -82,6 +85,70 @@
 
 :global(.dark .virtual-data-table[data-scrolled-end] .vtable-sticky-edge-right) {
   box-shadow: -6px 0 6px -4px rgba(0, 0, 0, 0.6);
+}
+
+/* Resizable columns: once a column is resized the table switches to a
+   fixed layout whose width is the sum of the column widths (set by DataTable
+   as --vtable-table-width). */
+:global(.virtual-data-table.vtable-fixed-layout table.vtlist-inner) {
+  table-layout: fixed;
+  width: var(--vtable-table-width);
+}
+
+:global(.datatable-table thead th .vtable-resize-handle) {
+  position: absolute;
+  top: 0;
+  right: 0;
+  bottom: 0;
+  width: 0.6rem;
+  cursor: col-resize;
+  touch-action: none;
+  z-index: 1;
+}
+
+/* Separator line on the header's right edge: always shown on resizable
+   columns, stronger while the header is hovered, accent-coloured and full
+   height on the handle itself or while dragging. */
+:global(.datatable-table thead th .vtable-resize-handle::after) {
+  content: '';
+  position: absolute;
+  top: 22%;
+  bottom: 22%;
+  right: 0;
+  width: 2px;
+  border-radius: 1px;
+  background-color: var(--vtable-resize-line);
+  transition:
+    background-color 0.12s ease-in-out,
+    top 0.12s ease-in-out,
+    bottom 0.12s ease-in-out,
+    width 0.12s ease-in-out;
+}
+
+:global(.datatable-table thead th:hover .vtable-resize-handle::after) {
+  top: 12%;
+  bottom: 12%;
+  background-color: var(--vtable-resize-line-hover);
+}
+
+:global(.datatable-table thead th .vtable-resize-handle:hover::after),
+:global(.datatable-table thead th .vtable-resize-handle.vtable-resize-active::after) {
+  top: 0;
+  bottom: 0;
+  width: 3px;
+  background-color: var(--vtable-color-accent-border);
+}
+
+:global(.dark) :global(.datatable-table thead th .vtable-resize-handle) {
+  --vtable-resize-line: #4b5563; /* gray-600 */
+  --vtable-resize-line-hover: #9ca3af; /* gray-400 */
+}
+
+/* Keep the resize cursor and stop text selection while dragging */
+:global(.virtual-data-table.vtable-resizing),
+:global(.virtual-data-table.vtable-resizing *) {
+  cursor: col-resize !important;
+  user-select: none;
 }
 
 /* Header visual styles - only bottom border */
@@ -205,6 +272,55 @@
   align-items: center;
   gap: 0.25rem;
   text-align: left;
+}
+
+/* Grouped column headers (ColumnDef.group): a header row above the column
+   headers, one cell per run of columns sharing a group. */
+:global(.datatable-table thead th.vtable-group-header) {
+  text-align: center;
+  padding-top: 0.25rem;
+  padding-bottom: 0.25rem;
+  font-size: 0.75rem;
+  letter-spacing: 0.05em;
+  color: #475569;
+  box-shadow: none;
+}
+
+/* Divider between groups; a run continued past a sticky boundary has none */
+:global(
+  .datatable-table thead th.vtable-group-header + th.vtable-group-header:not(.vtable-group-cont)
+) {
+  border-left: 1px solid #dee2e6;
+}
+
+:global(.datatable-table thead th.vtable-group-empty) {
+  border-bottom-color: transparent;
+}
+
+:global(.dark) :global(.datatable-table thead th.vtable-group-header) {
+  color: #cbd5e1;
+  box-shadow: none;
+}
+
+:global(.dark)
+  :global(
+    .datatable-table thead th.vtable-group-header + th.vtable-group-header:not(.vtable-group-cont)
+  ) {
+  border-left-color: #374151;
+}
+
+:global(.dark) :global(.datatable-table thead th.vtable-group-empty) {
+  border-bottom-color: transparent;
+}
+
+/* Single-line cells (DataTable wrap={false} or ColumnDef.wrap: false). The
+   zero max-width keeps cell text out of the automatic column sizing, so
+   columns keep their declared widths and long text ends in an ellipsis
+   (revealed in a tooltip on hover). */
+:global(.datatable-table tbody td.vtable-truncate) {
+  white-space: nowrap;
+  text-overflow: ellipsis;
+  max-width: 0;
 }
 
 /* Allow certain long cells to wrap fully if explicitly requested */

@@ -1,4 +1,5 @@
 <script>
+  import { untrack } from 'svelte';
   import { VirtualList } from 'svelte-virtuallists';
   import ColumnHeaderFilter from './filters/ColumnHeaderFilter.svelte';
   import { useFilterState } from './filters/useFilterState.svelte.js';
@@ -53,6 +54,19 @@
     virtualize = true,
     // Row density: 'comfortable' (default) or 'compact' (tighter cell padding).
     density = 'comfortable',
+    // Drag a header's right edge to resize its column (ColumnDef.resizable: false opts out).
+    resizable = false,
+    // User-set column widths in px, keyed by column key. Bindable; empty means
+    // the declared widths. Once any column is resized the table switches to a
+    // fixed layout whose width is the sum of the column widths.
+    columnWidths = $bindable({}),
+    // oncolumnresize({ key, width, widths }) — called when a resize ends.
+    oncolumnresize = undefined,
+    // When set, columnWidths are saved to and restored from localStorage under this key.
+    storageKey = undefined,
+    // Wrap long cell text (default). When false, cells stay on one line and
+    // truncated text is shown in a tooltip. ColumnDef.wrap overrides per column.
+    wrap = true,
   } = $props();
 
   // --- Derived values from ColumnDef[] ---
@@ -69,9 +83,10 @@
   const colDefMap = $derived(Object.fromEntries(columns.map((c) => [c.key, c])));
 
   // --- Sticky columns ---
-  // Header cell widths of sticky columns, measured (bind:offsetWidth), so the
-  // offsets hold whatever the width type (stretch weight or CSS length).
-  let stickyWidths = $state({});
+  // Header cell widths, measured (bind:offsetWidth), so the sticky offsets hold
+  // whatever the width type (stretch weight or CSS length). Also the starting
+  // point of the first column resize.
+  let headerWidths = $state({});
 
   // key → { side, offset, edge } for columns with `sticky: 'left' | 'right'`.
   // A left column's offset is the width of the left sticky columns before it;
@@ -84,12 +99,12 @@
     let acc = 0;
     left.forEach((c, i) => {
       map[c.key] = { side: 'left', offset: acc, edge: i === left.length - 1 };
-      acc += stickyWidths[c.key] ?? 0;
+      acc += headerWidths[c.key] ?? 0;
     });
     acc = 0;
     right.forEach((c, i) => {
       map[c.key] = { side: 'right', offset: acc, edge: i === right.length - 1 };
-      acc += stickyWidths[c.key] ?? 0;
+      acc += headerWidths[c.key] ?? 0;
     });
     return map;
   });
@@ -104,11 +119,18 @@
   // Set on the header content, it is a real minimum (a <col> width is only a
   // hint under automatic table layout), so wide tables scroll sideways
   // instead of squeezing their columns.
-  function minWidthStyle(key) {
+  function declaredMinWidth(key) {
     const c = colDefMap[key];
-    const w =
+    return (
       c?.minWidth ??
-      (typeof c?.width === 'string' && !c.width.trim().endsWith('%') ? c.width : null);
+      (typeof c?.width === 'string' && !c.width.trim().endsWith('%') ? c.width : null)
+    );
+  }
+
+  function minWidthStyle(key) {
+    // Under the fixed layout the column width already includes the minimum.
+    if (fixedLayout) return '';
+    const w = declaredMinWidth(key);
     return w ? `min-width: ${w};` : '';
   }
 
@@ -139,6 +161,220 @@
     updateHorizontalScroll();
     return () => ro.disconnect();
   });
+
+  // --- Resizable columns ---
+  // Floor for user widths, so a column stays wide enough to grab again. A
+  // declared minWidth does not apply: it sizes the declared layout only, and
+  // the user may resize below it.
+  const MIN_RESIZE_WIDTH = 40;
+  // Width of a column that has no user width under the fixed layout and
+  // declares no CSS width either (a stretch weight has no meaning there).
+  const DEFAULT_FIXED_WIDTH = '10rem';
+  const STORAGE_PREFIX = 'svelte-vtable:column-widths:';
+
+  // { key, startX, startWidth } while a header edge is dragged.
+  let resizing = $state(null);
+
+  const fixedLayout = $derived(resizable && Object.keys(columnWidths ?? {}).length > 0);
+
+  function isResizable(key) {
+    return resizable && colDefMap[key]?.resizable !== false;
+  }
+
+  // Column width under the fixed layout: the user width, else the declared
+  // CSS width or minimum.
+  function fixedColWidth(key) {
+    const px = columnWidths?.[key];
+    if (typeof px === 'number' && px > 0) return `${Math.max(MIN_RESIZE_WIDTH, px)}px`;
+    return declaredMinWidth(key) ?? DEFAULT_FIXED_WIDTH;
+  }
+
+  const fixedTableWidth = $derived(
+    fixedLayout ? `calc(${effectiveVisibleKeys.map(fixedColWidth).join(' + ')})` : '',
+  );
+
+  function readStoredWidths(key) {
+    try {
+      const parsed = JSON.parse(localStorage.getItem(STORAGE_PREFIX + key) ?? 'null');
+      return parsed && typeof parsed === 'object' && !Array.isArray(parsed) ? parsed : null;
+    } catch (e) {
+      return null;
+    }
+  }
+
+  function writeStoredWidths(key, widths) {
+    try {
+      if (Object.keys(widths).length === 0) localStorage.removeItem(STORAGE_PREFIX + key);
+      else localStorage.setItem(STORAGE_PREFIX + key, JSON.stringify(widths));
+    } catch (e) {}
+  }
+
+  // Restore saved widths before the first paint (and when the key changes).
+  $effect.pre(() => {
+    if (!storageKey) return;
+    const saved = readStoredWidths(storageKey);
+    untrack(() => {
+      columnWidths = saved ?? {};
+    });
+  });
+
+  // Save widths when they change, but not on every pointer move of a drag.
+  $effect(() => {
+    if (!storageKey || resizing) return;
+    writeStoredWidths(storageKey, $state.snapshot(columnWidths) ?? {});
+  });
+
+  // The first resize pins every column at its current width, so switching to
+  // the fixed layout does not move the other columns.
+  function ensureFixedWidths() {
+    if (fixedLayout) return;
+    columnWidths = Object.fromEntries(
+      effectiveVisibleKeys.map((k) => [k, Math.round(headerWidths[k] ?? 0)]).filter(([, w]) => w),
+    );
+  }
+
+  function setColumnWidth(key, width) {
+    columnWidths = { ...columnWidths, [key]: width };
+  }
+
+  function emitResize(key) {
+    try {
+      if (oncolumnresize)
+        oncolumnresize({ key, width: columnWidths[key], widths: $state.snapshot(columnWidths) });
+    } catch (err) {
+      try {
+        console.error('oncolumnresize threw:', err);
+      } catch (e) {}
+    }
+  }
+
+  function startResize(event, key) {
+    if (event.button !== 0) return;
+    event.preventDefault();
+    event.stopPropagation();
+    const handle = event.currentTarget;
+    const th = handle.closest('th');
+    ensureFixedWidths();
+    handle.setPointerCapture?.(event.pointerId);
+    resizing = {
+      key,
+      startX: event.clientX,
+      startWidth: th.offsetWidth,
+    };
+  }
+
+  function moveResize(event) {
+    if (!resizing) return;
+    const { key, startX, startWidth } = resizing;
+    setColumnWidth(
+      key,
+      Math.max(MIN_RESIZE_WIDTH, Math.round(startWidth + event.clientX - startX)),
+    );
+  }
+
+  function endResize() {
+    if (!resizing) return;
+    const { key } = resizing;
+    resizing = null;
+    emitResize(key);
+  }
+
+  // Double-clicking a header edge drops the user widths: the table returns to
+  // its declared layout. (A single column has no width to return to under the
+  // fixed layout when it declares only a stretch weight.)
+  function resetColumnWidths(key) {
+    if (!fixedLayout) return;
+    columnWidths = {};
+    emitResize(key);
+  }
+
+  // --- Grouped headers ---
+  // Runs of adjacent columns sharing ColumnDef.group, rendered as a header row
+  // above the column headers. A run is split where its columns' sticky side
+  // changes, so the sticky part can stick with its columns; only the first
+  // part shows the label.
+  const groupSegments = $derived.by(() => {
+    if (!columns.some((c) => c.group)) return [];
+    const segments = [];
+    for (const c of columns) {
+      const group = c.group || null;
+      const side = stickyMap[c.key]?.side ?? null;
+      const last = segments[segments.length - 1];
+      if (last && last.group === group && last.side === side) {
+        last.keys.push(c.key);
+      } else {
+        const cont = !!last && group !== null && last.group === group;
+        segments.push({ group, side, keys: [c.key], cont });
+      }
+    }
+    return segments;
+  });
+
+  // Height of the group header row: the column header row sticks below it.
+  let groupRowHeight = $state(0);
+
+  function groupStickyKey(segment) {
+    if (!segment.side) return null;
+    return segment.side === 'left' ? segment.keys[0] : segment.keys[segment.keys.length - 1];
+  }
+
+  function groupClass(segment) {
+    const base = segment.group
+      ? `vtable-group-header${segment.cont ? ' vtable-group-cont' : ''}`
+      : 'vtable-group-header vtable-group-empty';
+    if (!segment.side) return base;
+    const edge = segment.keys.some((k) => stickyMap[k]?.edge);
+    return `${base} vtable-sticky vtable-sticky-${segment.side}${edge ? ` vtable-sticky-edge-${segment.side}` : ''}`;
+  }
+
+  // --- Truncated text ---
+  function cellWraps(col) {
+    return col.wrap ?? wrap;
+  }
+
+  function isTruncated(el) {
+    return (
+      el.clientWidth > 0 &&
+      (el.scrollWidth > el.clientWidth + 1 || el.scrollHeight > el.clientHeight + 1)
+    );
+  }
+
+  // On hover, give a body cell (or header label) whose text is cut off a
+  // tooltip with the full text. Checks the hovered element and its ancestors
+  // up to the cell, so truncation inside custom cell snippets counts too.
+  function revealTruncated(event) {
+    const target = /** @type {Element} */ (event.target);
+    if (!target?.closest) return;
+    const label = target.closest('.vtable-header-label');
+    if (label) {
+      setAutoTitle(label, isTruncated(label) ? label.textContent : null);
+      return;
+    }
+    const td = target.closest('td');
+    if (!td || !scroller?.contains(td)) return;
+    let text = null;
+    for (let el = target; el; el = el.parentElement) {
+      if (isTruncated(el)) {
+        text = el.textContent;
+        break;
+      }
+      if (el === td) break;
+    }
+    setAutoTitle(td, text);
+  }
+
+  // Only touch titles this component set, never a consumer's.
+  function setAutoTitle(el, text) {
+    const full = text?.replace(/\s+/g, ' ').trim();
+    if (full) {
+      if (el.hasAttribute('title') && !el.hasAttribute('data-vtable-auto-title')) return;
+      el.setAttribute('title', full);
+      el.setAttribute('data-vtable-auto-title', '');
+    } else if (el.hasAttribute('data-vtable-auto-title')) {
+      el.removeAttribute('title');
+      el.removeAttribute('data-vtable-auto-title');
+    }
+  }
 
   const effectiveColumnFilters = $derived.by(() => {
     return resolveColumnFilters({
@@ -304,6 +540,7 @@
 
   // Compute column width by key (fallback to even distribution)
   function calcColWidth(key) {
+    if (fixedLayout) return fixedColWidth(key);
     if (colWidthMap[key] !== undefined) return String(colWidthMap[key]);
     const n = Math.max(1, effectiveVisibleKeys.length);
     return Math.floor(100 / n) + '%';
@@ -312,11 +549,16 @@
 
 <svelte:window onclick={closeFilter} onkeydown={handleKeydown} />
 
+<!-- pointerover only adds tooltips to truncated text -->
+<!-- svelte-ignore a11y_no_static_element_interactions -->
 <section
-  class="virtual-data-table {className}"
-  {style}
+  class="virtual-data-table {className}{fixedLayout ? ' vtable-fixed-layout' : ''}{resizing
+    ? ' vtable-resizing'
+    : ''}"
+  style="{style}{fixedTableWidth ? `; --vtable-table-width: ${fixedTableWidth}` : ''}"
   bind:this={scroller}
   onscroll={updateHorizontalScroll}
+  onpointerover={revealTruncated}
   data-scrolled-start={scrolledFromStart ? '' : undefined}
   data-scrolled-end={scrolledToEnd ? undefined : ''}
 >
@@ -340,6 +582,23 @@
           {/each}
         </colgroup>
         <thead class="sticky-header">
+          {#if groupSegments.length > 0}
+            <tr class="vtable-group-row" bind:offsetHeight={groupRowHeight}>
+              {#each groupSegments as segment}
+                {@const stickyKey = groupStickyKey(segment)}
+                <th
+                  colspan={segment.keys.length}
+                  class={groupClass(segment)}
+                  style={stickyKey ? stickyStyle(stickyKey) : undefined}
+                  scope={segment.group ? 'colgroup' : undefined}
+                >
+                  {#if segment.group && !segment.cont}
+                    <span class="vtable-header-label">{segment.group}</span>
+                  {/if}
+                </th>
+              {/each}
+            </tr>
+          {/if}
           <tr>
             {#each effectiveVisibleKeys as key, columnIndex}
               {@const colDef = colDefMap[key]}
@@ -349,11 +608,14 @@
               {@const selection = filterDef ? filterState.selections[filterDef.key] : undefined}
               {@const isFilterActive = hasActiveFilterValue(selection)}
               <th
-                style="width: {calcColWidth(key)}; {stickyStyle(key)}"
+                style="width: {calcColWidth(key)}; {stickyStyle(key)}{groupSegments.length > 0
+                  ? ` top: ${groupRowHeight}px;`
+                  : ''}"
                 class="select-none {stickyClass(key)}{filterDef && openFilterKey === filterDef.key
                   ? ' vtable-filter-open'
                   : ''}"
-                bind:offsetWidth={stickyWidths[key]}
+                data-key={key}
+                bind:offsetWidth={headerWidths[key]}
                 aria-sort={sortKey === key
                   ? sortDir === 'asc'
                     ? 'ascending'
@@ -371,13 +633,13 @@
                       class="vtable-header-sort-button min-w-0 flex-1 cursor-pointer"
                       onclick={() => handleSort(key)}
                     >
-                      <span class="min-w-0 truncate">{label}</span>
+                      <span class="vtable-header-label min-w-0 truncate">{label}</span>
                       {#if sortKey === key}
                         <span aria-hidden="true">{sortDir === 'asc' ? '▲' : '▼'}</span>
                       {/if}
                     </button>
                   {:else}
-                    <span class="min-w-0 flex-1 truncate">{label}</span>
+                    <span class="vtable-header-label min-w-0 flex-1 truncate">{label}</span>
                   {/if}
 
                   {#if inlineFilters && filterDef}
@@ -405,6 +667,27 @@
                     />
                   {/if}
                 </div>
+                {#if isResizable(key)}
+                  <!-- Pointer-only affordance, hidden from assistive technology -->
+                  <!-- svelte-ignore a11y_no_static_element_interactions, a11y_click_events_have_key_events -->
+                  <span
+                    class="vtable-resize-handle{resizing?.key === key
+                      ? ' vtable-resize-active'
+                      : ''}"
+                    aria-hidden="true"
+                    title="Drag to resize, double-click to reset all widths"
+                    onpointerdown={(e) => startResize(e, key)}
+                    onpointermove={moveResize}
+                    onpointerup={endResize}
+                    onpointercancel={endResize}
+                    onlostpointercapture={endResize}
+                    onclick={(e) => e.stopPropagation()}
+                    ondblclick={(e) => {
+                      e.stopPropagation();
+                      resetColumnWidths(key);
+                    }}
+                  ></span>
+                {/if}
               </th>
             {/each}
           </tr>
@@ -413,9 +696,17 @@
 
       {#snippet vl_slot({ index, item })}
         <!-- Default row rendering using each column's cellSnippet or raw value -->
-        <tr onclick={() => selectItem(item, index)} class={selected === item ? 'selected selected-row' : ''}>
+        <tr
+          onclick={() => selectItem(item, index)}
+          class={selected === item ? 'selected selected-row' : ''}
+        >
           {#each columns as col}
-            <td class={stickyClass(col.key) || undefined} style={stickyStyle(col.key) || undefined}>
+            <td
+              class={[stickyClass(col.key), cellWraps(col) ? '' : 'vtable-truncate']
+                .filter(Boolean)
+                .join(' ') || undefined}
+              style={stickyStyle(col.key) || undefined}
+            >
               {#if col.cellSnippet}
                 {@render col.cellSnippet({ item, value: item[col.key], index })}
               {:else}

@@ -43,9 +43,17 @@ export {
  * @property {string} [minWidth] - Minimum column width as a CSS length (e.g. `'12rem'`).
  *   A CSS-length `width` is also a minimum. When the minimums exceed the
  *   container, the table scrolls sideways instead of squeezing its columns.
+ *   Applies to the declared layout: a user may resize the column below it.
  * @property {'left'|'right'} [sticky] - Keep the column in view while the table
  *   scrolls sideways, pinned to that edge. Several columns may stick per side;
  *   offsets are measured, so any width type works.
+ * @property {string} [group] - Group label shown in a header row above the
+ *   column headers. Adjacent columns with the same group share one cell.
+ * @property {boolean} [resizable] - Set `false` to keep this column fixed when
+ *   the table is `resizable`. Defaults to `true`.
+ * @property {boolean} [wrap] - Wrap long text in this column's cells; overrides
+ *   the table's `wrap` prop. When false, cells stay on one line and cut-off text
+ *   is shown in a tooltip.
  * @property {boolean} [sortable] - Whether clicking the column header sorts the
  *   table. Defaults to `true`.
  * @property {'value'|'list'|'daterange'|'datetimerange'|'none'} [filterType]

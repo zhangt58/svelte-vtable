@@ -12,6 +12,20 @@ All notable changes to this project will be documented in this file.
 - **`ColumnDef.minWidth`**, and CSS-length widths act as minimums, so wide tables scroll
   sideways instead of squeezing their columns.
 - **`density` prop** on `DataTable`: `'comfortable'` (default) or `'compact'`.
+- **Resizable columns**: `resizable` prop adds a drag handle on each header's right edge
+  (double-click resets all widths); `ColumnDef.resizable: false` opts a column out. The
+  separator is always shown on resizable headers (themeable through `--vtable-resize-line`
+  / `--vtable-resize-line-hover`). Widths live in the bindable `columnWidths` (px), are
+  reported through `oncolumnresize({ key, width, widths })`, and are saved per table in
+  `localStorage` when `storageKey` is set. Once resized, the table uses a fixed layout. A
+  resize may go below the column's `minWidth` (down to 40px); the minimum sizes the
+  declared layout only.
+- **Grouped column headers**: `ColumnDef.group` draws a sticky header row above the
+  column headers, one cell per run of adjacent columns in the same group.
+- **`wrap` prop** (and `ColumnDef.wrap`): `wrap={false}` keeps cells on one line with an
+  ellipsis, without long text widening its column.
+- **Tooltips on truncated text**: hovering a cell or header label whose text is cut off
+  shows the full text (also inside cell snippets).
 
 ### Fixed
 

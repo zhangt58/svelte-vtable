@@ -142,27 +142,32 @@ A virtualized table component for efficient rendering of large datasets. The com
 
 #### Props
 
-| Prop            | Type                         | Default                  | Description                                                                                                                                                                             |
-| --------------- | ---------------------------- | ------------------------ | --------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------- |
-| `items`         | `Array`                      | `[]`                     | Array of data items to display                                                                                                                                                          |
-| `columns`       | `ColumnDef[]`                | `undefined`              | **Unified column definitions** (recommended). When provided, `visibleKeys`, `colWidths`, and `rowSnippet` may be omitted. See [ColumnDef](#columndef) below.                            |
-| `visibleKeys`   | `Array`                      | `[]`                     | _(Legacy)_ Array of keys to display as column headers. Ignored when `columns` is provided.                                                                                              |
-| `sortKey`       | `string \| null`             | `null`                   | Current sort key (column header); supports `bind:sortKey`                                                                                                                               |
-| `sortDir`       | `'asc' \| 'desc'`            | `'asc'`                  | Sort direction; supports `bind:sortDir`                                                                                                                                                 |
-| `className`     | `string`                     | `''`                     | Additional CSS classes                                                                                                                                                                  |
-| `style`         | `string`                     | `''`                     | Inline styles                                                                                                                                                                           |
-| `emptyMessage`  | `string`                     | `'No items to display.'` | Message when no items                                                                                                                                                                   |
-| `colWidths`     | `object \| Array`            | `{}`                     | _(Legacy)_ Column width configuration (stretch weights or pixel values). Ignored when `columns` is provided.                                                                            |
-| `selected`      | `any`                        | `null`                   | Currently selected item                                                                                                                                                                 |
-| `onselect`      | `function`                   | `undefined`              | Callback when a row is selected: `({item, index}) => void`                                                                                                                              |
-| `onsort`        | `function`                   | `undefined`              | Callback when sort changes: `({key, dir}) => void`. When provided, local sorting is skipped (server-side sort pattern). Omit entirely (do not pass `() => {}`) to enable local sorting. |
-| `inlineFilters` | `boolean`                    | `false`                  | Renders column filter buttons in table headers. Without `onfilter`, filters are applied locally to `items`.                                                                             |
-| `columnFilters` | `Array \| null`              | `null`                   | Optional explicit filter configurations, usually from `buildColumnFilters(rows, columns)`. Overrides derived filter options.                                                            |
-| `filterItems`   | `Array \| null`              | `null`                   | Base data source used to derive inline filter options when `columnFilters` is omitted. Defaults to `items`; pass the unpaged/search-scoped rows when `items` is paged.                  |
-| `activeFilters` | `Object`                     | `{}`                     | Controlled filter state for inline header filters.                                                                                                                                      |
-| `onfilter`      | `function`                   | `undefined`              | Callback when inline filters change: `({key, values, allFilters}) => void`. When provided, parent code is responsible for applying filters.                                             |
-| `rowSnippet`    | `Snippet`                    | `undefined`              | Svelte 5 snippet for rendering rows. Optional when `columns` is provided (a default row is rendered using each column's `cellSnippet` or raw value).                                    |
-| `density`       | `'comfortable' \| 'compact'` | `'comfortable'`          | Row density. `'compact'` tightens the body cell padding so more rows fit.                                                                                                               |
+| Prop             | Type                         | Default                  | Description                                                                                                                                                                             |
+| ---------------- | ---------------------------- | ------------------------ | --------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------- |
+| `items`          | `Array`                      | `[]`                     | Array of data items to display                                                                                                                                                          |
+| `columns`        | `ColumnDef[]`                | `undefined`              | **Unified column definitions** (recommended). When provided, `visibleKeys`, `colWidths`, and `rowSnippet` may be omitted. See [ColumnDef](#columndef) below.                            |
+| `visibleKeys`    | `Array`                      | `[]`                     | _(Legacy)_ Array of keys to display as column headers. Ignored when `columns` is provided.                                                                                              |
+| `sortKey`        | `string \| null`             | `null`                   | Current sort key (column header); supports `bind:sortKey`                                                                                                                               |
+| `sortDir`        | `'asc' \| 'desc'`            | `'asc'`                  | Sort direction; supports `bind:sortDir`                                                                                                                                                 |
+| `className`      | `string`                     | `''`                     | Additional CSS classes                                                                                                                                                                  |
+| `style`          | `string`                     | `''`                     | Inline styles                                                                                                                                                                           |
+| `emptyMessage`   | `string`                     | `'No items to display.'` | Message when no items                                                                                                                                                                   |
+| `colWidths`      | `object \| Array`            | `{}`                     | _(Legacy)_ Column width configuration (stretch weights or pixel values). Ignored when `columns` is provided.                                                                            |
+| `selected`       | `any`                        | `null`                   | Currently selected item                                                                                                                                                                 |
+| `onselect`       | `function`                   | `undefined`              | Callback when a row is selected: `({item, index}) => void`                                                                                                                              |
+| `onsort`         | `function`                   | `undefined`              | Callback when sort changes: `({key, dir}) => void`. When provided, local sorting is skipped (server-side sort pattern). Omit entirely (do not pass `() => {}`) to enable local sorting. |
+| `inlineFilters`  | `boolean`                    | `false`                  | Renders column filter buttons in table headers. Without `onfilter`, filters are applied locally to `items`.                                                                             |
+| `columnFilters`  | `Array \| null`              | `null`                   | Optional explicit filter configurations, usually from `buildColumnFilters(rows, columns)`. Overrides derived filter options.                                                            |
+| `filterItems`    | `Array \| null`              | `null`                   | Base data source used to derive inline filter options when `columnFilters` is omitted. Defaults to `items`; pass the unpaged/search-scoped rows when `items` is paged.                  |
+| `activeFilters`  | `Object`                     | `{}`                     | Controlled filter state for inline header filters.                                                                                                                                      |
+| `onfilter`       | `function`                   | `undefined`              | Callback when inline filters change: `({key, values, allFilters}) => void`. When provided, parent code is responsible for applying filters.                                             |
+| `rowSnippet`     | `Snippet`                    | `undefined`              | Svelte 5 snippet for rendering rows. Optional when `columns` is provided (a default row is rendered using each column's `cellSnippet` or raw value).                                    |
+| `density`        | `'comfortable' \| 'compact'` | `'comfortable'`          | Row density. `'compact'` tightens the body cell padding so more rows fit.                                                                                                               |
+| `resizable`      | `boolean`                    | `false`                  | Drag a header's right edge to resize its column. See [Resizable columns](#resizable-columns).                                                                                           |
+| `columnWidths`   | `Record<string, number>`     | `{}`                     | User column widths in px; supports `bind:columnWidths`. Empty means the declared widths.                                                                                                |
+| `oncolumnresize` | `function`                   | `undefined`              | Called when a resize ends: `({key, width, widths}) => void`.                                                                                                                            |
+| `storageKey`     | `string`                     | `undefined`              | Save `columnWidths` to `localStorage` (`svelte-vtable:column-widths:<storageKey>`) and restore them on mount.                                                                           |
+| `wrap`           | `boolean`                    | `true`                   | Wrap long cell text. `false` keeps cells on one line; cut-off text gets a tooltip. See [Long text](#long-text-wrap-or-truncate).                                                        |
 
 #### Row Snippet Parameters
 
@@ -181,17 +186,20 @@ The `rowSnippet` receives an object with:
 // @type {import('@zhangt58/svelte-vtable').ColumnDef}
 ```
 
-| Field           | Type                                                            | Default     | Description                                                                                                             |
-| --------------- | --------------------------------------------------------------- | ----------- | ----------------------------------------------------------------------------------------------------------------------- |
-| `key`           | `string`                                                        | required    | Data key. Must match a property on the row item.                                                                        |
-| `label`         | `string`                                                        | `key`       | Column header label. Defaults to `key`.                                                                                 |
-| `width`         | `number \| string`                                              | `1`         | Stretch weight (number) or CSS value (e.g. `'120px'`). A CSS length is also the column's minimum width.                 |
-| `minWidth`      | `string`                                                        | `undefined` | Minimum width as a CSS length (e.g. `'12rem'`). When the minimums exceed the container, the table scrolls sideways.     |
-| `sticky`        | `'left' \| 'right'`                                             | `undefined` | Keep the column in view while the table scrolls sideways. See [Sticky columns](#sticky-columns).                        |
-| `sortable`      | `boolean`                                                       | `true`      | Whether clicking the header sorts the table.                                                                            |
-| `filterType`    | `'value' \| 'list' \| 'daterange' \| 'datetimerange' \| 'none'` | `'value'`   | Filter UI for this column. `'list'` is an alias for value-list filters; `'none'` excludes it from `buildColumnFilters`. |
-| `headerSnippet` | `Snippet<[{key, label, sortKey, sortDir}]>`                     | `undefined` | Custom Svelte 5 snippet rendered inside `<th>`.                                                                         |
-| `cellSnippet`   | `Snippet<[{item, value, index}]>`                               | `undefined` | Custom Svelte 5 snippet rendered inside each `<td>`. Used for default row rendering when `rowSnippet` is not provided.  |
+| Field           | Type                                                            | Default      | Description                                                                                                                                        |
+| --------------- | --------------------------------------------------------------- | ------------ | -------------------------------------------------------------------------------------------------------------------------------------------------- |
+| `key`           | `string`                                                        | required     | Data key. Must match a property on the row item.                                                                                                   |
+| `label`         | `string`                                                        | `key`        | Column header label. Defaults to `key`.                                                                                                            |
+| `width`         | `number \| string`                                              | `1`          | Stretch weight (number) or CSS value (e.g. `'120px'`). A CSS length is also the column's minimum width.                                            |
+| `minWidth`      | `string`                                                        | `undefined`  | Minimum width as a CSS length (e.g. `'12rem'`). When the minimums exceed the container, the table scrolls sideways.                                |
+| `sticky`        | `'left' \| 'right'`                                             | `undefined`  | Keep the column in view while the table scrolls sideways. See [Sticky columns](#sticky-columns).                                                   |
+| `group`         | `string`                                                        | `undefined`  | Group label shown in a header row above this column; adjacent columns with the same group share one cell. See [Grouped headers](#grouped-headers). |
+| `resizable`     | `boolean`                                                       | `true`       | Set `false` to keep this column's resize handle off when the table is `resizable`.                                                                 |
+| `wrap`          | `boolean`                                                       | table `wrap` | Per-column override of the table's `wrap`.                                                                                                         |
+| `sortable`      | `boolean`                                                       | `true`       | Whether clicking the header sorts the table.                                                                                                       |
+| `filterType`    | `'value' \| 'list' \| 'daterange' \| 'datetimerange' \| 'none'` | `'value'`    | Filter UI for this column. `'list'` is an alias for value-list filters; `'none'` excludes it from `buildColumnFilters`.                            |
+| `headerSnippet` | `Snippet<[{key, label, sortKey, sortDir}]>`                     | `undefined`  | Custom Svelte 5 snippet rendered inside `<th>`.                                                                                                    |
+| `cellSnippet`   | `Snippet<[{item, value, index}]>`                               | `undefined`  | Custom Svelte 5 snippet rendered inside each `<td>`. Used for default row rendering when `rowSnippet` is not provided.                             |
 
 #### Minimal example using `columns`
 
@@ -290,6 +298,68 @@ const columns = [
   scrolled under it. The table root carries `data-scrolled-start` / `data-scrolled-end`
   while it is scrolled away from the start / not at the end, for custom styling.
 - Sticky body cells take their row's background (striping, hover, selection).
+
+#### Resizable columns
+
+With `resizable`, every header gets a handle on its right edge (`ColumnDef.resizable: false`
+opts a column out):
+
+- Drag it to resize the column, down to 40px. A user width may go below the column's
+  `minWidth` (or CSS width): those size the declared layout only.
+- Double-click a handle to drop all user widths and return to the declared layout
+  (same as setting `columnWidths = {}`).
+
+The first resize pins every column at its current width (in px) and switches the table
+to a fixed layout whose width is the sum of the column widths: the table scrolls
+sideways when wider than its container and leaves space on the right when narrower.
+Columns without a user width (e.g. shown later) take their CSS `width`/`minWidth`, else
+`10rem`.
+
+Widths are kept in `columnWidths` (`bind:columnWidths`, or `oncolumnresize` when a resize
+ends). Pass `storageKey` to save them per table in `localStorage`:
+
+```svelte
+<DataTable {items} {columns} resizable storageKey="orders" bind:columnWidths />
+<button onclick={() => (columnWidths = {})}>Reset widths</button>
+```
+
+#### Grouped headers
+
+Give columns a `group` to draw a header row above the column headers, with one cell
+spanning each run of adjacent columns of the same group:
+
+```js
+const columns = [
+  { key: 'id', label: 'Order' }, // no group: empty cell above
+  { key: 'customer', label: 'Name', group: 'Customer' },
+  { key: 'email', label: 'Email', group: 'Customer' },
+  { key: 'status', label: 'Status', group: 'Order' },
+  { key: 'total', label: 'Total', group: 'Order' },
+  { key: 'carrier', label: 'Carrier', group: 'Delivery' },
+];
+```
+
+- The group row sticks to the top together with the column headers.
+- Groups follow the column order: the same group in two separate runs gets two cells.
+- A run of sticky and non-sticky columns is split at the boundary so the sticky part
+  sticks with its columns; the label sits on the first part.
+
+#### Long text: wrap or truncate
+
+Cells wrap long text by default. With `wrap={false}` (or `ColumnDef.wrap: false` for one
+column) cells stay on one line, columns keep their declared widths regardless of
+content, and long text ends in an ellipsis — handy for a per-table "wrap long text"
+toggle:
+
+```svelte
+<label><input type="checkbox" bind:checked={wrapText} /> Wrap long text</label>
+<DataTable {items} {columns} wrap={wrapText} />
+```
+
+Hovering a cell whose text is cut off shows the full text in a tooltip, in either mode.
+This also covers truncation inside a `cellSnippet` (e.g. a `truncate` or `line-clamp`
+element) and truncated header labels. A `title` you set on a cell's content takes
+precedence.
 
 #### Row Snippet Parameters
 
@@ -483,8 +553,13 @@ svelte-vtable exposes a set of CSS custom properties (variables) as its theming 
 
   --vtable-radius: 0.375rem; /* rounded-md */
   --vtable-row-height: 2.25rem; /* virtual-scroll row height hint */
+
+  --vtable-resize-line: #cbd5e1; /* column resize separator (gray-600 in dark mode) */
+  --vtable-resize-line-hover: #64748b; /* … while its header is hovered (gray-400 dark) */
 }
 ```
+
+The resize separator turns `--vtable-color-accent-border` on the handle and while dragging.
 
 ### Overriding the theme
 
