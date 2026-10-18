@@ -13,6 +13,13 @@ All notable changes to this project will be documented in this file.
   sideways instead of squeezing their columns.
 - **`density` prop** on `DataTable`: `'comfortable'` (default) or `'compact'`.
 
+### Fixed
+
+- `@zhangt58/svelte-vtable/styles.css` is plain CSS again: `svelte-package` replaced the
+  compiled stylesheet with the raw source (with `:global(...)` wrappers, which browsers
+  drop), because the styles were compiled before packaging. `npm run build` now compiles
+  them after packaging.
+
 ### Changed
 
 - The header sticks per cell (`thead th`) instead of the `<thead>`, so header cells can

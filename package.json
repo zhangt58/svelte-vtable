@@ -31,8 +31,8 @@
   "scripts": {
     "check": "svelte-check --tsconfig ./tsconfig.json",
     "build:styles": "node ./scripts/build-styles.cjs",
-    "build": "svelte-package -i src/lib",
-    "prepare": "npm run build:styles && npm run build",
+    "build": "svelte-package -i src/lib && node ./scripts/build-styles.cjs",
+    "prepare": "npm run build",
     "prepublishOnly": "npm run build && npm run check && npm run test",
     "format": "prettier --write .",
     "format:check": "prettier --check .",
