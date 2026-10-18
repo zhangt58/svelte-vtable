@@ -19,6 +19,8 @@ All notable changes to this project will be documented in this file.
   compiled stylesheet with the raw source (with `:global(...)` wrappers, which browsers
   drop), because the styles were compiled before packaging. `npm run build` now compiles
   them after packaging.
+- The selected row is highlighted again: default rows now carry `selected-row`, the class
+  the stylesheet targets (they had only `selected`).
 
 ### Changed
 

@@ -413,7 +413,7 @@
 
       {#snippet vl_slot({ index, item })}
         <!-- Default row rendering using each column's cellSnippet or raw value -->
-        <tr onclick={() => selectItem(item, index)} class={selected === item ? 'selected' : ''}>
+        <tr onclick={() => selectItem(item, index)} class={selected === item ? 'selected selected-row' : ''}>
           {#each columns as col}
             <td class={stickyClass(col.key) || undefined} style={stickyStyle(col.key) || undefined}>
               {#if col.cellSnippet}
