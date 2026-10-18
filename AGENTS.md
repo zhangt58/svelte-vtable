@@ -17,6 +17,7 @@ Tests are in `tests/`, currently focused on utility behavior. The `examples/` ap
 - `npm run format:check`: verify Prettier formatting.
 - `npm run format`: apply Prettier formatting.
 - `cd examples && npm install && npm run dev`: run the local example app; its `predev` rebuilds the library first.
+- `make dev`: rebuild `dist/` on every change in `src/lib` and run the example app, which reloads after each rebuild (`make` lists all targets). The examples always use the built `dist/`, never `src/lib`.
 
 ## Coding Style & Naming Conventions
 

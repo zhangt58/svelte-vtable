@@ -601,6 +601,22 @@ The live example at `examples/ThemedExample.svelte` lets you switch between gree
 
 The library is written in JavaScript with JSDoc annotations. Type checking is available via `svelte-check`.
 
+## Local development
+
+A `Makefile` wraps the npm scripts (`make` lists the targets):
+
+| Target         | What it does                                                                 |
+| -------------- | ---------------------------------------------------------------------------- |
+| `make install` | Install dependencies for the library and `examples/`                         |
+| `make dev`     | Build `dist/`, rebuild it on every change in `src/lib`, and run the examples |
+| `make build`   | Build `dist/` (components and the compiled `styles.css`)                     |
+| `make verify`  | Build, type-check and test                                                   |
+| `make pack`    | Show what `npm publish` would ship                                           |
+
+The examples always use the built `dist/`, like a consumer would: with `make dev` an edit
+in `src/lib` rebuilds `dist/` and the example page reloads. `PORT=5174 make dev` picks
+another port (default 5173).
+
 ## License
 
 MIT © [zhangt58](https://github.com/zhangt58)
