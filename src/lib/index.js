@@ -29,6 +29,17 @@ export {
   searchParamsToFilters,
 } from './filterUtils.js';
 
+// Export utility functions (CSV)
+export {
+  sortItems,
+  getExportColumns,
+  getExportValue,
+  escapeCSVValue,
+  toCSV,
+  downloadCSV,
+  exportCSV,
+} from './exportUtils.js';
+
 /**
  * Unified column definition for DataTable.
  * Pass an array of `ColumnDef` objects as the `columns` prop to configure
@@ -65,6 +76,12 @@ export {
  * @property {import('svelte').Snippet<[{key: string, label: string, sortKey: string|null, sortDir: string}]>} [headerSnippet]
  *   Custom Svelte 5 snippet rendered inside the `<th>`. Receives
  *   `{ key, label, sortKey, sortDir }`.
+ * @property {boolean} [exportable] - Set `false` to leave the column out of CSV
+ *   exports (e.g. an actions column). Defaults to `true`.
+ * @property {string} [exportLabel] - CSV header for the column. Defaults to `label`.
+ * @property {(item: T, value: unknown) => unknown} [exportValue] - Plain value
+ *   written to CSV for this column (a `cellSnippet` cannot be exported).
+ *   Defaults to the raw row value.
  * @property {import('svelte').Snippet<[{item: T, value: unknown, index: number}]>} [cellSnippet]
  *   Custom Svelte 5 snippet rendered inside each `<td>` for this column.
  *   Receives `{ item, value, index }`. When omitted the raw value is rendered.

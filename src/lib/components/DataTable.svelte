@@ -9,6 +9,7 @@
     hasActiveFilterValue,
     resolveColumnFilters,
   } from '../filterUtils.js';
+  import { exportCSV as exportRowsToCSV, sortItems } from '../exportUtils.js';
 
   // Runic props: accept props via $props() so the component matches the
   // project's runes-style components. Include the `select` callback prop.
@@ -409,31 +410,23 @@
   // pass items through unchanged. Otherwise we sort locally.
   const sortedItems = $derived.by(() => {
     if (onsort !== undefined || !sortKey) return filteredItems;
-
-    const key = sortKey;
-    const dir = sortDir;
-    return [...filteredItems].sort((a, b) => {
-      const aVal = a[key];
-      const bVal = b[key];
-
-      // Handle null/undefined values
-      if (aVal == null && bVal == null) return 0;
-      if (aVal == null) return 1;
-      if (bVal == null) return -1;
-
-      // Convert to strings for comparison
-      const aStr = String(aVal);
-      const bStr = String(bVal);
-
-      // Alphabetical comparison
-      const comparison = aStr.localeCompare(bStr, undefined, {
-        numeric: true,
-        sensitivity: 'base',
-      });
-
-      return dir === 'asc' ? comparison : -comparison;
-    });
+    return sortItems(filteredItems, sortKey, sortDir);
   });
+
+  /**
+   * Save the rows this table shows — after its local filters and sort — as a
+   * CSV file, with the current columns (`exportable: false` ones left out).
+   * When the parent pages, filters or sorts the rows itself, `items` is only
+   * what the parent passed: export the full view with `exportCSV` from the
+   * package instead. Call through `bind:this`.
+   * @param {Object} [options] - `filename` (default `'export.csv'`), `rows` and
+   *   `columns` overrides, and the `toCSV` / `downloadCSV` options.
+   * @returns {string} The CSV text.
+   */
+  export function exportCSV(options = {}) {
+    const { rows = sortedItems, columns: exportColumns = columns, ...rest } = options;
+    return exportRowsToCSV(rows, exportColumns, rest);
+  }
 
   // expose selection via the callback prop (if provided)
   function selectItem(item, index) {

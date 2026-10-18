@@ -24,6 +24,14 @@ All notable changes to this project will be documented in this file.
   column headers, one cell per run of adjacent columns in the same group.
 - **`wrap` prop** (and `ColumnDef.wrap`): `wrap={false}` keeps cells on one line with an
   ellipsis, without long text widening its column.
+- **CSV export of the current view**: `exportCSV(rows, columns, options)` (plus `toCSV`,
+  `downloadCSV`, `escapeCSVValue`, `getExportColumns`, `getExportValue`) and a
+  `DataTable` `exportCSV()` method (via `bind:this`) that exports the rows the table shows
+  after its local filters and sort. `ColumnDef.exportValue`, `exportLabel` and
+  `exportable` control what each column writes. RFC 4180 quoting, UTF-8 BOM for Excel,
+  and formula-injection escaping by default.
+- **`sortItems(items, key, dir)`**: the table's local sort as a utility, so a parent can
+  reproduce the table's order (e.g. for exports).
 - **Tooltips on truncated text**: hovering a cell or header label whose text is cut off
   shows the full text (also inside cell snippets).
 

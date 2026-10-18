@@ -200,6 +200,9 @@ The `rowSnippet` receives an object with:
 | `filterType`    | `'value' \| 'list' \| 'daterange' \| 'datetimerange' \| 'none'` | `'value'`    | Filter UI for this column. `'list'` is an alias for value-list filters; `'none'` excludes it from `buildColumnFilters`.                            |
 | `headerSnippet` | `Snippet<[{key, label, sortKey, sortDir}]>`                     | `undefined`  | Custom Svelte 5 snippet rendered inside `<th>`.                                                                                                    |
 | `cellSnippet`   | `Snippet<[{item, value, index}]>`                               | `undefined`  | Custom Svelte 5 snippet rendered inside each `<td>`. Used for default row rendering when `rowSnippet` is not provided.                             |
+| `exportable`    | `boolean`                                                       | `true`       | Set `false` to leave the column out of CSV exports (e.g. an actions column).                                                                       |
+| `exportLabel`   | `string`                                                        | `label`      | CSV header for the column.                                                                                                                         |
+| `exportValue`   | `(item, value) => unknown`                                      | raw value    | Plain value written to CSV (a `cellSnippet` cannot be exported).                                                                                   |
 
 #### Minimal example using `columns`
 
@@ -360,6 +363,56 @@ Hovering a cell whose text is cut off shows the full text in a tooltip, in eithe
 This also covers truncation inside a `cellSnippet` (e.g. a `truncate` or `line-clamp`
 element) and truncated header labels. A `title` you set on a cell's content takes
 precedence.
+
+#### Exporting the current view to CSV
+
+Export what the user sees — the visible columns, in their order, and the rows left after
+search, filters and sort — with the helpers from the package:
+
+```svelte
+<script>
+  import { DataTable, applyFilters, sortItems, exportCSV } from '@zhangt58/svelte-vtable';
+
+  let sortKey = $state(null);
+  let sortDir = $state('asc');
+  // visibleColumns: the ColumnDef[] passed to the table (after a column chooser)
+  const viewRows = $derived(sortItems(applyFilters(searchedRows, activeFilters), sortKey, sortDir));
+</script>
+
+<button onclick={() => exportCSV(viewRows, visibleColumns, { filename: 'view.csv' })}>
+  Export CSV
+</button>
+<DataTable items={pagedRows} columns={visibleColumns} bind:sortKey bind:sortDir />
+```
+
+Export the full view rather than the table's `items` when the table is paged: `items` is
+only the current page. When the table holds all rows itself (local filters and sort),
+its `exportCSV()` method exports exactly what it shows:
+
+```svelte
+<script>
+  let table = $state();
+</script>
+
+<button onclick={() => table.exportCSV({ filename: 'orders.csv' })}>Export CSV</button>
+<DataTable bind:this={table} {items} {columns} inlineFilters />
+```
+
+- Cells hold the raw row values; set `ColumnDef.exportValue` for a formatted or derived
+  value (a `cellSnippet` is not exported), `exportLabel` for another header and
+  `exportable: false` to leave a column out.
+- Arrays are joined with `; `, dates written as ISO strings, objects as JSON.
+- Text starting with `=`, `+`, `-`, `@` is prefixed with `'` so spreadsheets do not run it
+  as a formula (`escapeFormulas: false` turns that off; numbers are never changed).
+- The file is UTF-8 with a byte order mark so Excel reads accents correctly (`bom: false`
+  to leave it out).
+
+| Function                                | Description                                                                                                                      |
+| --------------------------------------- | -------------------------------------------------------------------------------------------------------------------------------- |
+| `exportCSV(rows, columns, options?)`    | Build the CSV and save it as a file. Options: `filename` (`'export.csv'`), `bom`, and the `toCSV` options. Returns the CSV text. |
+| `toCSV(rows, columns, options?)`        | CSV text only. Options: `delimiter` (`','`), `header` (`true`), `lineEnding` (`'\r\n'`), `escapeFormulas` (`true`).              |
+| `downloadCSV(csv, filename?, { bom }?)` | Save CSV text as a file in the browser.                                                                                          |
+| `sortItems(items, key, dir?)`           | Sort rows the way `DataTable` sorts locally, e.g. to export in the table's order.                                                |
 
 #### Row Snippet Parameters
 
