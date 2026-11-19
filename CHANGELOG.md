@@ -43,6 +43,9 @@ All notable changes to this project will be documented in this file.
   them after packaging.
 - The selected row is highlighted again: default rows now carry `selected-row`, the class
   the stylesheet targets (they had only `selected`).
+- Value filters match number, boolean and Date cells: `applyFilters` compares by string
+  form, like the option lists built by `getUniqueValuesWithCounts` (selecting `"2"` on a
+  numeric column used to match nothing).
 
 ### Changed
 
