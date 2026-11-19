@@ -378,6 +378,24 @@ describe('applyFilters', () => {
     const result = applyFilters(data, { date: {} });
     expect(result).toHaveLength(4);
   });
+
+  it('matches number and boolean values against the derived option strings', () => {
+    const rows = [
+      { id: 1, ok: true, tags: [10, 20] },
+      { id: 2, ok: false, tags: [30] },
+      { id: 3, ok: true, tags: [] },
+    ];
+    const { uniqueValues } = getUniqueValuesWithCounts(rows, 'id');
+    expect(uniqueValues).toEqual(['1', '2', '3']);
+    expect(applyFilters(rows, { id: ['2'] }).map((r) => r.id)).toEqual([2]);
+    expect(applyFilters(rows, { ok: ['true'] }).map((r) => r.id)).toEqual([1, 3]);
+    expect(applyFilters(rows, { tags: ['20'] }).map((r) => r.id)).toEqual([1]);
+  });
+
+  it('accepts non-string selected values', () => {
+    const rows = [{ id: 1 }, { id: 2 }];
+    expect(applyFilters(rows, { id: [2] }).map((r) => r.id)).toEqual([2]);
+  });
 });
 
 // ---------------------------------------------------------------------------

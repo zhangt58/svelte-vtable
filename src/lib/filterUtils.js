@@ -248,6 +248,8 @@ export function matchesDateRange(value, from, to) {
  * Supports both value-selection filters (array) and date/datetime range filters
  * (object with optional `from` and `to` string fields).
  * @param {Array} data - Array of data objects to filter
+ * Selected values are matched by their string form, so numeric, boolean and Date
+ * cell values match the option strings derived from them.
  * @param {Object} activeFilters - Active filters: { columnKey: string[] | {from?, to?} }
  * @returns {Array} Filtered data array
  */
@@ -265,15 +267,18 @@ export function applyFilters(data, activeFilters) {
         // Value-based filter (OR logic within column)
         if (filterValue.length === 0) continue;
         const itemValue = item[columnKey];
+        // Compare as strings: the options come from getUniqueValuesWithCounts,
+        // whose Object.keys() turns numbers, booleans and dates into strings.
+        const selected = filterValue.map((v) => String(v));
 
         if (Array.isArray(itemValue)) {
           // array value - check if any element matches the filter values
-          const hasMatch = itemValue.some((v) => filterValue.includes(String(v ?? '')));
+          const hasMatch = itemValue.some((v) => selected.includes(String(v ?? '')));
           if (!hasMatch) return false;
         } else {
           // scalar value - treat null/undefined as '(empty)'
-          const normalizedItemValue = itemValue ?? '(empty)';
-          if (!filterValue.includes(normalizedItemValue)) return false;
+          const normalizedItemValue = itemValue == null ? '(empty)' : String(itemValue);
+          if (!selected.includes(normalizedItemValue)) return false;
         }
       } else if (typeof filterValue === 'object') {
         // Date / datetime range filter
